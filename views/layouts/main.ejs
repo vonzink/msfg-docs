@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %><%= site.siteName %></title>
+  <link rel="icon" type="image/png" sizes="32x32" href="<%= site.favicon %>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css?v=<%= v %>">
+  <link rel="stylesheet" href="/css/layout.css?v=<%= v %>">
+  <link rel="stylesheet" href="/css/components.css?v=<%= v %>">
+  <link rel="stylesheet" href="/css/print.css?v=<%= v %>" media="print">
+  <link rel="stylesheet" href="/css/email-modal.css?v=<%= v %>">
+  <%- typeof extraHead !== 'undefined' ? extraHead : '' %>
+</head>
+<body<%= typeof bodyClass !== 'undefined' ? ' class="' + bodyClass + '"' : '' %>>
+
+  <%- include('../partials/header') %>
+
+  <main class="site-main" data-ver="<%= v %>" data-js-ext="<%= jsExt %>"<% if (typeof doc !== 'undefined' && doc) { %> data-doc-icon="<%= doc.icon || '' %>" data-doc-slug="<%= doc.slug || '' %>"<% } %>>
+    <%- body %>
+  </main>
+
+  <%- include('../partials/footer') %>
+  <%- include('../partials/email-modal') %>
+  <script src="/js/shared/utils<%= jsExt %>?v=<%= v %>"></script>
+  <script src="/js/shared/report<%= jsExt %>?v=<%= v %>"></script>
+  <script src="/js/shared/doc-email<%= jsExt %>?v=<%= v %>"></script>
+  <%- typeof extraScripts !== 'undefined' ? extraScripts : '' %>
+</body>
+</html>

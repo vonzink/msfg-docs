@@ -1,0 +1,16 @@
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div class="site-footer__top">
+      <p class="site-footer__disclaimer">
+        These documents are provided as templates to assist with mortgage documentation.
+        All documents should be reviewed and verified before use.
+      </p>
+      <% if (site.equalHousingLogo) { %>
+        <img src="<%= site.equalHousingLogo %>" alt="Equal Housing Lender" class="site-footer__ehl" onerror="this.style.display='none'">
+      <% } %>
+    </div>
+    <div class="site-footer__brand">
+      <div class="site-footer__company"><%= site.companyName %><% if (site.nmls) { %>, NMLS# <%= site.nmls %><% } %></div>
+    </div>
+  </div>
+</footer>

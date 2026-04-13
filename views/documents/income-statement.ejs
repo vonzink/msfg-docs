@@ -1,0 +1,119 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <!-- Section 1: Business Information -->
+    <div class="calc-section">
+      <h2><span class="section-number">1</span> Business Information</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="businessName">Business Name</label>
+          <input type="text" id="businessName" placeholder="ABC Consulting LLC">
+        </div>
+        <div class="form-group">
+          <label for="ownerName">Owner Name</label>
+          <input type="text" id="ownerName" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label for="periodStart">Period Start</label>
+          <input type="date" id="periodStart">
+        </div>
+        <div class="form-group">
+          <label for="periodEnd">Period End</label>
+          <input type="date" id="periodEnd">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Revenue -->
+    <div class="calc-section">
+      <h2><span class="section-number">2</span> Revenue</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="grossSales">Gross Sales / Revenue</label>
+          <input type="text" id="grossSales" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="otherIncome">Other Income</label>
+          <input type="text" id="otherIncome" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="returnsAllowances">Returns & Allowances</label>
+          <input type="text" id="returnsAllowances" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="totalRevenue">Total Revenue</label>
+          <input type="text" id="totalRevenue" readonly class="calculated-field" value="$0.00">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Expenses -->
+    <div class="calc-section">
+      <h2><span class="section-number">3</span> Expenses</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="costOfGoods">Cost of Goods Sold</label>
+          <input type="text" id="costOfGoods" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="wages">Wages & Salaries</label>
+          <input type="text" id="wages" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="rent">Rent / Lease</label>
+          <input type="text" id="rent" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="utilities">Utilities</label>
+          <input type="text" id="utilities" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="insurance">Insurance</label>
+          <input type="text" id="insurance" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="depreciation">Depreciation</label>
+          <input type="text" id="depreciation" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="interestExpense">Interest Expense</label>
+          <input type="text" id="interestExpense" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="otherExpenses">Other Expenses</label>
+          <input type="text" id="otherExpenses" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="totalExpenses">Total Expenses</label>
+          <input type="text" id="totalExpenses" readonly class="calculated-field" value="$0.00">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Results -->
+    <div class="calc-section">
+      <h2><span class="section-number">4</span> Net Income</h2>
+      <div class="results-grid">
+        <div class="result-card">
+          <div class="result-card__label">Total Revenue</div>
+          <div class="result-card__value" id="resultRevenue">$0.00</div>
+        </div>
+        <div class="result-card">
+          <div class="result-card__label">Total Expenses</div>
+          <div class="result-card__value" id="resultExpenses">$0.00</div>
+        </div>
+        <div class="result-card">
+          <div class="result-card__label">Net Income</div>
+          <div class="result-card__value" id="resultNetIncome">$0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('../partials/doc-actions') %>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+<div class="workspace">
+
+  <!-- Toolbar -->
+  <div class="workspace__toolbar">
+    <div class="workspace__toolbar-left">
+      <h1 class="workspace__title">Document Workspace</h1>
+      <span class="workspace__count" id="wsCount">0 active</span>
+    </div>
+    <div class="workspace__toolbar-right">
+      <button class="btn btn-sm btn-ghost" id="wsCollapseAll" title="Collapse all">Collapse All</button>
+      <button class="btn btn-sm btn-ghost" id="wsClearAll" title="Remove all">Clear All</button>
+      <button class="btn btn-sm btn-primary" id="wsToggleSelector">Add Document</button>
+    </div>
+  </div>
+
+  <!-- Document Selector Drawer -->
+  <div class="workspace__selector u-hidden" id="wsSelector">
+    <div class="workspace__selector-inner">
+      <input type="text" class="workspace__search" id="wsSelectorSearch" placeholder="Search documents..." autocomplete="off">
+      <div class="workspace__selector-grid" id="wsSelectorGrid">
+        <% categories.forEach(cat => { %>
+          <div class="workspace__selector-group" data-cat="<%= cat.id %>">
+            <div class="workspace__selector-label" data-border-color="<%= cat.color %>">
+              <%= cat.label %>
+            </div>
+            <% documents.filter(d => d.category === cat.id).forEach(doc => { %>
+              <button class="workspace__selector-btn" data-slug="<%= doc.slug %>" data-name="<%= doc.name.toLowerCase() %>">
+                <span class="workspace__selector-icon"><%= doc.icon %></span>
+                <span class="workspace__selector-name"><%= doc.name %></span>
+              </button>
+            <% }) %>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Document Panels -->
+  <div class="workspace__panels" id="wsPanels">
+    <div class="workspace__empty" id="wsEmpty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+      <h3>No documents selected</h3>
+      <p>Click "Add Document" above to start building your workspace.</p>
+    </div>
+  </div>
+</div>

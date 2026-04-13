@@ -1,0 +1,29 @@
+{
+  "siteName": "MSFG Document Creator",
+  "companyName": "Mountain State Financial Group LLC",
+  "nmls": "1314257",
+  "logo": {
+    "src": "https://msfg-media.s3.us-west-2.amazonaws.com/Assets/LOGOS/MSFG/MSFG+w+Home+Loan+Under.png",
+    "alt": "MSFG Home Loans",
+    "width": 250
+  },
+  "equalHousingLogo": "https://msfg-media.s3.us-west-2.amazonaws.com/Assets/LOGOS/EQUAL+HOUSING+LENDER.png",
+  "favicon": "/images/favicon-32x32.png",
+  "domain": "msfginfo.com",
+  "smtp": {
+    "host": "smtp.porkbun.com",
+    "port": "465",
+    "secure": true,
+    "user": "info@msfginfo.com",
+    "pass": "Mortgage4Life!",
+    "from": "info@msfginfo.com"
+  },
+  "emailSignature": {
+    "name": "",
+    "title": "",
+    "phone": "",
+    "email": "",
+    "nmls": "",
+    "company": ""
+  }
+}

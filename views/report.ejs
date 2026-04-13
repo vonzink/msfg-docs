@@ -1,0 +1,37 @@
+<div class="report-page" id="reportPage" data-site-config="<%= JSON.stringify({ companyName: site.companyName, nmls: site.nmls || '', logo: site.logo.src, domain: site.domain, equalHousingLogo: site.equalHousingLogo || '' }) %>">
+
+  <div class="report-page__header">
+    <h1>
+      Session Report
+      <span class="report-page__header-count" id="reportCount"></span>
+    </h1>
+    <div class="report-page__actions u-hidden" id="reportActions">
+      <button class="btn btn-outline" id="btnPrintReport">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      <button class="btn btn-outline" id="btnPdfReport">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Export PDF
+      </button>
+      <button class="btn btn-outline btn--danger-outline" id="btnClearReport">
+        Clear All
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="report-empty" id="reportEmpty">
+    <div class="report-empty__icon">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <div class="report-empty__title">No items in your report yet</div>
+    <p class="report-empty__text">
+      Use the <strong>Add to Report</strong> button on any document to capture your work.
+      Items will appear here for viewing, printing, or PDF export.
+    </p>
+  </div>
+
+  <!-- Report items container -->
+  <div class="report-items" id="reportItems"></div>
+</div>

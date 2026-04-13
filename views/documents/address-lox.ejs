@@ -1,0 +1,69 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <!-- Section 1: Borrower Information -->
+    <div class="calc-section">
+      <h2><span class="section-number">1</span> Borrower Information</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="borrowerName">Borrower Name</label>
+          <input type="text" id="borrowerName" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label for="loanNumber">Loan Number</label>
+          <input type="text" id="loanNumber" placeholder="LN-2026-001234">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Address Details -->
+    <div class="calc-section">
+      <h2><span class="section-number">2</span> Address Details</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="currentAddress">Current Address</label>
+          <input type="text" id="currentAddress" placeholder="456 Oak Ave, City, ST 12345">
+        </div>
+        <div class="form-group">
+          <label for="previousAddress">Previous Address</label>
+          <input type="text" id="previousAddress" placeholder="123 Main St, City, ST 12345">
+        </div>
+        <div class="form-group">
+          <label for="discrepancyType">Discrepancy Type</label>
+          <select id="discrepancyType">
+            <option value="">Select...</option>
+            <option value="recent-move">Recent Move</option>
+            <option value="mailing-vs-physical">Mailing vs Physical Address</option>
+            <option value="name-variation">Name Variation on Record</option>
+            <option value="typo">Typographical Error</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Explanation -->
+    <div class="calc-section">
+      <h2><span class="section-number">3</span> Explanation</h2>
+      <div class="form-group form-group--full">
+        <label for="explanation">Explanation of Address Discrepancy</label>
+        <textarea id="explanation" rows="5" placeholder="I am writing to explain the address discrepancy on my credit report. The address listed as..."></textarea>
+      </div>
+    </div>
+
+    <!-- Section 4: Letter Preview -->
+    <div class="calc-section">
+      <h2><span class="section-number">4</span> Letter Preview</h2>
+      <div id="letterPreview" class="letter-preview">
+        <p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>
+      </div>
+    </div>
+
+    <%- include('../partials/doc-actions') %>
+  </div>
+</div>

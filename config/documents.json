@@ -1,0 +1,15 @@
+{
+  "categories": [
+    { "id": "borrower", "label": "Borrower Docs", "color": "#2d6a4f" },
+    { "id": "lender", "label": "Lender Docs", "color": "#1565c0" },
+    { "id": "other", "label": "Other Docs", "color": "#e65100" }
+  ],
+  "documents": [
+    { "slug": "credit-inquiry", "name": "Credit Inquiry Letter", "category": "borrower", "icon": "📧", "description": "Letter to creditors or credit bureaus requesting inquiry removal or explanation" },
+    { "slug": "pre-approval", "name": "Pre-Approval Letter", "category": "borrower", "icon": "✅", "description": "Branded pre-approval letter for borrowers with loan details and terms" },
+    { "slug": "address-lox", "name": "Address LOX", "category": "lender", "icon": "📍", "description": "Letter of explanation for address discrepancies or changes" },
+    { "slug": "income-statement", "name": "Income Statement", "category": "lender", "icon": "💰", "description": "Profit and loss statement for business or self-employment income" },
+    { "slug": "balance-sheet", "name": "Balance Sheet", "category": "lender", "icon": "📊", "description": "Statement of assets, liabilities, and equity for a business entity" },
+    { "slug": "invoice", "name": "Generic Invoice", "category": "other", "icon": "🧾", "description": "Professional invoice with line items, tax, and payment instructions" }
+  ]
+}

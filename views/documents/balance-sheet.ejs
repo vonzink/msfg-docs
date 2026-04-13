@@ -1,0 +1,131 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <!-- Section 1: Business Information -->
+    <div class="calc-section">
+      <h2><span class="section-number">1</span> Business Information</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="businessName">Business Name</label>
+          <input type="text" id="businessName" placeholder="ABC Consulting LLC">
+        </div>
+        <div class="form-group">
+          <label for="ownerName">Owner Name</label>
+          <input type="text" id="ownerName" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label for="asOfDate">As Of Date</label>
+          <input type="date" id="asOfDate">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Assets -->
+    <div class="calc-section">
+      <h2><span class="section-number">2</span> Assets</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="cash">Cash & Equivalents</label>
+          <input type="text" id="cash" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="accountsReceivable">Accounts Receivable</label>
+          <input type="text" id="accountsReceivable" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="inventory">Inventory</label>
+          <input type="text" id="inventory" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="prepaidExpenses">Prepaid Expenses</label>
+          <input type="text" id="prepaidExpenses" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="propertyEquipment">Property & Equipment</label>
+          <input type="text" id="propertyEquipment" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="otherAssets">Other Assets</label>
+          <input type="text" id="otherAssets" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="totalAssets">Total Assets</label>
+          <input type="text" id="totalAssets" readonly class="calculated-field" value="$0.00">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Liabilities -->
+    <div class="calc-section">
+      <h2><span class="section-number">3</span> Liabilities</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="accountsPayable">Accounts Payable</label>
+          <input type="text" id="accountsPayable" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="shortTermDebt">Short-Term Debt</label>
+          <input type="text" id="shortTermDebt" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="longTermDebt">Long-Term Debt</label>
+          <input type="text" id="longTermDebt" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="otherLiabilities">Other Liabilities</label>
+          <input type="text" id="otherLiabilities" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="totalLiabilities">Total Liabilities</label>
+          <input type="text" id="totalLiabilities" readonly class="calculated-field" value="$0.00">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Equity -->
+    <div class="calc-section">
+      <h2><span class="section-number">4</span> Owner's Equity</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="ownerCapital">Owner's Capital / Paid-In Capital</label>
+          <input type="text" id="ownerCapital" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="retainedEarnings">Retained Earnings</label>
+          <input type="text" id="retainedEarnings" placeholder="$0.00">
+        </div>
+        <div class="form-group">
+          <label for="totalEquity">Total Equity</label>
+          <input type="text" id="totalEquity" readonly class="calculated-field" value="$0.00">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Summary -->
+    <div class="calc-section">
+      <h2><span class="section-number">5</span> Summary</h2>
+      <div class="results-grid">
+        <div class="result-card">
+          <div class="result-card__label">Total Assets</div>
+          <div class="result-card__value" id="resultAssets">$0.00</div>
+        </div>
+        <div class="result-card">
+          <div class="result-card__label">Total Liabilities</div>
+          <div class="result-card__value" id="resultLiabilities">$0.00</div>
+        </div>
+        <div class="result-card">
+          <div class="result-card__label">Total Equity</div>
+          <div class="result-card__value" id="resultEquity">$0.00</div>
+        </div>
+      </div>
+      <div id="balanceCheck" class="alert alert-info u-mt-md" style="display:none;"></div>
+    </div>
+
+    <%- include('../partials/doc-actions') %>
+  </div>
+</div>

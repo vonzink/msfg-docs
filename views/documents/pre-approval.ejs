@@ -1,0 +1,115 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <!-- Section 1: Borrower Information -->
+    <div class="calc-section">
+      <h2><span class="section-number">1</span> Borrower Information</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="borrowerName">Borrower Name</label>
+          <input type="text" id="borrowerName" placeholder="John & Jane Doe">
+        </div>
+        <div class="form-group">
+          <label for="borrowerAddress">Current Address</label>
+          <input type="text" id="borrowerAddress" placeholder="123 Main St, City, ST 12345">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Loan Details -->
+    <div class="calc-section">
+      <h2><span class="section-number">2</span> Loan Details</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="loanType">Loan Type</label>
+          <select id="loanType">
+            <option value="Conventional">Conventional</option>
+            <option value="FHA">FHA</option>
+            <option value="VA">VA</option>
+            <option value="USDA">USDA</option>
+            <option value="Jumbo">Jumbo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="loanPurpose">Loan Purpose</label>
+          <select id="loanPurpose">
+            <option value="Purchase">Purchase</option>
+            <option value="Refinance">Refinance</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="approvalAmount">Pre-Approved Amount</label>
+          <input type="text" id="approvalAmount" placeholder="$350,000">
+        </div>
+        <div class="form-group">
+          <label for="interestRate">Interest Rate</label>
+          <input type="text" id="interestRate" placeholder="6.500%">
+        </div>
+        <div class="form-group">
+          <label for="loanTerm">Loan Term</label>
+          <select id="loanTerm">
+            <option value="30-Year Fixed">30-Year Fixed</option>
+            <option value="15-Year Fixed">15-Year Fixed</option>
+            <option value="20-Year Fixed">20-Year Fixed</option>
+            <option value="7/1 ARM">7/1 ARM</option>
+            <option value="5/1 ARM">5/1 ARM</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="downPayment">Down Payment</label>
+          <input type="text" id="downPayment" placeholder="$70,000">
+        </div>
+        <div class="form-group">
+          <label for="expirationDate">Expiration Date</label>
+          <input type="date" id="expirationDate">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Loan Officer -->
+    <div class="calc-section">
+      <h2><span class="section-number">3</span> Loan Officer</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="loName">Name</label>
+          <input type="text" id="loName" placeholder="Loan Officer Name">
+        </div>
+        <div class="form-group">
+          <label for="loNMLS">NMLS#</label>
+          <input type="text" id="loNMLS" placeholder="123456">
+        </div>
+        <div class="form-group">
+          <label for="loPhone">Phone</label>
+          <input type="text" id="loPhone" placeholder="(555) 123-4567">
+        </div>
+        <div class="form-group">
+          <label for="loEmail">Email</label>
+          <input type="email" id="loEmail" placeholder="lo@msfg.com">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Conditions -->
+    <div class="calc-section">
+      <h2><span class="section-number">4</span> Conditions</h2>
+      <div class="form-group form-group--full">
+        <textarea id="conditions" rows="4" placeholder="Subject to verification of income, assets, employment, credit, and property appraisal..."></textarea>
+      </div>
+    </div>
+
+    <!-- Section 5: Letter Preview -->
+    <div class="calc-section">
+      <h2><span class="section-number">5</span> Letter Preview</h2>
+      <div id="letterPreview" class="letter-preview">
+        <p class="text-muted text-center">Fill in the fields above to generate your pre-approval letter.</p>
+      </div>
+    </div>
+
+    <%- include('../partials/doc-actions') %>
+  </div>
+</div>

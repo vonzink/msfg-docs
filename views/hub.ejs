@@ -1,0 +1,43 @@
+<div class="hub-hero">
+  <h1>Document Creator Hub</h1>
+  <p class="hub-hero__sub">
+    Select a document to create, or open the <a href="/workspace">Workspace</a> to work on multiple documents side by side.
+  </p>
+  <div class="hub-counter-row">
+    <% categories.forEach(cat => { %>
+      <span class="hub-counter">
+        <span class="hub-counter-dot" data-color="<%= cat.color %>"></span>
+        <span id="hubCount-<%= cat.id %>"><%= documents.filter(d => d.category === cat.id).length %></span>
+        <%= cat.label.replace(' Docs', '') %>
+      </span>
+    <% }) %>
+  </div>
+</div>
+
+<div class="hub-search-wrap">
+  <div class="hub-search">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="hubSearch" placeholder="Search documents..." autocomplete="off">
+  </div>
+</div>
+
+<% categories.forEach(cat => { %>
+  <div class="hub-category" data-category="<%= cat.id %>">
+    <h2 class="hub-category__title">
+      <span class="hub-category__dot" data-color="<%= cat.color %>"></span>
+      <%= cat.label %>
+    </h2>
+    <div class="hub-grid">
+      <% documents.filter(d => d.category === cat.id).forEach(doc => { %>
+        <a href="/documents/<%= doc.slug %>" class="hub-card" data-name="<%= doc.name.toLowerCase() %>">
+          <div class="hub-card__icon"><%= doc.icon %></div>
+          <div class="hub-card__body">
+            <h3 class="hub-card__title"><%= doc.name %></h3>
+            <p class="hub-card__desc"><%= doc.description %></p>
+          </div>
+          <svg class="hub-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+<% }) %>

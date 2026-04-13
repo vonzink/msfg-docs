@@ -1,0 +1,35 @@
+<% /* Email modal — shared across all documents */ %>
+<div class="email-modal-overlay u-hidden" id="emailModalOverlay">
+  <div class="email-modal">
+    <div class="email-modal__header">
+      <h3>Email Document</h3>
+      <button type="button" class="email-modal__close" id="emailModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="email-modal__body">
+      <div class="email-modal__field">
+        <label for="emailTo">Recipient Email</label>
+        <input type="email" id="emailTo" placeholder="client@example.com" required>
+      </div>
+      <div class="email-modal__field">
+        <label for="emailSubject">Subject</label>
+        <input type="text" id="emailSubject" placeholder="Your Document" value="">
+      </div>
+      <div class="email-modal__field">
+        <label for="emailMessage">Personal Message <span class="text-muted">(optional)</span></label>
+        <textarea id="emailMessage" rows="3" placeholder="Hi, please find the attached document..."></textarea>
+      </div>
+      <div class="email-modal__preview-toggle">
+        <button type="button" class="btn btn-sm btn-ghost" id="emailPreviewToggle">Preview Email</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="emailCopyBtn">Copy to Clipboard</button>
+      </div>
+      <div class="email-modal__preview u-hidden" id="emailPreview">
+        <div class="email-modal__preview-content" id="emailPreviewContent"></div>
+      </div>
+    </div>
+    <div class="email-modal__footer">
+      <div class="email-modal__status" id="emailStatus"></div>
+      <button type="button" class="btn btn-ghost" id="emailModalCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="emailSendBtn">Send Email</button>
+    </div>
+  </div>
+</div>
