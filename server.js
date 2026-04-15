@@ -11,11 +11,13 @@ const expressLayouts = require('express-ejs-layouts');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
+const { requireAuth, AUTH_ENABLED } = require('./lib/auth/cognito');
+
 // Asset version — computed once at startup for cache-busting.
 let ASSET_VERSION;
 try {
   ASSET_VERSION = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
-} catch (e) {
+} catch (_e) {
   ASSET_VERSION = Date.now().toString(36);
 }
 
@@ -35,6 +37,15 @@ function getSiteConfig() {
 
 const app = express();
 const PORT = process.env.PORT || 3004;
+
+// BASE_PATH: URL prefix the app is mounted under behind a reverse proxy (e.g. '/docs').
+// Must start with '/' and have no trailing slash. Empty string means mounted at root.
+let BASE_PATH = String(process.env.BASE_PATH || '').trim();
+if (BASE_PATH && !BASE_PATH.startsWith('/')) BASE_PATH = '/' + BASE_PATH;
+if (BASE_PATH.endsWith('/')) BASE_PATH = BASE_PATH.slice(0, -1);
+
+// Trust proxy so req.protocol / req.ip reflect the terminating proxy correctly.
+app.set('trust proxy', 1);
 
 // Security headers
 app.use(helmet({
@@ -80,58 +91,67 @@ app.use((req, res, next) => {
   res.locals.categories = docConfig.categories;
   res.locals.currentPath = req.path;
   res.locals.v = ASSET_VERSION;
-  res.locals.jsExt = '.js'; // no build step yet
-  /* Optional: UI on another origin than API — origin only (no path). Strip accidental .../api suffix. */
+  res.locals.jsExt = '.js';
+  res.locals.basePath = BASE_PATH;
+  /* Optional: UI on another origin than API — origin only. Strip accidental /api suffix. */
   let appOrigin = String(process.env.PUBLIC_APP_ORIGIN || '').trim().replace(/\/$/, '');
   if (appOrigin.endsWith('/api')) appOrigin = appOrigin.slice(0, -4).replace(/\/$/, '');
   res.locals.appOrigin = appOrigin;
   next();
 });
 
-const { generateForm4506cPdfBuffer } = require('./lib/pdf/form4506cPdf');
+/* ---------- Router assembly ---------- */
+// Page routes (HTML)
+const pageRouter = express.Router();
+pageRouter.use('/', require('./routes/index'));
+pageRouter.use('/documents', require('./routes/documents'));
+pageRouter.use('/workspace', require('./routes/workspace'));
+pageRouter.use('/templates', require('./routes/templates'));
+pageRouter.use('/report', require('./routes/report'));
 
-// App routes before static files so POST /api/* is never ambiguous vs public/.
-app.use('/', require('./routes/index'));
-app.use('/documents', require('./routes/documents'));
-app.use('/workspace', require('./routes/workspace'));
-app.use('/templates', require('./routes/templates'));
-app.use('/report', require('./routes/report'));
+// API routes (JSON) — guarded by Cognito auth
+const apiRouter = express.Router();
+apiRouter.use('/health', require('./routes/health')); // health check is public via publicPaths
+apiRouter.use(requireAuth({ publicPaths: ['/health'] }));
+apiRouter.use('/email', require('./routes/email'));
+apiRouter.use('/pdf', require('./routes/pdf'));
+apiRouter.use('/investors', require('./routes/investors'));
 
-/* Form 4506-C + investors: mounted here (not only inside routes/api.js) so they always load with this entry file. */
-app.post('/api/pdf/form-4506-c', async (req, res) => {
-  try {
-    const bytes = await generateForm4506cPdfBuffer(req.body || {});
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="IRS-Form-4506-C-filled.pdf"');
-    res.send(Buffer.from(bytes));
-  } catch (err) {
-    console.error('[PDF] Form 4506-C error:', err);
-    res.status(500).json({ success: false, message: err.message || 'Failed to generate Form 4506-C PDF.' });
-  }
-});
-app.use('/api/investors', require('./routes/investors'));
+// Mount everything under BASE_PATH (empty string = mounted at root)
+app.use(BASE_PATH || '/', pageRouter);
+app.use(`${BASE_PATH}/api`, apiRouter);
 
-app.use('/api', require('./routes/api'));
-
-app.use(express.static(path.join(__dirname, 'public'), {
+// Static files last so app routes never get ambiguous vs public/
+app.use(BASE_PATH || '/', express.static(path.join(__dirname, 'public'), {
   maxAge: process.env.NODE_ENV === 'production' ? '30d' : 0
 }));
 
 // 404 handler
 app.use((req, res) => {
+  // API routes should return JSON 404
+  if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
   res.status(404).render('404', { title: 'Page Not Found' });
 });
 
-// Global error handler
-app.use((err, req, res, next) => {
+// Global error handler — 4-arg signature required by Express even though _next is unused
+app.use((err, req, res, _next) => {
   console.error('Unhandled error:', err);
-  res.status(err.status || 500).render('404', { title: 'Something went wrong' });
+  const status = err.status || 500;
+  // API routes should return JSON
+  if (req.path.startsWith(`${BASE_PATH}/api/`) || req.path.startsWith('/api/')) {
+    return res.status(status).json({ error: err.message || 'Server error' });
+  }
+  const view = status === 404 ? '404' : '500';
+  res.status(status).render(view, { title: status === 404 ? 'Page Not Found' : 'Server Error' });
 });
 
 // Start server
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`MSFG Document Creator running at http://localhost:${PORT}`);
+    console.log(`MSFG Document Creator running at http://localhost:${PORT}${BASE_PATH || ''}`);
+    console.log(`[msfg] Auth: ${AUTH_ENABLED ? 'Cognito enabled' : 'dev mode (no Cognito)'}`);
     console.log('[msfg] Form 4506-C PDF: POST /api/pdf/form-4506-c | investors: GET /api/investors/for-form-4506c');
   });
 }

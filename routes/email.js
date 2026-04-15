@@ -1,36 +1,26 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const nodemailer = require('nodemailer');
-const { generateCreditInquiryPdfBuffer } = require('../lib/pdf/creditInquiryPdf');
 
+const router = express.Router();
 const siteConfigPath = path.join(__dirname, '..', 'config', 'site.json');
-
-router.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'msfg-docs' });
-});
 
 function readSiteConfig() {
   try {
     return JSON.parse(fs.readFileSync(siteConfigPath, 'utf-8'));
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }
 
-/* ---- Email sending ---- */
-
-const emailLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many emails. Please wait a minute.' }
-});
+function escHTML(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 /**
  * Build HTML email body from document data.
@@ -38,7 +28,6 @@ const emailLimiter = rateLimit({
  */
 function buildEmailHTML(docData, personalMessage, siteConfig) {
   const sig = siteConfig.emailSignature || {};
-  const siteName = siteConfig.siteName || 'MSFG Document Creator';
   const primaryColor = '#2d6a4f';
 
   let html = `<!DOCTYPE html>
@@ -53,7 +42,6 @@ function buildEmailHTML(docData, personalMessage, siteConfig) {
   <h1 style="color:#fff;margin:0;font-size:20px;font-weight:700;">${escHTML(docData.title || 'Document')}</h1>
 </td></tr>`;
 
-  /* Personal message */
   if (personalMessage) {
     html += `
 <tr><td style="padding:20px 30px 0;">
@@ -61,7 +49,6 @@ function buildEmailHTML(docData, personalMessage, siteConfig) {
 </td></tr>`;
   }
 
-  /* Data sections */
   if (docData.sections && docData.sections.length) {
     docData.sections.forEach(function (sec) {
       html += `
@@ -110,7 +97,6 @@ function buildEmailHTML(docData, personalMessage, siteConfig) {
     });
   }
 
-  /* Signature */
   if (sig.name) {
     html += `
 <tr><td style="padding:24px 30px 0;">
@@ -125,7 +111,6 @@ function buildEmailHTML(docData, personalMessage, siteConfig) {
     html += '</td></tr></table></td></tr>';
   }
 
-  /* Footer */
   html += `
 <tr><td style="padding:20px 30px;">
   <p style="font-size:11px;color:#999;margin:0;text-align:center;">
@@ -137,7 +122,6 @@ function buildEmailHTML(docData, personalMessage, siteConfig) {
 </table>
 </td></tr></table>
 
-<!-- Spacer below content — gives Outlook a cursor landing zone when forwarding -->
 <div style="padding:8px 0;">&nbsp;</div>
 <div style="padding:8px 0;">&nbsp;</div>
 <div style="padding:8px 0;">&nbsp;</div>
@@ -147,16 +131,19 @@ function buildEmailHTML(docData, personalMessage, siteConfig) {
   return html;
 }
 
-function escHTML(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+const emailLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many emails. Please wait a minute.' }
+});
 
 /**
  * POST /api/email/send
  * Body: { to, subject, message, calcData: { title, sections } }
  */
-router.post('/email/send', emailLimiter, express.json(), async (req, res) => {
+router.post('/send', emailLimiter, express.json(), async (req, res) => {
   try {
     const { to, subject, message, calcData } = req.body;
 
@@ -164,7 +151,6 @@ router.post('/email/send', emailLimiter, express.json(), async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required fields (to, subject, calcData).' });
     }
 
-    /* Basic email validation */
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
       return res.status(400).json({ success: false, message: 'Invalid email address.' });
     }
@@ -195,8 +181,8 @@ router.post('/email/send', emailLimiter, express.json(), async (req, res) => {
 
     await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
-      to: to,
-      subject: subject,
+      to,
+      subject,
       html: htmlBody
     });
 
@@ -209,19 +195,6 @@ router.post('/email/send', emailLimiter, express.json(), async (req, res) => {
         ? 'Could not connect to email server. Check SMTP host and port.'
         : 'Failed to send email. Please try again.';
     res.status(500).json({ success: false, message: userMsg });
-  }
-});
-
-/* ---- PDF export (Credit Inquiry) — shared generator in lib/pdf/creditInquiryPdf.js */
-router.post('/pdf/credit-inquiry', express.json({ limit: '2mb' }), async (req, res) => {
-  try {
-    const bytes = await generateCreditInquiryPdfBuffer(req.body || {});
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="Credit-Inquiry-Letter.pdf"');
-    res.send(Buffer.from(bytes));
-  } catch (err) {
-    console.error('[PDF] Export error:', err);
-    res.status(500).json({ success: false, message: 'Failed to generate PDF.' });
   }
 });
 
