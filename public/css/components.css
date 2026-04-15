@@ -5,6 +5,17 @@
 
 /* ---- Utility classes ---- */
 .u-hidden         { display: none !important; }
+.u-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
 .u-grid-2col      { grid-template-columns: 1fr 1fr; }
 .u-grid-3col      { grid-template-columns: repeat(3, 1fr); }
 .u-grid-4col      { grid-template-columns: repeat(4, 1fr); }
@@ -675,6 +686,24 @@
 /* ---- Report Button & Toast ---- */
 .calc-page__header {
   position: relative;
+}
+
+.doc-page__header {
+  position: relative;
+}
+
+.doc-page__header-actions {
+  position: absolute;
+  top: 14px;
+  right: -44px; /* sit in the margin */
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .doc-page__header-actions {
+    right: 14px;
+  }
 }
 
 .calc-page__header-actions {

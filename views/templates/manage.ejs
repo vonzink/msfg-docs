@@ -1,0 +1,61 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1>PDF Templates</h1>
+    <p>Upload PDF forms with fillable fields. The system auto-detects AcroForm fields so you can configure labels, grouping, and fill them from the browser.</p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <!-- Upload -->
+    <div class="calc-section tpl-upload-section">
+      <h2>Upload new template</h2>
+      <form id="tplUploadForm" class="tpl-upload-form" enctype="multipart/form-data">
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label for="tplFile">PDF file</label>
+            <div class="tpl-dropzone" id="tplDropzone">
+              <input type="file" id="tplFile" name="pdf" accept="application/pdf" class="u-sr-only">
+              <div class="tpl-dropzone__content">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p>Drag &amp; drop a PDF here, or <button type="button" class="btn-link" id="tplBrowseBtn">browse</button></p>
+                <p class="text-muted tpl-dropzone__filename" id="tplFilename"></p>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="tplName">Template name</label>
+            <input type="text" id="tplName" name="name" placeholder="e.g. IRS Form 4506-C">
+          </div>
+          <div class="form-group">
+            <label for="tplCategory">Category</label>
+            <select id="tplCategory" name="category">
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat.id %>"><%= cat.label %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group form-group--full">
+            <label for="tplDescription">Description <span class="text-muted">(optional)</span></label>
+            <input type="text" id="tplDescription" name="description" placeholder="Brief description of this form">
+          </div>
+        </div>
+        <div class="tpl-upload-actions">
+          <button type="submit" class="btn btn-primary icon-inline" id="tplUploadBtn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload &amp; detect fields
+          </button>
+          <span class="text-muted" id="tplUploadStatus"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- Template list -->
+    <div class="calc-section">
+      <h2>Templates</h2>
+      <div id="tplList" class="tpl-list">
+        <p class="text-muted text-center" id="tplListEmpty">Loading...</p>
+      </div>
+    </div>
+
+  </div>
+</div>

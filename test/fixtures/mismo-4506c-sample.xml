@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MESSAGE xmlns="http://www.mismo.org/residential/2009/schemas">
+  <LOAN>
+    <LOAN_IDENTIFIER>
+      <LoanIdentifierType>LenderLoan</LoanIdentifierType>
+      <LoanIdentifier>LP-4506-TEST-001</LoanIdentifier>
+    </LOAN_IDENTIFIER>
+  </LOAN>
+
+  <TERMS_OF_LOAN>
+    <BaseLoanAmount>350000</BaseLoanAmount>
+    <LoanPurposeType>Purchase</LoanPurposeType>
+    <MortgageType>Conventional</MortgageType>
+  </TERMS_OF_LOAN>
+
+  <SUBJECT_PROPERTY>
+    <ADDRESS>
+      <AddressLineText>500 Sample Rd</AddressLineText>
+      <CityName>Boise</CityName>
+      <StateCode>ID</StateCode>
+      <PostalCode>83702</PostalCode>
+    </ADDRESS>
+  </SUBJECT_PROPERTY>
+
+  <PARTY>
+    <INDIVIDUAL>
+      <NAME>
+        <FirstName>Jane</FirstName>
+        <LastName>Borrower</LastName>
+      </NAME>
+      <TaxpayerIdentifierValue>123456789</TaxpayerIdentifierValue>
+    </INDIVIDUAL>
+    <ROLE>
+      <ROLE_DETAIL>
+        <PartyRoleType>Borrower</PartyRoleType>
+      </ROLE_DETAIL>
+      <BORROWER_DETAIL>
+        <BorrowerClassificationType>Primary</BorrowerClassificationType>
+      </BORROWER_DETAIL>
+    </ROLE>
+    <RESIDENCE>
+      <BorrowerResidencyType>Current</BorrowerResidencyType>
+      <ADDRESS>
+        <AddressLineText>100 Current St</AddressLineText>
+        <CityName>Boise</CityName>
+        <StateCode>ID</StateCode>
+        <PostalCode>83703</PostalCode>
+      </ADDRESS>
+    </RESIDENCE>
+  </PARTY>
+
+  <PARTY>
+    <INDIVIDUAL>
+      <NAME>
+        <FirstName>John</FirstName>
+        <LastName>CoBorrower</LastName>
+      </NAME>
+      <TaxpayerIdentifierValue>987654321</TaxpayerIdentifierValue>
+    </INDIVIDUAL>
+    <ROLE>
+      <ROLE_DETAIL>
+        <PartyRoleType>Borrower</PartyRoleType>
+      </ROLE_DETAIL>
+      <BORROWER_DETAIL>
+        <BorrowerClassificationType>Secondary</BorrowerClassificationType>
+      </BORROWER_DETAIL>
+    </ROLE>
+  </PARTY>
+</MESSAGE>

@@ -6,81 +6,65 @@
 
   <div class="doc-page__body">
 
-    <!-- Section 1: Sender Information -->
+    <!-- Section 1: Sender Information (from MISMO) -->
     <div class="calc-section">
       <h2><span class="section-number">1</span> Sender Information</h2>
       <div class="form-grid">
         <div class="form-group">
-          <label for="senderName">Full Name</label>
-          <input type="text" id="senderName" placeholder="John Doe">
+          <label for="senderName">Borrower Full Name</label>
+          <input type="text" id="senderName" placeholder="Borrower name">
         </div>
         <div class="form-group">
-          <label for="senderAddress">Address</label>
-          <input type="text" id="senderAddress" placeholder="123 Main St, City, ST 12345">
+          <label for="coBorrowerName">Co-Borrower (if applicable)</label>
+          <input type="text" id="coBorrowerName" placeholder="Co-borrower name">
         </div>
         <div class="form-group">
-          <label for="senderSSN">Last 4 SSN</label>
-          <input type="text" id="senderSSN" placeholder="1234" maxlength="4">
+          <label for="subjectPropertyAddress">Subject Property Address</label>
+          <input type="text" id="subjectPropertyAddress" placeholder="Subject property address">
         </div>
         <div class="form-group">
-          <label for="senderDOB">Date of Birth</label>
-          <input type="date" id="senderDOB">
+          <label for="loanNumber">Loan Number</label>
+          <input type="text" id="loanNumber" placeholder="Loan number">
+        </div>
+        <div class="form-group">
+          <label for="letterDate">Today's Date</label>
+          <input type="text" id="letterDate" readonly>
         </div>
       </div>
     </div>
 
-    <!-- Section 2: Credit Bureau / Creditor -->
+    <!-- Section 2: Inquiries -->
     <div class="calc-section">
-      <h2><span class="section-number">2</span> Recipient</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="recipientName">Bureau / Creditor Name</label>
-          <input type="text" id="recipientName" placeholder="Equifax, Experian, TransUnion, etc.">
+      <h2><span class="section-number">2</span> Inquiries</h2>
+      <div class="credit-inquiry__rows">
+        <div class="credit-inquiry__rows-actions">
+          <button type="button" class="btn btn-sm btn-ghost" id="addInquiryRow">Add Inquiry</button>
         </div>
-        <div class="form-group">
-          <label for="recipientAddress">Mailing Address</label>
-          <input type="text" id="recipientAddress" placeholder="P.O. Box 740256, Atlanta, GA 30374">
+        <div class="credit-inquiry__table-wrap">
+          <table class="credit-inquiry__table" id="inquiryTable">
+            <thead>
+              <tr>
+                <th style="width:60px;">No.</th>
+                <th style="width:170px;">Inquiry Date</th>
+                <th style="width:240px;">Creditor</th>
+                <th>Explanation</th>
+                <th style="width:60px;"></th>
+              </tr>
+            </thead>
+            <tbody id="inquiryTbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
 
-    <!-- Section 3: Inquiry Details -->
+    <!-- Section 3: Letter Preview -->
     <div class="calc-section">
-      <h2><span class="section-number">3</span> Inquiry Details</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="inquiryDate">Date of Inquiry</label>
-          <input type="date" id="inquiryDate">
-        </div>
-        <div class="form-group">
-          <label for="inquiryCompany">Company That Pulled Credit</label>
-          <input type="text" id="inquiryCompany" placeholder="ABC Lending">
-        </div>
-        <div class="form-group form-group--full">
-          <label for="inquiryReason">Reason for Dispute</label>
-          <select id="inquiryReason">
-            <option value="">Select a reason...</option>
-            <option value="unauthorized">I did not authorize this inquiry</option>
-            <option value="fraud">This inquiry is the result of identity theft/fraud</option>
-            <option value="duplicate">This is a duplicate inquiry</option>
-            <option value="explanation">I am providing an explanation for this inquiry</option>
-          </select>
-        </div>
-        <div class="form-group form-group--full">
-          <label for="additionalNotes">Additional Notes</label>
-          <textarea id="additionalNotes" rows="4" placeholder="Provide any additional context or explanation..."></textarea>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 4: Letter Preview -->
-    <div class="calc-section">
-      <h2><span class="section-number">4</span> Letter Preview</h2>
+      <h2><span class="section-number">3</span> Letter Preview</h2>
       <div id="letterPreview" class="letter-preview">
         <p class="text-muted text-center">Fill in the fields above to generate your letter.</p>
       </div>
     </div>
 
-    <%- include('../partials/doc-actions') %>
+    <%- include('../partials/doc-actions-credit-inquiry') %>
   </div>
 </div>

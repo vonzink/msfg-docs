@@ -1,0 +1,81 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <div class="tpl-editor-header">
+      <div>
+        <h1><%= templateConfig.icon || '📄' %> <%= templateConfig.name %></h1>
+        <p>Configure how each PDF field appears in the fill form. Set labels, grouping, order, and input types.</p>
+      </div>
+      <div class="tpl-editor-header__actions">
+        <a href="/templates/<%= templateConfig.slug %>/fill" class="btn btn-primary icon-inline" target="_blank">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Open fill form
+        </a>
+        <a href="/templates" class="btn btn-secondary">Back to templates</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-page__body">
+
+    <!-- Template metadata -->
+    <div class="calc-section">
+      <h2>Template info</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="edName">Name</label>
+          <input type="text" id="edName" value="<%= templateConfig.name %>">
+        </div>
+        <div class="form-group">
+          <label for="edCategory">Category</label>
+          <select id="edCategory">
+            <% categories.forEach(cat => { %>
+              <option value="<%= cat.id %>" <%= templateConfig.category === cat.id ? 'selected' : '' %>><%= cat.label %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="edIcon">Icon</label>
+          <input type="text" id="edIcon" value="<%= templateConfig.icon %>" placeholder="Emoji or leave blank" maxlength="4">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="edDescription">Description</label>
+          <input type="text" id="edDescription" value="<%= templateConfig.description %>">
+        </div>
+      </div>
+      <div class="tpl-editor-meta-actions">
+        <button type="button" class="btn btn-primary" id="edSaveMeta">Save info</button>
+        <span class="text-muted" id="edMetaStatus"></span>
+      </div>
+    </div>
+
+    <!-- Field list -->
+    <div class="calc-section">
+      <h2>Fields (<span id="edFieldCount"><%= templateConfig.fields.length %></span>)</h2>
+      <p class="text-muted" style="margin-top:0">
+        Drag to reorder. Set a <strong>group</strong> name to organize fields into sections on the fill form.
+        Fields with an empty label are hidden from the fill form.
+      </p>
+
+      <div class="tpl-field-list" id="edFieldList">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="tpl-editor-field-actions">
+        <button type="button" class="btn btn-primary" id="edSaveFields">Save field config</button>
+        <button type="button" class="btn btn-secondary" id="edRedetect">Re-detect from PDF</button>
+        <span class="text-muted" id="edFieldStatus"></span>
+      </div>
+    </div>
+
+    <!-- Preview blank PDF -->
+    <div class="calc-section">
+      <h2>Blank PDF preview</h2>
+      <div class="tpl-pdf-preview">
+        <iframe id="edPdfPreview" src="/templates/api/<%= templateConfig.id %>/download" width="100%" height="600" style="border:1px solid var(--clr-border);border-radius:var(--radius-md);"></iframe>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>window.__TPL_CONFIG__ = <%- JSON.stringify(templateConfig) %>;</script>

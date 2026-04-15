@@ -46,6 +46,20 @@ MSFG.el = function(id) { return document.getElementById(id); };
 MSFG.qs = function(sel, ctx) { return (ctx || document).querySelector(sel); };
 MSFG.qsa = function(sel, ctx) { return (ctx || document).querySelectorAll(sel); };
 
+/**
+ * Absolute path to same-origin API by default.
+ * Set window.__MSFG_APP_ORIGIN__ (via PUBLIC_APP_ORIGIN) if the HTML is served from another host than the API.
+ */
+MSFG.apiUrl = function(path) {
+  const p = String(path || '');
+  const abs = p.startsWith('/') ? p : '/' + p;
+  let origin = (typeof window !== 'undefined' && window.__MSFG_APP_ORIGIN__) || '';
+  origin = String(origin).trim().replace(/\/$/, '');
+  if (origin.endsWith('/api')) origin = origin.slice(0, -4).replace(/\/$/, '');
+  if (!origin) return abs;
+  return origin + abs;
+};
+
 /* Mobile menu toggle + doc metadata from data attributes */
 document.addEventListener('DOMContentLoaded', function() {
   const toggle = document.getElementById('mobileMenuToggle');

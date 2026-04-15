@@ -10,6 +10,7 @@
     { "slug": "address-lox", "name": "Address LOX", "category": "lender", "icon": "📍", "description": "Letter of explanation for address discrepancies or changes" },
     { "slug": "income-statement", "name": "Income Statement", "category": "lender", "icon": "💰", "description": "Profit and loss statement for business or self-employment income" },
     { "slug": "balance-sheet", "name": "Balance Sheet", "category": "lender", "icon": "📊", "description": "Statement of assets, liabilities, and equity for a business entity" },
-    { "slug": "invoice", "name": "Generic Invoice", "category": "other", "icon": "🧾", "description": "Professional invoice with line items, tax, and payment instructions" }
+    { "slug": "invoice", "name": "Generic Invoice", "category": "other", "icon": "🧾", "description": "Professional invoice with line items, tax, and payment instructions" },
+    { "slug": "form-4506-c", "name": "IRS Form 4506-C", "category": "other", "icon": "📋", "description": "Request for transcript of tax return — prepopulate from MISMO and your investor data" }
   ]
 }

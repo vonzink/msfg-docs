@@ -15,7 +15,8 @@ const docRoutes = [
   { slug: 'address-lox',      view: 'documents/address-lox',      title: 'Address LOX',             css: 'address-lox' },
   { slug: 'income-statement',  view: 'documents/income-statement',  title: 'Income Statement',        css: 'income-statement' },
   { slug: 'balance-sheet',    view: 'documents/balance-sheet',    title: 'Balance Sheet',           css: 'balance-sheet' },
-  { slug: 'invoice',          view: 'documents/invoice',          title: 'Generic Invoice',         css: 'invoice' }
+  { slug: 'invoice',          view: 'documents/invoice',          title: 'Generic Invoice',         css: 'invoice' },
+  { slug: 'form-4506-c',      view: 'documents/form-4506-c',      title: 'IRS Form 4506-C',         css: 'form-4506-c' }
 ];
 
 docRoutes.forEach(dr => {
@@ -28,6 +29,7 @@ docRoutes.forEach(dr => {
     res.render(dr.view, {
       title: dr.title,
       doc: findDoc(dr.slug),
+      bodyClass: req.query && req.query.embed ? 'embed-mode' : undefined,
       extraHead: extraHeadParts.length ? extraHeadParts.join('') : undefined,
       extraScripts: `<script src="/js/documents/${dr.slug}${ext}?v=${ver}"></script>`
     });

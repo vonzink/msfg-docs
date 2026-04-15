@@ -13,6 +13,9 @@
   <link rel="stylesheet" href="/css/components.css?v=<%= v %>">
   <link rel="stylesheet" href="/css/print.css?v=<%= v %>" media="print">
   <link rel="stylesheet" href="/css/email-modal.css?v=<%= v %>">
+  <% if (locals.appOrigin) { %>
+  <script>window.__MSFG_APP_ORIGIN__ = <%- JSON.stringify(locals.appOrigin) %>;</script>
+  <% } %>
   <%- typeof extraHead !== 'undefined' ? extraHead : '' %>
 </head>
 <body<%= typeof bodyClass !== 'undefined' ? ' class="' + bodyClass + '"' : '' %>>
@@ -28,6 +31,7 @@
   <script src="/js/shared/utils<%= jsExt %>?v=<%= v %>"></script>
   <script src="/js/shared/report<%= jsExt %>?v=<%= v %>"></script>
   <script src="/js/shared/doc-email<%= jsExt %>?v=<%= v %>"></script>
+  <script src="/js/shared/mismo-embed<%= jsExt %>?v=<%= v %>"></script>
   <%- typeof extraScripts !== 'undefined' ? extraScripts : '' %>
 </body>
 </html>

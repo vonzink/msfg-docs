@@ -1,0 +1,254 @@
+/* =====================================================
+   PDF Template System Styles
+   ===================================================== */
+
+/* ---- Upload dropzone ---- */
+.tpl-dropzone {
+  border: 2px dashed var(--clr-border, #d0d5dd);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-lg, 24px);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.tpl-dropzone:hover,
+.tpl-dropzone--active {
+  border-color: var(--clr-primary, #2d6a4f);
+  background: rgba(45, 106, 79, 0.04);
+}
+.tpl-dropzone__content p {
+  margin: var(--space-xs, 6px) 0 0;
+  color: var(--clr-text-muted, #6b7280);
+  font-size: 0.9rem;
+}
+.tpl-dropzone__content svg {
+  display: block;
+  margin: 0 auto var(--space-xs, 6px);
+}
+.tpl-dropzone__filename {
+  font-size: 0.8rem !important;
+  font-weight: 600;
+}
+.tpl-upload-actions {
+  margin-top: var(--space-md, 16px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 12px);
+}
+
+/* ---- Template card list ---- */
+.tpl-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 12px);
+}
+.tpl-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md, 16px);
+  padding: var(--space-md, 16px);
+  background: var(--clr-surface, #fff);
+  border: 1px solid var(--clr-border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  transition: box-shadow 0.15s;
+}
+.tpl-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.tpl-card__icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  width: 48px;
+  text-align: center;
+}
+.tpl-card__body {
+  flex: 1;
+  min-width: 0;
+}
+.tpl-card__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--clr-text, #1a1a1a);
+}
+.tpl-card__meta {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: var(--clr-text-muted, #6b7280);
+}
+.tpl-card__actions {
+  display: flex;
+  gap: var(--space-xs, 6px);
+  flex-shrink: 0;
+}
+
+/* ---- Buttons ---- */
+.btn-sm {
+  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm, 6px);
+}
+.btn-danger {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+}
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--clr-primary, #2d6a4f);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  padding: 0;
+}
+
+/* ---- Editor header ---- */
+.tpl-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md, 16px);
+  flex-wrap: wrap;
+}
+.tpl-editor-header__actions {
+  display: flex;
+  gap: var(--space-sm, 12px);
+  flex-shrink: 0;
+}
+.tpl-editor-meta-actions {
+  margin-top: var(--space-md, 16px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 12px);
+}
+
+/* ---- Field editor list ---- */
+.tpl-field-header,
+.tpl-field-row {
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr 120px 90px 1fr;
+  gap: var(--space-xs, 6px);
+  align-items: center;
+  padding: var(--space-xs, 6px) var(--space-sm, 12px);
+}
+.tpl-field-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--clr-text-muted, #6b7280);
+  border-bottom: 2px solid var(--clr-border, #e5e7eb);
+  padding-bottom: var(--space-sm, 12px);
+  margin-bottom: var(--space-xs, 6px);
+}
+.tpl-field-row {
+  border-bottom: 1px solid var(--clr-border-light, #f0f0f0);
+  padding-top: var(--space-xs, 6px);
+  padding-bottom: var(--space-xs, 6px);
+}
+.tpl-field-row:hover {
+  background: rgba(45, 106, 79, 0.02);
+}
+.tpl-field-row input,
+.tpl-field-row select {
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border: 1px solid var(--clr-border, #d0d5dd);
+  border-radius: var(--radius-sm, 4px);
+  width: 100%;
+  box-sizing: border-box;
+}
+.tpl-fr-pdf {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.72rem;
+  color: var(--clr-text-muted, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tpl-fr-order {
+  display: flex;
+  gap: 2px;
+}
+.tpl-move-btn {
+  background: var(--clr-surface, #fff);
+  border: 1px solid var(--clr-border, #d0d5dd);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  line-height: 1;
+  color: var(--clr-text-muted, #6b7280);
+}
+.tpl-move-btn:hover:not(:disabled) {
+  background: var(--clr-primary, #2d6a4f);
+  color: #fff;
+  border-color: var(--clr-primary, #2d6a4f);
+}
+.tpl-move-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.tpl-editor-field-actions {
+  margin-top: var(--space-md, 16px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 12px);
+}
+
+/* ---- Fill form ---- */
+.tpl-fill-checkbox {
+  display: flex;
+  align-items: center;
+}
+.tpl-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs, 6px);
+  cursor: pointer;
+  font-weight: 500;
+}
+.tpl-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--clr-primary, #2d6a4f);
+}
+
+/* ---- PDF preview ---- */
+.tpl-pdf-preview iframe {
+  display: block;
+  width: 100%;
+  min-height: 500px;
+  background: #f5f5f5;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+  .tpl-field-header,
+  .tpl-field-row {
+    grid-template-columns: 40px 1fr 1fr 80px;
+    font-size: 0.8rem;
+  }
+  .tpl-fh-placeholder,
+  .tpl-fr-placeholder,
+  .tpl-fh-pdf,
+  .tpl-fr-pdf {
+    display: none;
+  }
+  .tpl-editor-header {
+    flex-direction: column;
+  }
+  .tpl-card {
+    flex-wrap: wrap;
+  }
+  .tpl-card__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

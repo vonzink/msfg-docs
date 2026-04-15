@@ -3,8 +3,8 @@
   background: var(--color-white);
   border: 1px solid var(--color-gray-200);
   border-radius: var(--border-radius);
-  padding: var(--space-xl);
-  min-height: 200px;
+  padding: var(--space-lg);
+  min-height: 160px;
   font-size: 0.9rem;
   line-height: 1.6;
   color: var(--color-gray-900);
@@ -36,3 +36,79 @@
 .doc-page__header p { color: var(--color-gray-500); font-size: 0.95rem; margin: 0; max-width: 700px; }
 
 .doc-page__body { padding: var(--space-lg); }
+
+/* ---- Inquiry rows table ---- */
+.credit-inquiry__rows-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-sm);
+}
+
+.credit-inquiry__table-wrap {
+  overflow-x: auto;
+}
+
+.credit-inquiry__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.credit-inquiry__table th,
+.credit-inquiry__table td {
+  border-bottom: 1px solid var(--color-gray-100);
+  padding: 8px 10px;
+  vertical-align: top;
+  font-size: 0.86rem;
+}
+
+.credit-inquiry__table th {
+  background: var(--color-gray-50);
+  font-weight: 700;
+  color: var(--color-gray-700);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.credit-inquiry__cell-input,
+.credit-inquiry__cell-select,
+.credit-inquiry__cell-textarea {
+  width: 100%;
+  border: 1.5px solid var(--color-gray-300);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  background: var(--color-white);
+}
+
+.credit-inquiry__cell-input:focus,
+.credit-inquiry__cell-select:focus,
+.credit-inquiry__cell-textarea:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.12);
+}
+
+.credit-inquiry__cell-textarea {
+  min-height: 56px;
+  resize: vertical;
+}
+
+.credit-inquiry__row-remove {
+  background: none;
+  border: 1px solid var(--color-gray-300);
+  color: var(--color-gray-600);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+}
+
+.credit-inquiry__row-remove:hover {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}

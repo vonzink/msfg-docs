@@ -10,7 +10,11 @@
     "lint": "eslint server.js routes/ public/js/",
     "lint:fix": "eslint server.js routes/ public/js/ --fix"
   },
-  "keywords": ["mortgage", "documents", "templates"],
+  "keywords": [
+    "mortgage",
+    "documents",
+    "templates"
+  ],
   "author": "Mountain States Financial Group",
   "license": "UNLICENSED",
   "private": true,
@@ -24,7 +28,10 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "morgan": "^1.10.1",
-    "nodemailer": "^8.0.4"
+    "multer": "^2.1.1",
+    "mysql2": "^3.22.0",
+    "nodemailer": "^8.0.4",
+    "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
     "eslint": "^9.39.2"

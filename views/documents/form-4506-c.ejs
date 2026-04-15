@@ -1,0 +1,186 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <div class="calc-section form-4506-c__notice">
+      <p class="text-muted" style="margin:0 0 var(--space-sm);">
+        Fill the worksheet below, then use <strong>Download filled IRS PDF</strong> to get an AcroForm-filled copy (browser “Open IRS PDF” is the blank template only).
+        After you <strong>import MISMO</strong> in the workspace, the loan number is used to match an investor when you set the MYSQL_INVESTORS_LOAN_COLUMN env var or store matching loan numbers inside doc_4506c JSON (see server docs).
+      </p>
+      <div class="form-4506-c__pdf-actions">
+        <button type="button" class="btn btn-primary icon-inline" id="btnF4506DownloadPdf">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download filled IRS PDF
+        </button>
+        <a class="btn btn-secondary icon-inline" href="/documents/irs-form-4506-c.pdf" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Open blank IRS PDF
+        </a>
+      </div>
+    </div>
+
+    <!-- Section 1: File reference -->
+    <div class="calc-section">
+      <h2><span class="section-number">1</span> Loan file</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="f4506LoanNumber">Loan number</label>
+          <input type="text" id="f4506LoanNumber" placeholder="From MISMO / LOS" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Taxpayer -->
+    <div class="calc-section">
+      <h2><span class="section-number">2</span> Taxpayer (as shown on tax return)</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="f4506TaxpayerName">Name (primary)</label>
+          <input type="text" id="f4506TaxpayerName" placeholder="First Last" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="f4506Ssn">SSN or ITIN (primary)</label>
+          <input type="text" id="f4506Ssn" placeholder="XXX-XX-XXXX" inputmode="numeric" autocomplete="off" maxlength="11">
+        </div>
+        <div class="form-group">
+          <label for="f4506SpouseName">Spouse / second borrower <span class="text-muted">(if joint)</span></label>
+          <input type="text" id="f4506SpouseName" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label for="f4506SpouseSsn">SSN or ITIN (spouse)</label>
+          <input type="text" id="f4506SpouseSsn" placeholder="XXX-XX-XXXX" inputmode="numeric" autocomplete="off" maxlength="11">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Address -->
+    <div class="calc-section">
+      <h2><span class="section-number">3</span> Current address</h2>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="f4506AddressLine">Street address</label>
+          <input type="text" id="f4506AddressLine" placeholder="Number and street">
+        </div>
+        <div class="form-group">
+          <label for="f4506Apt">Apt / suite</label>
+          <input type="text" id="f4506Apt" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label for="f4506City">City</label>
+          <input type="text" id="f4506City" placeholder="City">
+        </div>
+        <div class="form-group">
+          <label for="f4506State">State</label>
+          <input type="text" id="f4506State" placeholder="ST" maxlength="2" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label for="f4506Zip">ZIP</label>
+          <input type="text" id="f4506Zip" placeholder="12345" maxlength="10">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="f4506PrevAddress">Previous address <span class="text-muted">(if different from last return)</span></label>
+          <input type="text" id="f4506PrevAddress" placeholder="Optional">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Transcript request -->
+    <div class="calc-section">
+      <h2><span class="section-number">4</span> Transcript requested</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="f4506TaxForm">Tax form / document</label>
+          <select id="f4506TaxForm">
+            <option value="1040">Form 1040</option>
+            <option value="1040-sr">Form 1040-SR</option>
+            <option value="1120">Form 1120</option>
+            <option value="1065">Form 1065</option>
+            <option value="w2">Form W-2</option>
+            <option value="1099">Form 1099 (specify in notes)</option>
+            <option value="other">Other (see notes)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f4506TranscriptType">Transcript type</label>
+          <select id="f4506TranscriptType">
+            <option value="return">Return transcript</option>
+            <option value="account">Account transcript</option>
+            <option value="record">Record of account</option>
+            <option value="wage">Wage and income</option>
+            <option value="verification-nonfiling">Verification of non-filing</option>
+          </select>
+        </div>
+        <div class="form-group form-group--full">
+          <label for="f4506TaxYears">Tax year(s) or period</label>
+          <input type="text" id="f4506TaxYears" placeholder="e.g. 2023 or 2021, 2022, 2023">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="f4506Notes">Notes</label>
+          <textarea id="f4506Notes" rows="2" placeholder="Optional details for your processor"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Third party (lender / investor) -->
+    <div class="calc-section">
+      <h2><span class="section-number">5</span> Third party to receive transcript</h2>
+      <p class="text-muted" style="margin-top:0;">
+        Choose an investor from your MSFG database (same source as
+        <a href="https://dashboard.msfgco.com/Calculators/Admin%20Settings/admin-settings.html" target="_blank" rel="noopener noreferrer">Admin Settings</a>).
+        You can still edit the fields below after selection.
+      </p>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="f4506InvestorSelect">Investor</label>
+          <select id="f4506InvestorSelect">
+            <option value="">Select investor…</option>
+          </select>
+          <p class="text-muted form-4506-c__hint" id="f4506InvestorDbHint" hidden></p>
+        </div>
+        <div class="form-group">
+          <label for="f4506ThirdPartyName">Name</label>
+          <input type="text" id="f4506ThirdPartyName" placeholder="Company or individual">
+        </div>
+        <div class="form-group">
+          <label for="f4506ThirdPartyCaf">CAF number <span class="text-muted">(if applicable)</span></label>
+          <input type="text" id="f4506ThirdPartyCaf" placeholder="Optional">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="f4506ThirdPartyAddress">Address</label>
+          <input type="text" id="f4506ThirdPartyAddress" placeholder="Street, city, ST ZIP">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: Preview (print) -->
+    <div class="calc-section">
+      <h2><span class="section-number">6</span> Summary preview</h2>
+      <div id="f4506Preview" class="letter-preview form-4506-c__preview">
+        <p class="text-muted text-center">Data will appear here for printing.</p>
+      </div>
+    </div>
+
+    <div class="action-bar doc-actions">
+      <button type="button" class="btn btn-primary icon-inline" id="btnF4506DownloadPdfFooter">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download filled PDF
+      </button>
+      <a class="btn btn-secondary icon-inline" href="/documents/irs-form-4506-c.pdf" target="_blank" rel="noopener noreferrer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Blank IRS PDF
+      </a>
+      <button type="button" class="btn btn-secondary icon-inline" data-action="doc-print">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      <button type="button" class="btn btn-secondary icon-inline" data-action="doc-email">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email
+      </button>
+    </div>
+  </div>
+</div>

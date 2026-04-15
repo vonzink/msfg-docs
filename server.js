@@ -81,20 +81,41 @@ app.use((req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.v = ASSET_VERSION;
   res.locals.jsExt = '.js'; // no build step yet
+  /* Optional: UI on another origin than API — origin only (no path). Strip accidental .../api suffix. */
+  let appOrigin = String(process.env.PUBLIC_APP_ORIGIN || '').trim().replace(/\/$/, '');
+  if (appOrigin.endsWith('/api')) appOrigin = appOrigin.slice(0, -4).replace(/\/$/, '');
+  res.locals.appOrigin = appOrigin;
   next();
 });
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public'), {
-  maxAge: process.env.NODE_ENV === 'production' ? '30d' : 0
-}));
+const { generateForm4506cPdfBuffer } = require('./lib/pdf/form4506cPdf');
 
-// Routes
+// App routes before static files so POST /api/* is never ambiguous vs public/.
 app.use('/', require('./routes/index'));
 app.use('/documents', require('./routes/documents'));
 app.use('/workspace', require('./routes/workspace'));
+app.use('/templates', require('./routes/templates'));
 app.use('/report', require('./routes/report'));
+
+/* Form 4506-C + investors: mounted here (not only inside routes/api.js) so they always load with this entry file. */
+app.post('/api/pdf/form-4506-c', async (req, res) => {
+  try {
+    const bytes = await generateForm4506cPdfBuffer(req.body || {});
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="IRS-Form-4506-C-filled.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error('[PDF] Form 4506-C error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to generate Form 4506-C PDF.' });
+  }
+});
+app.use('/api/investors', require('./routes/investors'));
+
 app.use('/api', require('./routes/api'));
+
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: process.env.NODE_ENV === 'production' ? '30d' : 0
+}));
 
 // 404 handler
 app.use((req, res) => {
@@ -111,6 +132,7 @@ app.use((err, req, res, next) => {
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`MSFG Document Creator running at http://localhost:${PORT}`);
+    console.log('[msfg] Form 4506-C PDF: POST /api/pdf/form-4506-c | investors: GET /api/investors/for-form-4506c');
   });
 }
 

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MESSAGE xmlns="http://www.mismo.org/residential/2009/schemas">
+  <TERMS_OF_LOAN>
+    <BaseLoanAmount>350000</BaseLoanAmount>
+    <LoanPurposeType>Purchase</LoanPurposeType>
+    <MortgageType>Conventional</MortgageType>
+  </TERMS_OF_LOAN>
+
+  <PROPERTY>
+    <ADDRESS>
+      <AddressLineText>123 Main St</AddressLineText>
+      <CityName>Phoenix</CityName>
+      <StateCode>AZ</StateCode>
+      <PostalCode>85001</PostalCode>
+    </ADDRESS>
+  </PROPERTY>
+
+  <INDIVIDUAL>
+    <NAME>
+      <FullName>Jane Doe</FullName>
+    </NAME>
+  </INDIVIDUAL>
+</MESSAGE>
+

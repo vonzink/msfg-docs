@@ -1,0 +1,51 @@
+/* IRS Form 4506-C worksheet */
+
+.form-4506-c__notice {
+  padding-bottom: var(--space-md);
+}
+
+.form-4506-c__pdf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.form-4506-c__hint {
+  font-size: 0.875rem;
+  margin: var(--space-xs) 0 0;
+}
+
+.form-group--actions label {
+  visibility: hidden;
+}
+
+.form-4506-c__preview {
+  min-height: 120px;
+}
+
+.form-4506-c__preview-block {
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.form-4506-c__preview-block:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.form-4506-c__preview-block h4 {
+  margin: 0 0 var(--space-xs);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-gray-500);
+}
+
+.form-4506-c__preview-block p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--color-gray-900);
+}

@@ -6,8 +6,13 @@ const fs = require('fs');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const nodemailer = require('nodemailer');
+const { generateCreditInquiryPdfBuffer } = require('../lib/pdf/creditInquiryPdf');
 
 const siteConfigPath = path.join(__dirname, '..', 'config', 'site.json');
+
+router.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'msfg-docs' });
+});
 
 function readSiteConfig() {
   try {
@@ -204,6 +209,19 @@ router.post('/email/send', emailLimiter, express.json(), async (req, res) => {
         ? 'Could not connect to email server. Check SMTP host and port.'
         : 'Failed to send email. Please try again.';
     res.status(500).json({ success: false, message: userMsg });
+  }
+});
+
+/* ---- PDF export (Credit Inquiry) — shared generator in lib/pdf/creditInquiryPdf.js */
+router.post('/pdf/credit-inquiry', express.json({ limit: '2mb' }), async (req, res) => {
+  try {
+    const bytes = await generateCreditInquiryPdfBuffer(req.body || {});
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Credit-Inquiry-Letter.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error('[PDF] Export error:', err);
+    res.status(500).json({ success: false, message: 'Failed to generate PDF.' });
   }
 });
 
