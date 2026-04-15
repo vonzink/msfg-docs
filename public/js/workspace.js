@@ -79,7 +79,7 @@
         '</div>' +
       '</div>' +
       '<div class="ws-panel__body">' +
-        '<iframe class="ws-panel__iframe" src="/documents/' + slug + '?embed=1" title="' + MSFG.escHtml(name) + '"></iframe>' +
+        '<iframe class="ws-panel__iframe" src="' + MSFG.appUrl('/documents/' + slug) + '?embed=1" title="' + MSFG.escHtml(name) + '"></iframe>' +
       '</div>';
 
     panels.appendChild(panel);

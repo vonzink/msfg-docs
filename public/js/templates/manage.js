@@ -77,7 +77,7 @@
         var tpl = data.template;
         statusEl.textContent = 'Detected ' + tpl.fields.length + ' fields. Redirecting...';
         // Redirect to editor
-        window.location.href = '/templates/' + tpl.slug + '/edit';
+        window.location.href = MSFG.appUrl('/templates/' + tpl.slug + '/edit');
       })
       .catch(function (err) {
         statusEl.textContent = 'Error: ' + err.message;
@@ -115,8 +115,8 @@
         + '</p>'
         + '</div>'
         + '<div class="tpl-card__actions">'
-        + '<a href="/templates/' + MSFG.escHtml(tpl.slug) + '/fill" class="btn btn-sm btn-primary">Fill</a>'
-        + '<a href="/templates/' + MSFG.escHtml(tpl.slug) + '/edit" class="btn btn-sm btn-secondary">Edit</a>'
+        + '<a href="' + MSFG.appUrl('/templates/' + tpl.slug + '/fill') + '" class="btn btn-sm btn-primary">Fill</a>'
+        + '<a href="' + MSFG.appUrl('/templates/' + tpl.slug + '/edit') + '" class="btn btn-sm btn-secondary">Edit</a>'
         + '<button type="button" class="btn btn-sm btn-danger tpl-delete-btn" data-id="' + MSFG.escHtml(tpl.id) + '">Delete</button>'
         + '</div>'
         + '</div>';

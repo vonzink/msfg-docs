@@ -4,15 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= typeof title !== 'undefined' ? title + ' | ' : '' %><%= site.siteName %></title>
-  <link rel="icon" type="image/png" sizes="32x32" href="<%= site.favicon %>">
+  <link rel="icon" type="image/png" sizes="32x32" href="<%= (site.favicon && site.favicon.startsWith('/') ? basePath : '') + site.favicon %>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/base.css?v=<%= v %>">
-  <link rel="stylesheet" href="/css/layout.css?v=<%= v %>">
-  <link rel="stylesheet" href="/css/components.css?v=<%= v %>">
-  <link rel="stylesheet" href="/css/print.css?v=<%= v %>" media="print">
-  <link rel="stylesheet" href="/css/email-modal.css?v=<%= v %>">
+  <link rel="stylesheet" href="<%= basePath %>/css/base.css?v=<%= v %>">
+  <link rel="stylesheet" href="<%= basePath %>/css/layout.css?v=<%= v %>">
+  <link rel="stylesheet" href="<%= basePath %>/css/components.css?v=<%= v %>">
+  <link rel="stylesheet" href="<%= basePath %>/css/print.css?v=<%= v %>" media="print">
+  <link rel="stylesheet" href="<%= basePath %>/css/email-modal.css?v=<%= v %>">
+  <script>window.__MSFG_BASE_PATH__ = <%- JSON.stringify(basePath || '') %>;</script>
   <% if (locals.appOrigin) { %>
   <script>window.__MSFG_APP_ORIGIN__ = <%- JSON.stringify(locals.appOrigin) %>;</script>
   <% } %>
@@ -28,10 +29,10 @@
 
   <%- include('../partials/footer') %>
   <%- include('../partials/email-modal') %>
-  <script src="/js/shared/utils<%= jsExt %>?v=<%= v %>"></script>
-  <script src="/js/shared/report<%= jsExt %>?v=<%= v %>"></script>
-  <script src="/js/shared/doc-email<%= jsExt %>?v=<%= v %>"></script>
-  <script src="/js/shared/mismo-embed<%= jsExt %>?v=<%= v %>"></script>
+  <script src="<%= basePath %>/js/shared/utils<%= jsExt %>?v=<%= v %>"></script>
+  <script src="<%= basePath %>/js/shared/report<%= jsExt %>?v=<%= v %>"></script>
+  <script src="<%= basePath %>/js/shared/doc-email<%= jsExt %>?v=<%= v %>"></script>
+  <script src="<%= basePath %>/js/shared/mismo-embed<%= jsExt %>?v=<%= v %>"></script>
   <%- typeof extraScripts !== 'undefined' ? extraScripts : '' %>
 </body>
 </html>

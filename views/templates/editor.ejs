@@ -6,11 +6,11 @@
         <p>Configure how each PDF field appears in the fill form. Set labels, grouping, order, and input types.</p>
       </div>
       <div class="tpl-editor-header__actions">
-        <a href="/templates/<%= templateConfig.slug %>/fill" class="btn btn-primary icon-inline" target="_blank">
+        <a href="<%= basePath %>/templates/<%= templateConfig.slug %>/fill" class="btn btn-primary icon-inline" target="_blank">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Open fill form
         </a>
-        <a href="/templates" class="btn btn-secondary">Back to templates</a>
+        <a href="<%= basePath %>/templates" class="btn btn-secondary">Back to templates</a>
       </div>
     </div>
   </div>
@@ -71,7 +71,7 @@
     <div class="calc-section">
       <h2>Blank PDF preview</h2>
       <div class="tpl-pdf-preview">
-        <iframe id="edPdfPreview" src="/templates/api/<%= templateConfig.id %>/download" width="100%" height="600" style="border:1px solid var(--clr-border);border-radius:var(--radius-md);"></iframe>
+        <iframe id="edPdfPreview" src="<%= basePath %>/templates/api/<%= templateConfig.id %>/download" width="100%" height="600" style="border:1px solid var(--clr-border);border-radius:var(--radius-md);"></iframe>
       </div>
     </div>
 

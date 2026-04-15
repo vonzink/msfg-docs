@@ -70,7 +70,7 @@
     });
 
     if (!visibleFields.length) {
-      html = '<div class="calc-section"><p class="text-muted text-center">No visible fields configured. <a href="/templates/' + config.slug + '/edit">Edit this template</a> to set up field labels.</p></div>';
+      html = '<div class="calc-section"><p class="text-muted text-center">No visible fields configured. <a href="' + MSFG.appUrl('/templates/' + config.slug + '/edit') + '">Edit this template</a> to set up field labels.</p></div>';
     }
 
     sectionsEl.innerHTML = html;

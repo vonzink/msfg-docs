@@ -25,15 +25,16 @@ docRoutes.forEach(dr => {
   router.get(`/${dr.slug}`, (req, res) => {
     const ver = res.locals.v;
     const ext = res.locals.jsExt;
+    const bp = res.locals.basePath || '';
     const extraHeadParts = [];
-    if (dr.css) extraHeadParts.push(`<link rel="stylesheet" href="/css/documents/${dr.css}.css?v=${ver}">`);
+    if (dr.css) extraHeadParts.push(`<link rel="stylesheet" href="${bp}/css/documents/${dr.css}.css?v=${ver}">`);
 
     res.render(dr.view, {
       title: dr.title,
       doc: findDoc(dr.slug),
       bodyClass: req.query && req.query.embed ? 'embed-mode' : undefined,
       extraHead: extraHeadParts.length ? extraHeadParts.join('') : undefined,
-      extraScripts: `<script src="/js/documents/${dr.slug}${ext}?v=${ver}"></script>`
+      extraScripts: `<script src="${bp}/js/documents/${dr.slug}${ext}?v=${ver}"></script>`
     });
   });
 });

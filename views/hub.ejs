@@ -1,7 +1,7 @@
 <div class="hub-hero">
   <h1>Document Creator Hub</h1>
   <p class="hub-hero__sub">
-    Select a document to create, or open the <a href="/workspace">Workspace</a> to work on multiple documents side by side.
+    Select a document to create, or open the <a href="<%= basePath %>/workspace">Workspace</a> to work on multiple documents side by side.
   </p>
   <div class="hub-counter-row">
     <% categories.forEach(cat => { %>
@@ -29,7 +29,7 @@
     </h2>
     <div class="hub-grid">
       <% documents.filter(d => d.category === cat.id).forEach(doc => { %>
-        <a href="/documents/<%= doc.slug %>" class="hub-card" data-name="<%= doc.name.toLowerCase() %>">
+        <a href="<%= basePath %>/documents/<%= doc.slug %>" class="hub-card" data-name="<%= doc.name.toLowerCase() %>">
           <div class="hub-card__icon"><%= doc.icon %></div>
           <div class="hub-card__body">
             <h3 class="hub-card__title"><%= doc.name %></h3>

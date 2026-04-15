@@ -32,10 +32,11 @@ const uploadLimiter = rateLimit({
 /** List / manage templates */
 router.get('/', (req, res) => {
   const ver = res.locals.v;
+  const bp = res.locals.basePath || '';
   res.render('templates/manage', {
     title: 'PDF Templates',
-    extraHead: `<link rel="stylesheet" href="/css/templates.css?v=${ver}">`,
-    extraScripts: `<script src="/js/templates/manage${res.locals.jsExt}?v=${ver}"></script>`
+    extraHead: `<link rel="stylesheet" href="${bp}/css/templates.css?v=${ver}">`,
+    extraScripts: `<script src="${bp}/js/templates/manage${res.locals.jsExt}?v=${ver}"></script>`
   });
 });
 
@@ -44,11 +45,12 @@ router.get('/:idOrSlug/edit', (req, res) => {
   const config = templateService.getTemplate(req.params.idOrSlug);
   if (!config) return res.status(404).render('404', { title: 'Template Not Found' });
   const ver = res.locals.v;
+  const bp = res.locals.basePath || '';
   res.render('templates/editor', {
     title: `Edit — ${config.name}`,
     templateConfig: config,
-    extraHead: `<link rel="stylesheet" href="/css/templates.css?v=${ver}">`,
-    extraScripts: `<script src="/js/templates/editor${res.locals.jsExt}?v=${ver}"></script>`
+    extraHead: `<link rel="stylesheet" href="${bp}/css/templates.css?v=${ver}">`,
+    extraScripts: `<script src="${bp}/js/templates/editor${res.locals.jsExt}?v=${ver}"></script>`
   });
 });
 
@@ -57,13 +59,14 @@ router.get('/:idOrSlug/fill', (req, res) => {
   const config = templateService.getTemplate(req.params.idOrSlug);
   if (!config) return res.status(404).render('404', { title: 'Template Not Found' });
   const ver = res.locals.v;
+  const bp = res.locals.basePath || '';
   res.render('templates/fill', {
     title: config.name,
     templateConfig: config,
     doc: { slug: `pdf-template-${config.slug}`, icon: config.icon || '📄', name: config.name, description: config.description },
     bodyClass: req.query && req.query.embed ? 'embed-mode' : undefined,
-    extraHead: `<link rel="stylesheet" href="/css/templates.css?v=${ver}">`,
-    extraScripts: `<script src="/js/templates/fill${res.locals.jsExt}?v=${ver}"></script>`
+    extraHead: `<link rel="stylesheet" href="${bp}/css/templates.css?v=${ver}">`,
+    extraScripts: `<script src="${bp}/js/templates/fill${res.locals.jsExt}?v=${ver}"></script>`
   });
 });
 

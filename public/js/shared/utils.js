@@ -47,18 +47,34 @@ MSFG.qs = function(sel, ctx) { return (ctx || document).querySelector(sel); };
 MSFG.qsa = function(sel, ctx) { return (ctx || document).querySelectorAll(sel); };
 
 /**
- * Absolute path to same-origin API by default.
- * Set window.__MSFG_APP_ORIGIN__ (via PUBLIC_APP_ORIGIN) if the HTML is served from another host than the API.
+ * Build an absolute-on-origin URL from an app-relative path.
+ * Prepends window.__MSFG_BASE_PATH__ (when the app is mounted under a
+ * sub-path like "/docs"), and — if set — window.__MSFG_APP_ORIGIN__ for
+ * cross-origin embeds.
+ *
+ * MSFG.apiUrl('/api/pdf/credit-inquiry') →
+ *    '/api/pdf/credit-inquiry'                    (dev, root mount)
+ *    '/docs/api/pdf/credit-inquiry'               (behind /docs)
+ *    'https://dashboard.msfgco.com/docs/api/...'  (cross-origin)
  */
 MSFG.apiUrl = function(path) {
   const p = String(path || '');
   const abs = p.startsWith('/') ? p : '/' + p;
+  let basePath = (typeof window !== 'undefined' && window.__MSFG_BASE_PATH__) || '';
+  basePath = String(basePath).trim().replace(/\/$/, '');
+  // Avoid double-prefixing if caller already included the basePath.
+  const withBase = basePath && !abs.startsWith(basePath + '/') && abs !== basePath
+    ? basePath + abs
+    : abs;
   let origin = (typeof window !== 'undefined' && window.__MSFG_APP_ORIGIN__) || '';
   origin = String(origin).trim().replace(/\/$/, '');
   if (origin.endsWith('/api')) origin = origin.slice(0, -4).replace(/\/$/, '');
-  if (!origin) return abs;
-  return origin + abs;
+  if (!origin) return withBase;
+  return origin + withBase;
 };
+
+/** Short alias for building app-relative URLs in dynamic HTML. */
+MSFG.appUrl = MSFG.apiUrl;
 
 /* Mobile menu toggle + doc metadata from data attributes */
 document.addEventListener('DOMContentLoaded', function() {
