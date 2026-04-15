@@ -2,7 +2,7 @@
 
 msfg-docs runs on the shared EC2 instance that already hosts the dashboard
 backend and `msfg-calc`. It is exposed at `https://dashboard.msfgco.com/docs/*`
-through CloudFront → nginx → Node (port 3001).
+through CloudFront → nginx → Node (port 3005).
 
 ## Architecture
 
@@ -14,14 +14,14 @@ CloudFront (E3QTH6K640MMKK)
   │  behavior: /docs/* → EC2 origin
   ▼
 EC2 nginx :80
-  │  location /docs/ { proxy_pass http://127.0.0.1:3001; }
+  │  location /docs/ { proxy_pass http://127.0.0.1:3005; }
   ▼
-PM2 → node server.js   (PORT=3001, BASE_PATH=/docs)
+PM2 → node server.js   (PORT=3005, BASE_PATH=/docs)
 ```
 
 Key points:
 
-- msfg-docs listens on **port 3001** (msfg-calc owns 3000, dashboard backend
+- msfg-docs listens on **port 3005** (msfg-calc owns 3000, dashboard backend
   owns 8080).
 - `BASE_PATH=/docs` tells Express to mount pages at `/docs` and the API at
   `/docs/api`. The nginx rule **keeps** the `/docs` prefix (no trailing slash
@@ -53,7 +53,7 @@ Set at minimum:
 
 ```
 NODE_ENV=production
-PORT=3001
+PORT=3005
 BASE_PATH=/docs
 
 COGNITO_REGION=us-east-1
@@ -72,7 +72,7 @@ fronts port 80):
 
 ```nginx
 location /docs/ {
-  proxy_pass         http://127.0.0.1:3001;   # no trailing slash — preserve prefix
+  proxy_pass         http://127.0.0.1:3005;   # no trailing slash — preserve prefix
   proxy_http_version 1.1;
   proxy_set_header   Host              $host;
   proxy_set_header   X-Real-IP         $remote_addr;
