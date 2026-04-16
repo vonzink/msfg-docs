@@ -169,5 +169,45 @@
     }
   } catch (_e) { /* ignore */ }
 
+  /* ---- Print / Email / Add-to-Report data extractor ----
+     Walks the rendered form by group/section and produces the canonical
+     email-modal shape: { title, sections: [{ heading, rows: [{label, value}] }] }.
+     Empty fields are skipped to keep the email/preview clean. */
+  function getEmailData() {
+    var sections = groups.map(function (groupName) {
+      var rows = [];
+      groupMap[groupName].forEach(function (f) {
+        var inputId = 'tplf_' + sanitizeId(f.pdfField);
+        var el = document.getElementById(inputId);
+        if (!el) return;
+        var value;
+        if (el.type === 'checkbox') {
+          value = el.checked ? 'Yes' : '';
+        } else {
+          value = (el.value || '').trim();
+        }
+        if (!value) return;
+        rows.push({ label: f.label, value: value });
+      });
+      return { heading: groupName, rows: rows };
+    }).filter(function (sec) { return sec.rows.length > 0; });
+
+    return {
+      title: (config.icon ? config.icon + ' ' : '') + config.name,
+      sections: sections
+    };
+  }
+
+  // Register with shared modules. Both checks are guards: the modules load
+  // earlier in the layout (doc-email + report) so the registrations should
+  // succeed; ReportTemplates is lazy-loaded by report.js so the second check
+  // matches the pattern used by every other document JS file in this repo.
+  if (window.MSFG && MSFG.DocActions && typeof MSFG.DocActions.register === 'function') {
+    MSFG.DocActions.register(getEmailData);
+  }
+  if (window.MSFG && MSFG.ReportTemplates && typeof MSFG.ReportTemplates.registerExtractor === 'function') {
+    MSFG.ReportTemplates.registerExtractor('pdf-template-' + config.slug, getEmailData);
+  }
+
   renderForm();
 })();
