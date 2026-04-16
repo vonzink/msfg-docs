@@ -17,47 +17,61 @@
 
   var fields = config.fields.slice(); // working copy
 
-  /* ---- MISMO source options ----
-     Keys must match what mismo-parser.js puts on the parsed object.
-     Used both in the editor dropdown and at fill time (parsed[mismoPath]). */
-  var MISMO_PATH_GROUPS = [
-    { group: 'Borrower', items: [
-      { value: 'borrowerName',      label: 'Borrower full name' },
-      { value: 'coBorrowerName',    label: 'Co-borrower full name' },
-      { value: 'borrowerTin',       label: 'Borrower SSN / TIN' },
-      { value: 'spouseTin',         label: 'Co-borrower SSN / TIN' },
-      { value: 'borrowerBirthDate', label: 'Borrower date of birth' }
+  /* ---- Auto-fill source options ----
+     Each option value is `type:key`. At fill time, the prefix selects the
+     dispatcher (mismo, investor) and the key is the lookup name within
+     that source. Future source types (e.g. processing) plug in here. */
+  var SOURCE_GROUPS = [
+    { group: 'MISMO data', items: [
+      { value: 'mismo:borrowerName',       label: 'Borrower full name' },
+      { value: 'mismo:coBorrowerName',     label: 'Co-borrower full name' },
+      { value: 'mismo:borrowerTin',        label: 'Borrower SSN / TIN' },
+      { value: 'mismo:spouseTin',          label: 'Co-borrower SSN / TIN' },
+      { value: 'mismo:borrowerBirthDate',  label: 'Borrower date of birth' },
+      { value: 'mismo:loanNumber',         label: 'Loan number' },
+      { value: 'mismo:baseLoanAmount',     label: 'Base loan amount' },
+      { value: 'mismo:noteRate',           label: 'Note rate (%)' },
+      { value: 'mismo:loanTermMonths',     label: 'Loan term (months)' },
+      { value: 'mismo:loanPurposeType',    label: 'Loan purpose' },
+      { value: 'mismo:mortgageType',       label: 'Mortgage type' },
+      { value: 'mismo:propertyAddress',    label: 'Subject property address (full)' },
+      { value: 'mismo:currentResidenceAddress', label: 'Current residence (full)' },
+      { value: 'mismo:currentResidenceLine',    label: 'Current residence — street' },
+      { value: 'mismo:currentResidenceCity',    label: 'Current residence — city' },
+      { value: 'mismo:currentResidenceState',   label: 'Current residence — state' },
+      { value: 'mismo:currentResidencePostal',  label: 'Current residence — ZIP' },
+      { value: 'mismo:previousResidenceAddress', label: 'Prior residence (full)' },
+      { value: 'mismo:priorResidenceLine',       label: 'Prior residence — street' },
+      { value: 'mismo:priorResidenceCity',       label: 'Prior residence — city' },
+      { value: 'mismo:priorResidenceState',      label: 'Prior residence — state' },
+      { value: 'mismo:priorResidencePostal',     label: 'Prior residence — ZIP' }
     ]},
-    { group: 'Loan', items: [
-      { value: 'loanNumber',        label: 'Loan number' },
-      { value: 'baseLoanAmount',    label: 'Base loan amount' },
-      { value: 'noteRate',          label: 'Note rate (%)' },
-      { value: 'loanTermMonths',    label: 'Loan term (months)' },
-      { value: 'loanPurposeType',   label: 'Loan purpose' },
-      { value: 'mortgageType',      label: 'Mortgage type' }
-    ]},
-    { group: 'Property', items: [
-      { value: 'propertyAddress',   label: 'Subject property address (full)' }
-    ]},
-    { group: 'Current residence', items: [
-      { value: 'currentResidenceAddress', label: 'Current residence (full)' },
-      { value: 'currentResidenceLine',    label: 'Current residence — street' },
-      { value: 'currentResidenceCity',    label: 'Current residence — city' },
-      { value: 'currentResidenceState',   label: 'Current residence — state' },
-      { value: 'currentResidencePostal',  label: 'Current residence — ZIP' }
-    ]},
-    { group: 'Prior residence', items: [
-      { value: 'previousResidenceAddress', label: 'Prior residence (full)' },
-      { value: 'priorResidenceLine',       label: 'Prior residence — street' },
-      { value: 'priorResidenceCity',       label: 'Prior residence — city' },
-      { value: 'priorResidenceState',      label: 'Prior residence — state' },
-      { value: 'priorResidencePostal',     label: 'Prior residence — ZIP' }
+    { group: 'Investor record (database)', items: [
+      { value: 'investor:companyName',     label: 'Company name' },
+      { value: 'investor:companyAddress',  label: 'Company address' },
+      { value: 'investor:agentName',       label: 'Agent name' },
+      { value: 'investor:agentAddress',    label: 'Agent address' },
+      { value: 'investor:mailingAddress',  label: 'Mailing address' },
+      { value: 'investor:phone',           label: 'Phone' },
+      { value: 'investor:email',           label: 'Email' },
+      { value: 'investor:caf',             label: 'CAF number' },
+      { value: 'investor:validFor',        label: 'Valid for (days)' }
     ]}
   ];
 
-  function mismoOptions(current) {
+  /** Normalize a stored source value:
+   *  - new shape (`type:key`) passes through unchanged
+   *  - legacy bare mismoPath (`borrowerName`) becomes `mismo:borrowerName`
+   *  - empty / null becomes '' */
+  function normalizeSource(field) {
+    if (field.source) return String(field.source);
+    if (field.mismoPath) return 'mismo:' + String(field.mismoPath);
+    return '';
+  }
+
+  function sourceOptions(current) {
     var html = '<option value=""' + (current ? '' : ' selected') + '>— None —</option>';
-    MISMO_PATH_GROUPS.forEach(function (grp) {
+    SOURCE_GROUPS.forEach(function (grp) {
       html += '<optgroup label="' + MSFG.escHtml(grp.group) + '">';
       grp.items.forEach(function (it) {
         var sel = it.value === current ? ' selected' : '';
@@ -78,7 +92,7 @@
       + '<span class="tpl-fh-group">Group</span>'
       + '<span class="tpl-fh-type">Type</span>'
       + '<span class="tpl-fh-placeholder">Placeholder</span>'
-      + '<span class="tpl-fh-mismo">MISMO source</span>'
+      + '<span class="tpl-fh-mismo">Auto-fill source</span>'
       + '</div>';
 
     fields.forEach(function (f, idx) {
@@ -97,8 +111,8 @@
         + typeOption('radio', f.type)
         + '</select>'
         + '<input class="tpl-fr-placeholder" value="' + MSFG.escHtml(f.placeholder || '') + '" data-key="placeholder" data-idx="' + idx + '" placeholder="hint text">'
-        + '<select class="tpl-fr-mismo" data-key="mismoPath" data-idx="' + idx + '" title="Auto-fill source from imported MISMO XML">'
-        + mismoOptions(f.mismoPath || '')
+        + '<select class="tpl-fr-mismo" data-key="source" data-idx="' + idx + '" title="Auto-fill source: MISMO XML or investor record">'
+        + sourceOptions(normalizeSource(f))
         + '</select>'
         + '</div>';
     });
@@ -155,6 +169,14 @@
       var key = el.dataset.key;
       if (!isNaN(idx) && key && fields[idx]) {
         fields[idx][key] = el.value;
+      }
+    });
+
+    // One-way migration: once `source` is set on a field, drop the legacy
+    // `mismoPath` so it doesn't drift out of sync with what the editor shows.
+    fields.forEach(function (f) {
+      if (f.source && Object.prototype.hasOwnProperty.call(f, 'mismoPath')) {
+        delete f.mismoPath;
       }
     });
 

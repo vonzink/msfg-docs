@@ -132,26 +132,61 @@
       });
   });
 
-  /* ---- MISMO auto-fill support ----
-     Workspace broadcasts { type: 'MSFG_MISMO', payload: { xmlString, parsed } }.
-     Each field with a mismoPath set in the editor pulls its value from parsed[mismoPath]. */
+  /* ---- Auto-fill source dispatch ----
+     Each field's editor-configured source string (`type:key`) tells us
+     where the prepopulation value comes from. Two source types today:
+       - mismo:<key>      → look up parsed[key] from the MISMO payload
+       - investor:<key>   → look up investorFields[key] from the picker
+     Legacy: a bare `mismoPath` value is treated as `mismo:<value>`. */
+
+  function getFieldSource(f) {
+    if (f.source) {
+      var s = String(f.source);
+      var idx = s.indexOf(':');
+      if (idx === -1) return { type: 'mismo', key: s };
+      return { type: s.slice(0, idx), key: s.slice(idx + 1) };
+    }
+    if (f.mismoPath) return { type: 'mismo', key: String(f.mismoPath) };
+    return null;
+  }
+
+  function applyValueToField(f, value) {
+    if (value == null || value === '') return;
+    var inputId = 'tplf_' + sanitizeId(f.pdfField);
+    var el = document.getElementById(inputId);
+    if (!el) return;
+    if (el.type === 'checkbox') {
+      el.checked = value === true || value === 'true' || value === '1' || value === 'on';
+    } else {
+      el.value = String(value);
+    }
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  /** Index fields by source type so we can show/hide pickers conditionally. */
+  function fieldsByType(type) {
+    return config.fields.filter(function (f) {
+      var s = getFieldSource(f);
+      return s && s.type === type;
+    });
+  }
+
+  var hasInvestorFields = fieldsByType('investor').length > 0;
+  var lastLoanNumber = '';
+
+  /* ---- MISMO ---- */
+
   function applyMismo(parsed) {
     if (!parsed) return;
     config.fields.forEach(function (f) {
-      if (!f.mismoPath) return;
-      var value = parsed[f.mismoPath];
-      if (value == null || value === '') return;
-      var inputId = 'tplf_' + sanitizeId(f.pdfField);
-      var el = document.getElementById(inputId);
-      if (!el) return;
-      if (el.type === 'checkbox') {
-        // MISMO values won't usually drive checkboxes, but support truthy strings just in case
-        el.checked = value === true || value === 'true' || value === '1' || value === 'on';
-      } else {
-        el.value = String(value);
-      }
-      el.dispatchEvent(new Event('change', { bubbles: true }));
+      var s = getFieldSource(f);
+      if (!s || s.type !== 'mismo') return;
+      applyValueToField(f, parsed[s.key]);
     });
+    // If the template has any investor mappings, kick off (or refresh) the
+    // investor list using the imported loan number for auto-match.
+    if (parsed.loanNumber) lastLoanNumber = String(parsed.loanNumber);
+    if (hasInvestorFields) loadInvestorList(lastLoanNumber);
   }
 
   window.addEventListener('message', function (e) {
@@ -168,6 +203,91 @@
       window.parent.postMessage({ type: 'MSFG_MISMO_REQUEST' }, window.location.origin);
     }
   } catch (_e) { /* ignore */ }
+
+  /* ---- Investor record ----
+     Mirrors the SSA-89 / 4506-C investor flow but uses generic endpoints:
+       GET /api/investors/for-template?loan=<n>     → list (auto-match)
+       GET /api/investors/<id>/template-fields      → canonical fields
+     Picker section in fill.ejs is shown only when at least one field is
+     mapped to an investor source. */
+
+  function applyInvestor(investorFields) {
+    if (!investorFields) return;
+    config.fields.forEach(function (f) {
+      var s = getFieldSource(f);
+      if (!s || s.type !== 'investor') return;
+      applyValueToField(f, investorFields[s.key]);
+    });
+  }
+
+  function setInvestorHint(text) {
+    var hint = document.getElementById('tplInvestorHint');
+    if (!hint) return;
+    if (text) {
+      hint.hidden = false;
+      hint.textContent = text;
+    } else {
+      hint.hidden = true;
+      hint.textContent = '';
+    }
+  }
+
+  function loadInvestorList(loan) {
+    var sel = document.getElementById('tplInvestorSelect');
+    if (!sel) return;
+    var url = MSFG.apiUrl('/api/investors/for-template') + (loan ? '?loan=' + encodeURIComponent(loan) : '');
+    MSFG.fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        // Reset to just the placeholder option, then append fresh list
+        while (sel.options.length > 1) sel.remove(1);
+        if (j.investors && j.investors.length) {
+          j.investors.forEach(function (inv) {
+            var opt = document.createElement('option');
+            opt.value = String(inv.id);
+            opt.textContent = inv.label || ('Investor #' + inv.id);
+            sel.appendChild(opt);
+          });
+          sel.disabled = false;
+        } else {
+          sel.disabled = !j.configured;
+        }
+
+        if (!j.configured && j.message) setInvestorHint(j.message);
+        else if (j.matchHint) setInvestorHint(j.matchHint);
+        else if (j.investors && j.investors.length) setInvestorHint(j.investors.length + ' investor(s) loaded.');
+        else setInvestorHint(j.configured ? 'No rows in investors table yet.' : '');
+
+        if (j.autoSelectId) {
+          sel.value = String(j.autoSelectId);
+          loadInvestorFields(j.autoSelectId);
+        }
+      })
+      .catch(function (err) {
+        console.error('[Templates] investor list', err);
+        setInvestorHint('Could not load investor list.');
+      });
+  }
+
+  function loadInvestorFields(id) {
+    if (!id) return;
+    MSFG.fetch(MSFG.apiUrl('/api/investors/' + encodeURIComponent(id) + '/template-fields'))
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.success) applyInvestor(j.fields || {});
+      })
+      .catch(function (err) { console.error('[Templates] investor fields', err); });
+  }
+
+  function initInvestorPicker() {
+    var section = document.getElementById('tplInvestorSection');
+    var sel = document.getElementById('tplInvestorSelect');
+    if (!section || !sel) return;
+    if (!hasInvestorFields) return;
+    section.hidden = false;
+    sel.addEventListener('change', function () { loadInvestorFields(sel.value); });
+    loadInvestorList(''); // initial load with no loan match
+  }
 
   /* ---- Print / Email / Add-to-Report data extractor ----
      Walks the rendered form by group/section and produces the canonical
@@ -210,4 +330,5 @@
   }
 
   renderForm();
+  initInvestorPicker();
 })();

@@ -6,6 +6,23 @@
 
   <div class="doc-page__body">
 
+    <!-- Investor picker — shown only when at least one field is mapped to an investor source -->
+    <div class="calc-section" id="tplInvestorSection" hidden>
+      <h2><span class="section-number">★</span> Investor record</h2>
+      <p class="text-muted" style="margin-top:0;">
+        Pick an investor to fill mapped fields automatically. Auto-matched on MISMO import when a loan number matches.
+      </p>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="tplInvestorSelect">Investor</label>
+          <select id="tplInvestorSelect">
+            <option value="">Select investor…</option>
+          </select>
+          <p class="text-muted" id="tplInvestorHint" hidden></p>
+        </div>
+      </div>
+    </div>
+
     <!-- Dynamic form sections rendered by JS from field config -->
     <div id="tplFillSections">
       <!-- JS renders grouped fields here -->
