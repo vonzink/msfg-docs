@@ -24,10 +24,6 @@ try {
 // Document config is static — loaded once at startup
 const docConfig = require('./config/documents.json');
 
-// Template registry is filesystem-backed; list per-request so newly uploaded
-// templates appear without restarting the server.
-const templateService = require('./lib/pdf/templateService');
-
 // Site config — read fresh each request so branding changes take effect immediately
 const siteConfigPath = path.join(__dirname, 'config', 'site.json');
 function getSiteConfig() {
@@ -93,13 +89,10 @@ app.use((req, res, next) => {
   res.locals.site = getSiteConfig();
   res.locals.documents = docConfig.documents;
   res.locals.categories = docConfig.categories;
-  // Read template registry per request so the workspace selector reflects
-  // recent uploads without a restart. Cheap (small JSON file).
-  try {
-    res.locals.templates = templateService.listTemplates();
-  } catch (_e) {
-    res.locals.templates = [];
-  }
+  // Templates are per-user — the workspace route fetches them with the
+  // calling user's Cognito sub. We expose an empty default here so views
+  // that read the variable without an explicit override don't crash.
+  res.locals.templates = [];
   res.locals.currentPath = req.path;
   res.locals.v = ASSET_VERSION;
   res.locals.jsExt = '.js';

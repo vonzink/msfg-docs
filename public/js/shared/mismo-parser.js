@@ -283,6 +283,125 @@
     return out;
   }
 
+  /* ---- Generic PARTY-by-role lookups ----
+     MISMO 3.4 closing exports use a uniform pattern: every actor (lender,
+     title vendor, buyer's agent, seller's agent) is a PARTY whose
+     PartyRoleType identifies their role. Once we find the PARTY element,
+     name/address/contact/license live in predictable child elements. */
+
+  function findPartiesByRole(doc, roleType) {
+    const out = [];
+    const roleTypeNodes = nodesByLocalName(doc, 'PartyRoleType');
+    const target = String(roleType || '').trim().toLowerCase();
+    for (const n of roleTypeNodes) {
+      const t = (n.textContent || '').trim();
+      if (!t || t.toLowerCase() !== target) continue;
+      const party = closestAncestorByLocalName(n, 'PARTY') || closestAncestorByLocalName(n, 'Party');
+      if (party && out.indexOf(party) === -1) out.push(party);
+    }
+    return out;
+  }
+
+  function findPartyByRole(doc, roleType) {
+    return findPartiesByRole(doc, roleType)[0] || null;
+  }
+
+  /** Pick the first non-empty trimmed value from a list. */
+  function firstNonEmpty(/* ...vals */) {
+    for (let i = 0; i < arguments.length; i++) {
+      const v = arguments[i];
+      if (v == null) continue;
+      const s = String(v).trim();
+      if (s) return s;
+    }
+    return '';
+  }
+
+  /** Extract person/company name + address + contact info from a PARTY element.
+   *  Handles both INDIVIDUAL (NAME/FirstName/LastName/FullName) and LEGAL_ENTITY
+   *  (LegalEntityName / FullName). Companies usually publish under LEGAL_ENTITY. */
+  function getPartyInfo(party) {
+    const blank = {
+      name: '', firstName: '', middleName: '', lastName: '',
+      addressLine: '', city: '', state: '', postal: '', fullAddress: '',
+      phone: '', email: '', license: ''
+    };
+    if (!party) return blank;
+
+    const first = firstTextWithin(party, 'FirstName');
+    const middle = firstTextWithin(party, 'MiddleName');
+    const last = firstTextWithin(party, 'LastName');
+    const composed = [first, middle, last].filter(Boolean).join(' ').trim();
+    const fullName = firstTextWithin(party, 'FullName');
+    const legalName = firstTextWithin(party, 'LegalEntityName');
+
+    const name = firstNonEmpty(
+      composed.toLowerCase() === 'na' ? '' : composed,
+      fullName && fullName.toLowerCase() !== 'na' ? fullName : '',
+      legalName
+    );
+
+    // First ADDRESS encountered on the PARTY (some MISMO exports nest under
+    // ADDRESSES > ADDRESS; getElementsByTagName grabs at any depth).
+    const addr = nodesByLocalName(party, 'ADDRESS')[0];
+    const addressLine = addr ? firstTextWithin(addr, 'AddressLineText') : '';
+    const city = addr ? firstTextWithin(addr, 'CityName') : '';
+    const state = addr ? firstTextWithin(addr, 'StateCode') : '';
+    const postal = addr ? firstTextWithin(addr, 'PostalCode') : '';
+    const fullAddress = [addressLine, city, state, postal].filter(Boolean).join(', ');
+
+    const phone = firstTextWithin(party, 'ContactPointTelephoneValue');
+    const email = firstTextWithin(party, 'ContactPointEmailValue');
+    const license = firstTextWithin(party, 'LicenseIdentifier');
+
+    return {
+      name,
+      firstName: first,
+      middleName: middle,
+      lastName: last,
+      addressLine,
+      city,
+      state,
+      postal,
+      fullAddress,
+      phone,
+      email,
+      license
+    };
+  }
+
+  /** Extract loan-level dates and identifiers that aren't already in the
+   *  borrower / property helpers. */
+  function getLoanDetails(doc) {
+    return {
+      closingDate: textByLocalName(doc, 'ClosingDate'),
+      disbursementDate: textByLocalName(doc, 'DisbursementDate'),
+      loanMaturityDate: textByLocalName(doc, 'LoanMaturityDate'),
+      // Application & estimate dates seen across MISMO 3.4 closings.
+      applicationDate: textByLocalName(doc, 'ApplicationReceivedDate') || textByLocalName(doc, 'LoanApplicationDate'),
+      estimatedClosingDate: textByLocalName(doc, 'EstimatedClosingDate')
+    };
+  }
+
+  /** Borrower-specific contact info beyond the name/SSN already extracted.
+   *  Looks at the PARTY containing PartyRoleType=Borrower with primary
+   *  classification. */
+  function getBorrowerContact(doc, classification /* 'primary' | 'secondary' */) {
+    const target = String(classification || '').toLowerCase();
+    const roleTypeNodes = nodesByLocalName(doc, 'PartyRoleType');
+    for (const n of roleTypeNodes) {
+      const t = (n.textContent || '').trim();
+      if (!t || t.toLowerCase() !== 'borrower') continue;
+      const role = closestAncestorByLocalName(n, 'ROLE');
+      const party = closestAncestorByLocalName(n, 'PARTY');
+      if (!party) continue;
+      const cls = role ? (firstTextWithin(role, 'BorrowerClassificationType') || '').trim().toLowerCase() : '';
+      if (target && cls !== target) continue;
+      return getPartyInfo(party);
+    }
+    return getPartyInfo(null);
+  }
+
   function parseMismoXml(xmlString) {
     const doc = new DOMParser().parseFromString(xmlString, 'text/xml');
     const parserError = doc.getElementsByTagName('parsererror');
@@ -307,10 +426,50 @@
     const noteRate = textByLocalName(doc, 'NoteRatePercent') || textByLocalName(doc, 'NoteRate');
     const borrowerBirthDate = textByLocalName(doc, 'BorrowerBirthDate') || textByLocalName(doc, 'BorrowerBirthDateDate') || textByLocalName(doc, 'BorrowerBirthDateDateTime');
 
+    // Borrower / co-borrower contact + name parts
+    const primaryBorrower = getBorrowerContact(doc, 'primary');
+    const secondaryBorrower = getBorrowerContact(doc, 'secondary');
+
+    // Loan dates
+    const loanDetails = getLoanDetails(doc);
+
+    // Other parties — name stays empty when the role isn't present in the XML
+    const lender = getPartyInfo(findPartyByRole(doc, 'NotePayTo')
+      || findPartyByRole(doc, 'Lender'));
+    const broker = getPartyInfo(findPartyByRole(doc, 'LoanOriginationCompany')
+      || findPartyByRole(doc, 'MortgageBroker'));
+    const loanOriginator = getPartyInfo(findPartyByRole(doc, 'LoanOriginator'));
+
+    const titleVendor = getPartyInfo(findPartyByRole(doc, 'TitleInsuranceProvider')
+      || findPartyByRole(doc, 'ClosingAgent')
+      || findPartyByRole(doc, 'TitleCompany'));
+    const titleFileNumber = textByLocalName(doc, 'TitleInsurancePolicyIdentifier');
+
+    const buyerAgent = getPartyInfo(findPartyByRole(doc, 'BuyersRealEstateAgent')
+      || findPartyByRole(doc, 'SellingAgent')); // "selling agent" in real-estate vernacular = buyer's agent
+    const sellerAgent = getPartyInfo(findPartyByRole(doc, 'SellersRealEstateAgent')
+      || findPartyByRole(doc, 'ListingAgent'));
+
     return {
+      // ---- Borrower / co-borrower (existing) ----
       borrowers,
       borrowerName,
       coBorrowerName,
+
+      // ---- Borrower contact / name parts (new) ----
+      borrowerFirstName: primaryBorrower.firstName,
+      borrowerMiddleName: primaryBorrower.middleName,
+      borrowerLastName: primaryBorrower.lastName,
+      borrowerPhone: primaryBorrower.phone,
+      borrowerEmail: primaryBorrower.email,
+
+      coBorrowerFirstName: secondaryBorrower.firstName,
+      coBorrowerMiddleName: secondaryBorrower.middleName,
+      coBorrowerLastName: secondaryBorrower.lastName,
+      coBorrowerPhone: secondaryBorrower.phone,
+      coBorrowerEmail: secondaryBorrower.email,
+
+      // ---- Property / residence (existing) ----
       propertyAddress,
       currentResidenceAddress,
       currentResidenceLine: curRes.line,
@@ -322,15 +481,77 @@
       priorResidenceState: priRes.state,
       priorResidencePostal: priRes.postal,
       previousResidenceAddress: composeAddressParts(priRes),
+
+      // ---- Identifiers (existing) ----
       borrowerTin: tinList[0] || '',
       spouseTin: tinList[1] || '',
       loanNumber,
+      borrowerBirthDate,
+
+      // ---- Loan terms (existing + dates) ----
       baseLoanAmount,
       loanPurposeType,
       mortgageType,
       loanTermMonths,
       noteRate,
-      borrowerBirthDate
+      closingDate: loanDetails.closingDate,
+      disbursementDate: loanDetails.disbursementDate,
+      loanMaturityDate: loanDetails.loanMaturityDate,
+      applicationDate: loanDetails.applicationDate,
+      estimatedClosingDate: loanDetails.estimatedClosingDate,
+
+      // ---- Lender (NotePayTo / Lender PARTY) ----
+      lenderName: lender.name,
+      lenderAddress: lender.fullAddress,
+      lenderAddressLine: lender.addressLine,
+      lenderCity: lender.city,
+      lenderState: lender.state,
+      lenderPostal: lender.postal,
+      lenderPhone: lender.phone,
+      lenderEmail: lender.email,
+      lenderNmls: lender.license,
+
+      // ---- Mortgage broker / origination company ----
+      brokerName: broker.name,
+      brokerAddress: broker.fullAddress,
+      brokerPhone: broker.phone,
+      brokerEmail: broker.email,
+      brokerNmls: broker.license,
+
+      // ---- Individual loan officer (LoanOriginator role) ----
+      loanOriginatorName: loanOriginator.name,
+      loanOriginatorPhone: loanOriginator.phone,
+      loanOriginatorEmail: loanOriginator.email,
+      loanOriginatorNmls: loanOriginator.license,
+
+      // ---- Title / closing vendor ----
+      titleCompanyName: titleVendor.name,
+      titleCompanyAddress: titleVendor.fullAddress,
+      titleCompanyAddressLine: titleVendor.addressLine,
+      titleCompanyCity: titleVendor.city,
+      titleCompanyState: titleVendor.state,
+      titleCompanyPostal: titleVendor.postal,
+      titleCompanyPhone: titleVendor.phone,
+      titleCompanyEmail: titleVendor.email,
+      titleFileNumber,
+
+      // ---- Buyer's real estate agent ----
+      buyerAgentName: buyerAgent.name,
+      buyerAgentFirstName: buyerAgent.firstName,
+      buyerAgentLastName: buyerAgent.lastName,
+      buyerAgentPhone: buyerAgent.phone,
+      buyerAgentEmail: buyerAgent.email,
+      buyerAgentLicense: buyerAgent.license,
+      buyerAgentAddress: buyerAgent.fullAddress,
+
+      // ---- Seller's real estate agent ----
+      sellerAgentName: sellerAgent.name,
+      sellerAgentFirstName: sellerAgent.firstName,
+      sellerAgentLastName: sellerAgent.lastName,
+      sellerAgentPhone: sellerAgent.phone,
+      sellerAgentEmail: sellerAgent.email,
+      sellerAgentLicense: sellerAgent.license,
+      sellerAgentAddress: sellerAgent.fullAddress
     };
   }
 

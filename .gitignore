@@ -2,6 +2,8 @@ node_modules/
 .env
 data/esign-requests.json
 data/templates/
+data/template-drafts/
+data/dashboard-cache/
 .DS_Store
 *.min.js
 *.min.css

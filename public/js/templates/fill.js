@@ -9,6 +9,9 @@
 
   var sectionsEl = document.getElementById('tplFillSections');
   var downloadBtn = document.getElementById('tplDownloadBtn');
+  var viewBtn = document.getElementById('tplViewBtn');
+  var saveDraftBtn = document.getElementById('tplSaveDraftBtn');
+  var draftStatusEl = document.getElementById('tplDraftStatus');
 
   // Only show fields that have a label
   var visibleFields = config.fields.filter(function (f) {
@@ -98,6 +101,10 @@
     return values;
   }
 
+  function apiBasePath() {
+    return config.apiBase || ('/templates/api/' + config.id);
+  }
+
   /* ---- Download filled PDF ---- */
   downloadBtn.addEventListener('click', function () {
     downloadBtn.disabled = true;
@@ -105,8 +112,7 @@
 
     var values = collectValues();
 
-    var apiBase = config.apiBase || ('/templates/api/' + config.id);
-    MSFG.fetch(MSFG.apiUrl(apiBase + '/fill'), {
+    MSFG.fetch(MSFG.apiUrl(apiBasePath() + '/fill'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: values })
@@ -331,6 +337,105 @@
     MSFG.ReportTemplates.registerExtractor('pdf-template-' + config.slug, getEmailData);
   }
 
+  /* ---- View filled PDF in a new tab ----
+     Fetches the filled PDF (with Cognito Bearer via MSFG.fetch), wraps
+     the bytes in a blob URL, then window.open() pops a new tab. Browser
+     PDF viewer handles Save As / Print / zoom natively from there. */
+  if (viewBtn) {
+    viewBtn.addEventListener('click', function () {
+      var values = collectValues();
+      viewBtn.disabled = true;
+      var originalHtml = viewBtn.innerHTML;
+      viewBtn.textContent = 'Opening…';
+      MSFG.fetch(MSFG.apiUrl(apiBasePath() + '/fill?inline=1'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: values })
+      })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (d) { throw new Error((d && d.message) || 'View failed'); });
+          return r.blob();
+        })
+        .then(function (blob) {
+          var url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          // Keep the blob alive long enough for the new tab to finish
+          // loading it. 30s is comfortable; revoked after.
+          setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+        })
+        .catch(function (err) { alert('Error: ' + err.message); })
+        .finally(function () {
+          viewBtn.disabled = false;
+          viewBtn.innerHTML = originalHtml;
+        });
+    });
+  }
+
+  /* ---- Save draft / resume ----
+     Persists the current form values server-side, scoped per-user and
+     per-template. On page open we auto-load any saved draft so the
+     user resumes where they left off. */
+  function setDraftStatus(text) {
+    if (!draftStatusEl) return;
+    draftStatusEl.textContent = text || '';
+  }
+
+  function applyDraftValues(values) {
+    if (!values || typeof values !== 'object') return;
+    Object.keys(values).forEach(function (pdfField) {
+      var inputId = 'tplf_' + sanitizeId(pdfField);
+      var el = document.getElementById(inputId);
+      if (!el) return;
+      var v = values[pdfField];
+      if (el.type === 'checkbox') {
+        el.checked = v === true || v === 'true' || v === '1' || v === 'on';
+      } else if (v != null) {
+        el.value = String(v);
+      }
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+
+  function loadDraft() {
+    // Only local templates support drafts today; dashboard-sourced docs
+    // have their own apiBase and don't expose /draft endpoints.
+    if (config.apiBase) return;
+    MSFG.fetch(MSFG.apiUrl(apiBasePath() + '/draft'))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.success || !j.draft) return;
+        applyDraftValues(j.draft.values || {});
+        var when = j.draft.savedAt ? new Date(j.draft.savedAt).toLocaleString() : '';
+        setDraftStatus(when ? 'Draft restored — last saved ' + when : 'Draft restored');
+      })
+      .catch(function (err) { console.warn('[Templates] draft load failed:', err); });
+  }
+
+  if (saveDraftBtn) {
+    saveDraftBtn.addEventListener('click', function () {
+      if (config.apiBase) {
+        setDraftStatus('Drafts are only supported on your own uploaded templates.');
+        return;
+      }
+      saveDraftBtn.disabled = true;
+      setDraftStatus('Saving…');
+      MSFG.fetch(MSFG.apiUrl(apiBasePath() + '/draft'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: collectValues() })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.success) throw new Error((j && j.message) || 'Save failed');
+          var when = j.draft && j.draft.savedAt ? new Date(j.draft.savedAt).toLocaleTimeString() : '';
+          setDraftStatus(when ? 'Draft saved at ' + when : 'Draft saved');
+        })
+        .catch(function (err) { setDraftStatus('Save failed: ' + err.message); })
+        .finally(function () { saveDraftBtn.disabled = false; });
+    });
+  }
+
   renderForm();
   initInvestorPicker();
+  loadDraft();
 })();

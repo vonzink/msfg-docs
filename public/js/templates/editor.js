@@ -19,38 +19,111 @@
 
   /* ---- Auto-fill source options ----
      Each option value is `type:key`. At fill time, the prefix selects the
-     dispatcher (mismo, investor) and the key is the lookup name within
-     that source. Future source types (e.g. processing) plug in here. */
+     dispatcher (today: mismo only — investor data travels in the
+     pre-filled PDF base) and the key is the property name on the
+     mismo-parser.js parsed payload.
+
+     Keep this list in sync with what mismo-parser.js exposes at the top
+     level of its parsed object — the lookup at fill time is a flat
+     parsed[key]. Groups below mirror how a loan officer thinks about
+     these fields, not how MISMO nests them in XML. */
   var SOURCE_GROUPS = [
-    { group: 'MISMO data', items: [
-      { value: 'mismo:borrowerName',       label: 'Borrower full name' },
-      { value: 'mismo:coBorrowerName',     label: 'Co-borrower full name' },
-      { value: 'mismo:borrowerTin',        label: 'Borrower SSN / TIN' },
-      { value: 'mismo:spouseTin',          label: 'Co-borrower SSN / TIN' },
-      { value: 'mismo:borrowerBirthDate',  label: 'Borrower date of birth' },
-      { value: 'mismo:loanNumber',         label: 'Loan number' },
-      { value: 'mismo:baseLoanAmount',     label: 'Base loan amount' },
-      { value: 'mismo:noteRate',           label: 'Note rate (%)' },
-      { value: 'mismo:loanTermMonths',     label: 'Loan term (months)' },
-      { value: 'mismo:loanPurposeType',    label: 'Loan purpose' },
-      { value: 'mismo:mortgageType',       label: 'Mortgage type' },
-      { value: 'mismo:propertyAddress',    label: 'Subject property address (full)' },
-      { value: 'mismo:currentResidenceAddress', label: 'Current residence (full)' },
-      { value: 'mismo:currentResidenceLine',    label: 'Current residence — street' },
-      { value: 'mismo:currentResidenceCity',    label: 'Current residence — city' },
-      { value: 'mismo:currentResidenceState',   label: 'Current residence — state' },
-      { value: 'mismo:currentResidencePostal',  label: 'Current residence — ZIP' },
-      { value: 'mismo:previousResidenceAddress', label: 'Prior residence (full)' },
-      { value: 'mismo:priorResidenceLine',       label: 'Prior residence — street' },
-      { value: 'mismo:priorResidenceCity',       label: 'Prior residence — city' },
-      { value: 'mismo:priorResidenceState',      label: 'Prior residence — state' },
-      { value: 'mismo:priorResidencePostal',     label: 'Prior residence — ZIP' }
+    { group: 'Borrower', items: [
+      { value: 'mismo:borrowerName',          label: 'Full name' },
+      { value: 'mismo:borrowerFirstName',     label: 'First name' },
+      { value: 'mismo:borrowerMiddleName',    label: 'Middle name' },
+      { value: 'mismo:borrowerLastName',      label: 'Last name' },
+      { value: 'mismo:borrowerTin',           label: 'SSN / TIN' },
+      { value: 'mismo:borrowerBirthDate',     label: 'Date of birth' },
+      { value: 'mismo:borrowerPhone',         label: 'Phone' },
+      { value: 'mismo:borrowerEmail',         label: 'Email' },
+      { value: 'mismo:currentResidenceAddress', label: 'Current address (full)' },
+      { value: 'mismo:currentResidenceLine',    label: 'Current address — street' },
+      { value: 'mismo:currentResidenceCity',    label: 'Current address — city' },
+      { value: 'mismo:currentResidenceState',   label: 'Current address — state' },
+      { value: 'mismo:currentResidencePostal',  label: 'Current address — ZIP' },
+      { value: 'mismo:previousResidenceAddress', label: 'Prior address (full)' },
+      { value: 'mismo:priorResidenceLine',       label: 'Prior address — street' },
+      { value: 'mismo:priorResidenceCity',       label: 'Prior address — city' },
+      { value: 'mismo:priorResidenceState',      label: 'Prior address — state' },
+      { value: 'mismo:priorResidencePostal',     label: 'Prior address — ZIP' }
     ]},
-    // The "Investor record (database)" optgroup and its supporting
-    // routes/services were removed when we pivoted to the per-investor
-    // pre-filled PDF flow. Investor info now travels in the uploaded PDF
-    // (sourced from dashboard.msfgco.com investor Documents), and MISMO
-    // continues to populate the borrower-side fields below.
+    { group: 'Co-borrower', items: [
+      { value: 'mismo:coBorrowerName',        label: 'Full name' },
+      { value: 'mismo:coBorrowerFirstName',   label: 'First name' },
+      { value: 'mismo:coBorrowerMiddleName',  label: 'Middle name' },
+      { value: 'mismo:coBorrowerLastName',    label: 'Last name' },
+      { value: 'mismo:spouseTin',             label: 'SSN / TIN' },
+      { value: 'mismo:coBorrowerPhone',       label: 'Phone' },
+      { value: 'mismo:coBorrowerEmail',       label: 'Email' }
+    ]},
+    { group: 'Loan', items: [
+      { value: 'mismo:loanNumber',            label: 'Loan number' },
+      { value: 'mismo:baseLoanAmount',        label: 'Base loan amount' },
+      { value: 'mismo:noteRate',              label: 'Note rate (%)' },
+      { value: 'mismo:loanTermMonths',        label: 'Term (months)' },
+      { value: 'mismo:loanPurposeType',       label: 'Purpose' },
+      { value: 'mismo:mortgageType',          label: 'Mortgage type' },
+      { value: 'mismo:closingDate',           label: 'Closing date' },
+      { value: 'mismo:disbursementDate',      label: 'Disbursement date' },
+      { value: 'mismo:loanMaturityDate',      label: 'Maturity date' },
+      { value: 'mismo:applicationDate',       label: 'Application date' },
+      { value: 'mismo:estimatedClosingDate',  label: 'Estimated closing date' }
+    ]},
+    { group: 'Subject property', items: [
+      { value: 'mismo:propertyAddress',       label: 'Full address' }
+    ]},
+    { group: 'Lender', items: [
+      { value: 'mismo:lenderName',            label: 'Name' },
+      { value: 'mismo:lenderAddress',         label: 'Address (full)' },
+      { value: 'mismo:lenderAddressLine',     label: 'Address — street' },
+      { value: 'mismo:lenderCity',            label: 'Address — city' },
+      { value: 'mismo:lenderState',           label: 'Address — state' },
+      { value: 'mismo:lenderPostal',          label: 'Address — ZIP' },
+      { value: 'mismo:lenderPhone',           label: 'Phone' },
+      { value: 'mismo:lenderEmail',           label: 'Email' },
+      { value: 'mismo:lenderNmls',            label: 'NMLS' }
+    ]},
+    { group: 'Mortgage broker / origination', items: [
+      { value: 'mismo:brokerName',            label: 'Company name' },
+      { value: 'mismo:brokerAddress',         label: 'Address' },
+      { value: 'mismo:brokerPhone',           label: 'Phone' },
+      { value: 'mismo:brokerEmail',           label: 'Email' },
+      { value: 'mismo:brokerNmls',            label: 'NMLS (company)' },
+      { value: 'mismo:loanOriginatorName',    label: 'Loan originator name' },
+      { value: 'mismo:loanOriginatorPhone',   label: 'Loan originator phone' },
+      { value: 'mismo:loanOriginatorEmail',   label: 'Loan originator email' },
+      { value: 'mismo:loanOriginatorNmls',    label: 'Loan originator NMLS' }
+    ]},
+    { group: 'Title / closing', items: [
+      { value: 'mismo:titleCompanyName',      label: 'Company name' },
+      { value: 'mismo:titleCompanyAddress',   label: 'Address (full)' },
+      { value: 'mismo:titleCompanyAddressLine', label: 'Address — street' },
+      { value: 'mismo:titleCompanyCity',      label: 'Address — city' },
+      { value: 'mismo:titleCompanyState',     label: 'Address — state' },
+      { value: 'mismo:titleCompanyPostal',    label: 'Address — ZIP' },
+      { value: 'mismo:titleCompanyPhone',     label: 'Phone' },
+      { value: 'mismo:titleCompanyEmail',     label: 'Email' },
+      { value: 'mismo:titleFileNumber',       label: 'Title file number' }
+    ]},
+    { group: "Buyer's agent", items: [
+      { value: 'mismo:buyerAgentName',        label: 'Full name' },
+      { value: 'mismo:buyerAgentFirstName',   label: 'First name' },
+      { value: 'mismo:buyerAgentLastName',    label: 'Last name' },
+      { value: 'mismo:buyerAgentPhone',       label: 'Phone' },
+      { value: 'mismo:buyerAgentEmail',       label: 'Email' },
+      { value: 'mismo:buyerAgentLicense',     label: 'License' },
+      { value: 'mismo:buyerAgentAddress',     label: 'Address' }
+    ]},
+    { group: "Seller's agent", items: [
+      { value: 'mismo:sellerAgentName',       label: 'Full name' },
+      { value: 'mismo:sellerAgentFirstName',  label: 'First name' },
+      { value: 'mismo:sellerAgentLastName',   label: 'Last name' },
+      { value: 'mismo:sellerAgentPhone',      label: 'Phone' },
+      { value: 'mismo:sellerAgentEmail',      label: 'Email' },
+      { value: 'mismo:sellerAgentLicense',    label: 'License' },
+      { value: 'mismo:sellerAgentAddress',    label: 'Address' }
+    ]}
   ];
 
   /** Normalize a stored source value:
