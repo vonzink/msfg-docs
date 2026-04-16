@@ -118,6 +118,7 @@ pageRouter.use('/', require('./routes/index'));
 pageRouter.use('/documents', require('./routes/documents'));
 pageRouter.use('/workspace', require('./routes/workspace'));
 pageRouter.use('/templates', require('./routes/templates'));
+pageRouter.use('/dashboard-docs', require('./routes/dashboardDocs'));
 pageRouter.use('/report', require('./routes/report'));
 
 // API routes (JSON) — guarded by Cognito auth

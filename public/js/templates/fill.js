@@ -73,7 +73,8 @@
     });
 
     if (!visibleFields.length) {
-      html = '<div class="calc-section"><p class="text-muted text-center">No visible fields configured. <a href="' + MSFG.appUrl('/templates/' + config.slug + '/edit') + '">Edit this template</a> to set up field labels.</p></div>';
+      var editUrl = config.editUrl || ('/templates/' + config.slug + '/edit');
+      html = '<div class="calc-section"><p class="text-muted text-center">No visible fields configured. <a href="' + MSFG.appUrl(editUrl) + '">Edit this template</a> to set up field labels.</p></div>';
     }
 
     sectionsEl.innerHTML = html;
@@ -104,7 +105,8 @@
 
     var values = collectValues();
 
-    MSFG.fetch(MSFG.apiUrl('/templates/api/' + config.id + '/fill'), {
+    var apiBase = config.apiBase || ('/templates/api/' + config.id);
+    MSFG.fetch(MSFG.apiUrl(apiBase + '/fill'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: values })

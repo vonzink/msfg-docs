@@ -99,6 +99,8 @@ function computeLoanMatchesAnyDoc(rows, loan) {
 module.exports = {
   sanitizeMysqlIdent,
   rowMatchesLoan,
+  // Kept for potential future reuse — was added for the now-removed generic
+  // template investor flow but is a useful generic utility on its own.
   rowMatchesAnyDocJson,
   computeLoanMatches,
   computeLoanMatchesAnyDoc

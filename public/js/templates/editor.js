@@ -46,13 +46,11 @@
       { value: 'mismo:priorResidenceState',      label: 'Prior residence — state' },
       { value: 'mismo:priorResidencePostal',     label: 'Prior residence — ZIP' }
     ]},
-    // Note: the database-pull "Investor record" optgroup was deliberately
-    // removed from the picker. The /api/investors/for-template +
-    // /:id/template-fields endpoints and templateMapper.js remain in place
-    // (see commit f6f85fe) so we can re-enable this source type later
-    // without rebuilding the back end. The new primary flow is per-investor
-    // pre-filled PDF templates: investor info is baked into the uploaded
-    // PDF, MISMO fills the borrower fields, no DB hydration needed.
+    // The "Investor record (database)" optgroup and its supporting
+    // routes/services were removed when we pivoted to the per-investor
+    // pre-filled PDF flow. Investor info now travels in the uploaded PDF
+    // (sourced from dashboard.msfgco.com investor Documents), and MISMO
+    // continues to populate the borrower-side fields below.
   ];
 
   /** Normalize a stored source value:
@@ -176,7 +174,8 @@
       }
     });
 
-    MSFG.fetch(MSFG.apiUrl('/templates/api/' + config.id), {
+    var apiBase = config.apiBase || ('/templates/api/' + config.id);
+    MSFG.fetch(MSFG.apiUrl(apiBase), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: fields })
