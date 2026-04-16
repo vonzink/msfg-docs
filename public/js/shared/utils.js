@@ -57,16 +57,25 @@ MSFG.qsa = function(sel, ctx) { return (ctx || document).querySelectorAll(sel); 
  *    '/docs/api/pdf/credit-inquiry'               (behind /docs)
  *    'https://dashboard.msfgco.com/docs/api/...'  (cross-origin)
  */
+function _readMeta(name) {
+  if (typeof document === 'undefined') return '';
+  const m = document.querySelector('meta[name="' + name + '"]');
+  return m ? (m.getAttribute('content') || '') : '';
+}
+
 MSFG.apiUrl = function(path) {
   const p = String(path || '');
   const abs = p.startsWith('/') ? p : '/' + p;
-  let basePath = (typeof window !== 'undefined' && window.__MSFG_BASE_PATH__) || '';
+  // Prefer meta-tag (CSP-safe). Fall back to legacy window globals.
+  let basePath = _readMeta('msfg-base-path')
+    || (typeof window !== 'undefined' && window.__MSFG_BASE_PATH__) || '';
   basePath = String(basePath).trim().replace(/\/$/, '');
   // Avoid double-prefixing if caller already included the basePath.
   const withBase = basePath && !abs.startsWith(basePath + '/') && abs !== basePath
     ? basePath + abs
     : abs;
-  let origin = (typeof window !== 'undefined' && window.__MSFG_APP_ORIGIN__) || '';
+  let origin = _readMeta('msfg-app-origin')
+    || (typeof window !== 'undefined' && window.__MSFG_APP_ORIGIN__) || '';
   origin = String(origin).trim().replace(/\/$/, '');
   if (origin.endsWith('/api')) origin = origin.slice(0, -4).replace(/\/$/, '');
   if (!origin) return withBase;

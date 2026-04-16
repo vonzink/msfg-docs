@@ -13,9 +13,9 @@
   <link rel="stylesheet" href="<%= basePath %>/css/components.css?v=<%= v %>">
   <link rel="stylesheet" href="<%= basePath %>/css/print.css?v=<%= v %>" media="print">
   <link rel="stylesheet" href="<%= basePath %>/css/email-modal.css?v=<%= v %>">
-  <script>window.__MSFG_BASE_PATH__ = <%- JSON.stringify(basePath || '') %>;</script>
+  <meta name="msfg-base-path" content="<%= basePath || '' %>">
   <% if (locals.appOrigin) { %>
-  <script>window.__MSFG_APP_ORIGIN__ = <%- JSON.stringify(locals.appOrigin) %>;</script>
+  <meta name="msfg-app-origin" content="<%= locals.appOrigin %>">
   <% } %>
   <%- typeof extraHead !== 'undefined' ? extraHead : '' %>
 </head>

@@ -1,7 +1,10 @@
 'use strict';
 
 (function () {
-  var config = window.__TPL_CONFIG__;
+  var configEl = document.getElementById('tplConfig');
+  var config = null;
+  if (configEl) { try { config = JSON.parse(configEl.textContent); } catch (_e) { /* ignore */ } }
+  if (!config) config = window.__TPL_CONFIG__; // legacy fallback
   if (!config) return;
 
   var sectionsEl = document.getElementById('tplFillSections');
