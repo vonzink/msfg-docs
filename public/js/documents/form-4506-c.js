@@ -65,29 +65,9 @@
     box.innerHTML = parts.join('');
   }
 
-  function clearThirdPartyFields() {
-    ['f4506ThirdPartyName', 'f4506ThirdPartyAddress', 'f4506ThirdPartyCaf'].forEach(function(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.value = '';
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-  }
-
-  /** API / parent-window payloads use the same ids as the form inputs. */
-  function applyInvestorFields(fields) {
-    if (!fields || typeof fields !== 'object') return;
-    Object.keys(fields).forEach(function(k) {
-      const el = document.getElementById(k);
-      if (!el || typeof el.value === 'undefined') return;
-      const v = fields[k];
-      if (v == null || v === '') return;
-      el.value = String(v);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    buildPreview();
-  }
+  // (Removed) clearThirdPartyFields + applyInvestorFields — third-party
+  // info now travels with the investor's pre-filled PDF (selected via the
+  // investor picker), not via DB-hydrated worksheet inputs.
 
   function collectWorksheetPayload() {
     const selTax = document.getElementById('f4506TaxForm');
@@ -110,8 +90,20 @@
       f4506Notes: val('f4506Notes'),
       f4506ThirdPartyName: val('f4506ThirdPartyName'),
       f4506ThirdPartyAddress: val('f4506ThirdPartyAddress'),
-      f4506ThirdPartyCaf: val('f4506ThirdPartyCaf')
+      f4506ThirdPartyCaf: val('f4506ThirdPartyCaf'),
+      investorPdfRef: getInvestorPdfRef()
     };
+  }
+
+  /** Read the picker's selected option and return the {investorId, docId}
+   *  pair the backend uses to swap the PDF base. Returns null when no
+   *  investor is selected (backend then falls back to the blank IRS PDF). */
+  function getInvestorPdfRef() {
+    const sel = document.getElementById('f4506InvestorSelect');
+    if (!sel) return null;
+    const opt = sel.selectedOptions[0];
+    if (!opt || !opt.value || !opt.dataset.investorId || !opt.dataset.docId) return null;
+    return { investorId: opt.dataset.investorId, docId: opt.dataset.docId };
   }
 
   async function readErrorBody(resp) {
@@ -172,42 +164,11 @@
     }
   }
 
-  async function fetchAndApplyInvestorFields(id, opts) {
-    opts = opts || {};
-    const hint = document.getElementById('f4506InvestorDbHint');
-    if (!id) return;
-    if (hint && !opts.silent) {
-      hint.hidden = false;
-      hint.textContent = 'Loading investor…';
-    }
-    clearThirdPartyFields();
-    try {
-      const r = await MSFG.fetch(MSFG.apiUrl('/api/investors/' + encodeURIComponent(id) + '/form-4506c-fields'));
-      const ct = (r.headers.get('content-type') || '').toLowerCase();
-      const raw = await r.text();
-      let j = {};
-      if (ct.indexOf('application/json') !== -1) {
-        try {
-          j = JSON.parse(raw);
-        } catch (e) {
-          throw new Error('Invalid JSON from investor API.');
-        }
-      } else if (!r.ok) {
-        throw new Error(
-          raw.indexOf('<!DOCTYPE') === 0
-            ? 'Investor fields API not found (404). Same host / PUBLIC_APP_ORIGIN as the main Form 4506-C API.'
-            : 'Request failed (HTTP ' + r.status + ').'
-        );
-      }
-      if (!r.ok || !j.success) throw new Error(j.message || 'Request failed');
-      applyInvestorFields(j.fields || {});
-      if (hint && !opts.hintText) hint.textContent = 'Third party fields updated from database.';
-      if (hint && opts.hintText) hint.textContent = opts.hintText;
-    } catch (e) {
-      console.error(e);
-      if (hint) hint.textContent = e.message || 'Could not load investor row.';
-    }
-  }
+  // No field-application step needed — picking an investor selects their
+  // pre-filled PDF as the base, and the backend stamps borrower fields on
+  // top. The third-party block (5a / 5d) is already in the investor's PDF.
+  // Selection state is read directly off the <option>'s data-* attrs at
+  // submit time (collectWorksheetPayload), not stored anywhere extra.
 
   function getEmailData() {
     return {
@@ -256,68 +217,63 @@
     };
   }
 
-  async function loadInvestorDropdown(loanForMatch) {
+  /** Populate the investor picker from /dashboard-docs/list?docType=form-4506c.
+   *  Each option carries the investor's pre-filled 4506-C PDF as data-doc-id;
+   *  picking one tells the backend (via investorPdfRef in the fill request)
+   *  to use that PDF as the AcroForm base instead of the blank IRS template. */
+  async function loadInvestorDropdown() {
     const sel = document.getElementById('f4506InvestorSelect');
     const hint = document.getElementById('f4506InvestorDbHint');
     if (!sel) return;
 
-    const loan = loanForMatch != null ? String(loanForMatch).trim() : '';
-    const url = MSFG.apiUrl('/api/investors/for-form-4506c') + (loan ? '?loan=' + encodeURIComponent(loan) : '');
-
     try {
-      const r = await MSFG.fetch(url);
-      const ct = (r.headers.get('content-type') || '').toLowerCase();
-      const raw = await r.text();
+      const r = await MSFG.fetch(MSFG.apiUrl('/dashboard-docs/list?docType=form-4506c'));
       let j = {};
-      if (ct.indexOf('application/json') !== -1) {
-        try {
-          j = JSON.parse(raw);
-        } catch (parseErr) {
-          throw new Error('Investor API returned invalid JSON.');
-        }
-      } else if (!r.ok && raw.indexOf('<!DOCTYPE') === 0) {
-        throw new Error(
-          'Investor API not found (404). Use the MSFG Node server on this host (see PORT in .env), or set PUBLIC_APP_ORIGIN to your API origin if the UI is hosted elsewhere.'
-        );
-      } else {
-        throw new Error('Unexpected response from investor API (HTTP ' + r.status + ').');
+      try {
+        j = await r.json();
+      } catch (_e) {
+        throw new Error('Investor docs API returned invalid JSON.');
       }
-      if (!r.ok) throw new Error(j.message || 'Request failed');
+      if (!r.ok || !j.success) throw new Error(j.message || ('Request failed (HTTP ' + r.status + ').'));
 
       while (sel.options.length > 1) sel.remove(1);
 
-      if (hint) {
-        hint.hidden = false;
-        if (!j.configured && j.message) {
-          hint.textContent = j.message;
-        } else if (j.investors && j.investors.length) {
-          hint.textContent = (j.investors.length + ' investor(s) loaded.') + (j.matchHint ? ' ' + j.matchHint : '');
-        } else {
-          hint.textContent = j.configured ? 'No rows in investors table yet.' : (j.message || '');
-        }
-      }
+      const buckets = j.investors || [];
+      // Flatten to one option per (investor, doc). Investors with multiple
+      // 4506-Cs uploaded show each filename so the LO picks the right one.
+      const total = buckets.reduce(function(n, b) { return n + (b.docs ? b.docs.length : 0); }, 0);
 
-      if (j.investors && j.investors.length) {
-        j.investors.forEach(function(inv) {
-          const opt = document.createElement('option');
-          opt.value = String(inv.id);
-          opt.textContent = inv.label || ('Investor #' + inv.id);
-          sel.appendChild(opt);
-        });
+      if (total) {
+        buckets
+          .slice()
+          .sort(function(a, b) { return String(a.investorName || '').localeCompare(String(b.investorName || '')); })
+          .forEach(function(bucket) {
+            bucket.docs.forEach(function(doc) {
+              const opt = document.createElement('option');
+              // Composite value lets handlers parse out both pieces. Each
+              // option also carries them on data-* for clarity.
+              opt.value = bucket.investorId + ':' + doc.docId;
+              opt.dataset.investorId = String(bucket.investorId);
+              opt.dataset.docId = String(doc.docId);
+              opt.textContent = (bucket.investorName || ('Investor #' + bucket.investorId))
+                + ' — ' + (doc.fileName || ('Doc #' + doc.docId));
+              sel.appendChild(opt);
+            });
+          });
         sel.disabled = false;
       } else {
-        sel.disabled = !j.configured;
+        sel.disabled = false;
       }
 
-      if (j.autoSelectId) {
-        sel.value = String(j.autoSelectId);
-        await fetchAndApplyInvestorFields(j.autoSelectId, {
-          silent: true,
-          hintText: j.matchHint || 'Investor matched for this loan.'
-        });
-      } else {
-        sel.value = '';
+      if (hint) {
+        hint.hidden = false;
+        if (total) {
+          hint.textContent = total + ' pre-filled 4506-C(s) available across ' + buckets.length + ' investor(s).';
+        } else {
+          hint.textContent = 'No investor has uploaded a 4506-C tagged "Form 4506-C" in the dashboard yet.';
+        }
       }
+      sel.value = '';
     } catch (e) {
       console.error(e);
       if (hint) {
@@ -327,18 +283,16 @@
     }
   }
 
-  async function onInvestorSelectChange() {
+  function onInvestorSelectChange() {
     const sel = document.getElementById('f4506InvestorSelect');
+    const hint = document.getElementById('f4506InvestorDbHint');
     if (!sel) return;
-
-    const id = sel.value;
-    if (!id) {
-      clearThirdPartyFields();
-      buildPreview();
+    const opt = sel.selectedOptions[0];
+    if (!opt || !opt.value) {
+      if (hint) hint.textContent = 'No investor selected — will use the blank IRS template.';
       return;
     }
-
-    await fetchAndApplyInvestorFields(id);
+    if (hint) hint.textContent = 'Will use ' + opt.textContent + ' as the PDF base.';
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -352,28 +306,12 @@
     if (invSel) {
       invSel.addEventListener('change', onInvestorSelectChange);
     }
-    loadInvestorDropdown('');
+    loadInvestorDropdown();
 
     document.querySelectorAll('#btnF4506DownloadPdf, #btnF4506DownloadPdfFooter').forEach(function(btn) {
       btn.addEventListener('click', function() {
         downloadFilledPdf(btn);
       });
-    });
-
-    window.addEventListener('message', function(e) {
-      if (e.origin !== window.location.origin) return;
-      if (!e.data || e.data.type !== 'MSFG_INVESTOR_FORM4506C') return;
-      applyInvestorFields(e.data.fields || {});
-    });
-
-    window.addEventListener('message', function(e) {
-      if (e.origin !== window.location.origin) return;
-      if (!e.data || e.data.type !== 'MSFG_MISMO') return;
-      if (!isForm4506Page()) return;
-      setTimeout(function() {
-        const loan = val('f4506LoanNumber');
-        loadInvestorDropdown(loan);
-      }, 0);
     });
 
     if (MSFG.ReportTemplates) {

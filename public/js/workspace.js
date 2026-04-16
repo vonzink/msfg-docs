@@ -49,12 +49,9 @@
   }
 
   /* ---- Add document panel ----
-     Selector buttons are added in two waves:
-       1. Server-side renders documents + local templates from res.locals.
-       2. After load, fetchDashboardDocs() injects investor-grouped buttons
-          for editable PDFs uploaded via the dashboard's investor profile.
-     Both waves use the same data-type/data-slug contract; click handler is
-     bound once via event delegation on the selector grid. */
+     Selector buttons are server-side rendered from res.locals (documents
+     from config/documents.json + locally-uploaded templates). The click
+     handler is bound via event delegation on the selector grid. */
   const selectorGrid = document.getElementById('wsSelectorGrid');
   if (selectorGrid) {
     selectorGrid.addEventListener('click', function(e) {
@@ -65,38 +62,28 @@
         btn.dataset.slug,
         btn.querySelector('.workspace__selector-name').textContent.trim(),
         btn.querySelector('.workspace__selector-icon').textContent.trim(),
-        type,
-        {
-          investorId: btn.dataset.investorId || '',
-          docId: btn.dataset.docId || ''
-        }
+        type
       );
     });
   }
 
-  function panelIframeSrc(slug, type, ctx) {
-    if (type === 'dashboard-doc' && ctx && ctx.investorId && ctx.docId) {
-      return MSFG.appUrl('/dashboard-docs/' + encodeURIComponent(ctx.investorId) + '/' + encodeURIComponent(ctx.docId) + '/fill') + '?embed=1';
-    }
+  function panelIframeSrc(slug, type) {
     if (type === 'template') {
       return MSFG.appUrl('/templates/' + slug + '/fill') + '?embed=1';
     }
     return MSFG.appUrl('/documents/' + slug) + '?embed=1';
   }
 
-  function addPanel(slug, name, icon, type, ctx) {
+  function addPanel(slug, name, icon, type) {
     panelCounter++;
     const panelId = 'ws-panel-' + panelCounter;
     const panelType = type || 'document';
-    ctx = ctx || {};
 
     const panel = document.createElement('div');
     panel.className = 'ws-panel';
     panel.id = panelId;
     panel.dataset.slug = slug;
     panel.dataset.type = panelType;
-    if (ctx.investorId) panel.dataset.investorId = ctx.investorId;
-    if (ctx.docId) panel.dataset.docId = ctx.docId;
 
     panel.innerHTML =
       '<div class="ws-panel__header">' +
@@ -112,7 +99,7 @@
         '</div>' +
       '</div>' +
       '<div class="ws-panel__body">' +
-        '<iframe class="ws-panel__iframe" src="' + panelIframeSrc(slug, panelType, ctx) + '" title="' + MSFG.escHtml(name) + '"></iframe>' +
+        '<iframe class="ws-panel__iframe" src="' + panelIframeSrc(slug, panelType) + '" title="' + MSFG.escHtml(name) + '"></iframe>' +
       '</div>';
 
     panels.appendChild(panel);
@@ -166,83 +153,7 @@
   }
 
   updateCount();
-
-  /* ---- Fetch dashboard-sourced investor docs ----
-     Async hydration of the selector grid. We POST nothing — just a GET
-     through msfg-docs which forwards the user's Cognito token to the
-     dashboard backend. Failures degrade silently to "no investor docs"
-     so the workspace still works without dashboard access. */
-  const DOC_TYPE_LABELS = {
-    'form-4506c': 'Form 4506-C',
-    'form-ssa89': 'Form SSA-89',
-    'template':   'Template',
-  };
-  const DOC_TYPE_ICONS = {
-    'form-4506c': '📋',
-    'form-ssa89': '🆔',
-    'template':   '📄',
-  };
-
-  function appendDashboardGroups(buckets) {
-    if (!selectorGrid || !buckets || !buckets.length) return;
-
-    // Sort investors alphabetically; render a divider header so the
-    // dashboard section is visually distinct from local templates above.
-    const sorted = buckets.slice().sort(function(a, b) {
-      return String(a.investorName || '').localeCompare(String(b.investorName || ''));
-    });
-
-    sorted.forEach(function(bucket) {
-      const groupEl = document.createElement('div');
-      groupEl.className = 'workspace__selector-group';
-      groupEl.dataset.cat = 'dashboard';
-      groupEl.setAttribute('data-investor-id', bucket.investorId);
-
-      const labelEl = document.createElement('div');
-      labelEl.className = 'workspace__selector-label';
-      labelEl.setAttribute('data-border-color', '#1565c0');
-      labelEl.textContent = bucket.investorName || ('Investor #' + bucket.investorId);
-      groupEl.appendChild(labelEl);
-
-      bucket.docs.forEach(function(doc) {
-        const btn = document.createElement('button');
-        btn.className = 'workspace__selector-btn';
-        btn.dataset.type = 'dashboard-doc';
-        btn.dataset.investorId = String(bucket.investorId);
-        btn.dataset.docId = String(doc.docId);
-        // Slug field is unused for dashboard docs but kept for the data
-        // attribute the picker search reads.
-        btn.dataset.slug = 'dashboard-' + bucket.investorId + '-' + doc.docId;
-        const searchable = (doc.fileName || '').toLowerCase()
-          + ' ' + String(bucket.investorName || '').toLowerCase()
-          + ' ' + (DOC_TYPE_LABELS[doc.docType] || doc.docType || '').toLowerCase();
-        btn.dataset.name = searchable;
-
-        const iconEl = document.createElement('span');
-        iconEl.className = 'workspace__selector-icon';
-        iconEl.textContent = DOC_TYPE_ICONS[doc.docType] || '📄';
-        btn.appendChild(iconEl);
-
-        const nameEl = document.createElement('span');
-        nameEl.className = 'workspace__selector-name';
-        nameEl.textContent = doc.fileName || ('Document #' + doc.docId);
-        btn.appendChild(nameEl);
-
-        groupEl.appendChild(btn);
-      });
-
-      selectorGrid.appendChild(groupEl);
-    });
-  }
-
-  MSFG.fetch(MSFG.apiUrl('/dashboard-docs/list'))
-    .then(function(r) { return r.ok ? r.json() : null; })
-    .then(function(data) {
-      if (!data || !data.success) return;
-      appendDashboardGroups(data.investors || []);
-    })
-    .catch(function(err) {
-      // Non-fatal — workspace still works without dashboard docs.
-      console.warn('Dashboard docs unavailable:', err);
-    });
+  // Dashboard-sourced investor docs no longer surface in the workspace
+  // selector. Per-investor pre-filled PDFs are picked from inside the
+  // existing 4506-C / SSA-89 documents (via /dashboard-docs/list?docType=...).
 })();

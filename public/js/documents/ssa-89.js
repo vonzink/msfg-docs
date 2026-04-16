@@ -105,28 +105,9 @@
     box.innerHTML = parts.join('');
   }
 
-  function clearCompanyFields() {
-    ['sSsaCompanyName', 'sSsaCompanyAddress', 'sSsaAgentName', 'sSsaAgentAddress', 'sSsaValidFor'].forEach(function(id) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.value = '';
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-  }
-
-  function applyInvestorFields(fields) {
-    if (!fields || typeof fields !== 'object') return;
-    Object.keys(fields).forEach(function(k) {
-      const el = document.getElementById(k);
-      if (!el || typeof el.value === 'undefined') return;
-      const v = fields[k];
-      if (v == null || v === '') return;
-      el.value = String(v);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    buildPreview();
-  }
+  // (Removed) clearCompanyFields + applyInvestorFields — investor company /
+  // agent info now travels with the investor's pre-filled SSA-89 PDF
+  // (selected via the investor picker), not via DB-hydrated worksheet inputs.
 
   function collectWorksheetPayload() {
     return {
@@ -144,8 +125,20 @@
       sSsaInitial: val('sSsaInitial'),
       sSsaSignature: val('sSsaSignature'),
       sSsaDateSigned: val('sSsaDateSigned'),
-      sSsaRelationship: val('sSsaRelationship')
+      sSsaRelationship: val('sSsaRelationship'),
+      investorPdfRef: getInvestorPdfRef()
     };
+  }
+
+  /** Read the picker's selected option and return the {investorId, docId}
+   *  pair the backend uses to swap the PDF base. Returns null when no
+   *  investor is selected (backend then falls back to the blank SSA-89 PDF). */
+  function getInvestorPdfRef() {
+    const sel = document.getElementById('sSsaInvestorSelect');
+    if (!sel) return null;
+    const opt = sel.selectedOptions[0];
+    if (!opt || !opt.value || !opt.dataset.investorId || !opt.dataset.docId) return null;
+    return { investorId: opt.dataset.investorId, docId: opt.dataset.docId };
   }
 
   async function readErrorBody(resp) {
@@ -206,42 +199,9 @@
     }
   }
 
-  async function fetchAndApplyInvestorFields(id, opts) {
-    opts = opts || {};
-    const hint = document.getElementById('sSsaInvestorDbHint');
-    if (!id) return;
-    if (hint && !opts.silent) {
-      hint.hidden = false;
-      hint.textContent = 'Loading investor…';
-    }
-    clearCompanyFields();
-    try {
-      const r = await MSFG.fetch(MSFG.apiUrl('/api/investors/' + encodeURIComponent(id) + '/ssa-89-fields'));
-      const ct = (r.headers.get('content-type') || '').toLowerCase();
-      const raw = await r.text();
-      let j = {};
-      if (ct.indexOf('application/json') !== -1) {
-        try {
-          j = JSON.parse(raw);
-        } catch (e) {
-          throw new Error('Invalid JSON from investor API.');
-        }
-      } else if (!r.ok) {
-        throw new Error(
-          raw.indexOf('<!DOCTYPE') === 0
-            ? 'Investor fields API not found (404). Same host / PUBLIC_APP_ORIGIN as the main SSA-89 API.'
-            : 'Request failed (HTTP ' + r.status + ').'
-        );
-      }
-      if (!r.ok || !j.success) throw new Error(j.message || 'Request failed');
-      applyInvestorFields(j.fields || {});
-      if (hint && !opts.hintText) hint.textContent = 'Company / agent fields updated from database.';
-      if (hint && opts.hintText) hint.textContent = opts.hintText;
-    } catch (e) {
-      console.error(e);
-      if (hint) hint.textContent = e.message || 'Could not load investor row.';
-    }
-  }
+  // (Removed) fetchAndApplyInvestorFields — picking an investor now selects
+  // their pre-filled SSA-89 PDF as the base; the backend stamps borrower
+  // worksheet fields on top of the company/agent block already in the PDF.
 
   function getEmailData() {
     const reasonRow = reasonsLabels().join(', ') + (
@@ -294,68 +254,55 @@
     };
   }
 
-  async function loadInvestorDropdown(loanForMatch) {
+  /** Populate the investor picker from /dashboard-docs/list?docType=form-ssa89.
+   *  Each option carries the investor's pre-filled SSA-89 PDF as data-doc-id;
+   *  picking one tells the backend (via investorPdfRef in the fill request)
+   *  to use that PDF as the AcroForm base instead of the blank SSA template. */
+  async function loadInvestorDropdown() {
     const sel = document.getElementById('sSsaInvestorSelect');
     const hint = document.getElementById('sSsaInvestorDbHint');
     if (!sel) return;
 
-    const loan = loanForMatch != null ? String(loanForMatch).trim() : '';
-    const url = MSFG.apiUrl('/api/investors/for-ssa-89') + (loan ? '?loan=' + encodeURIComponent(loan) : '');
-
     try {
-      const r = await MSFG.fetch(url);
-      const ct = (r.headers.get('content-type') || '').toLowerCase();
-      const raw = await r.text();
+      const r = await MSFG.fetch(MSFG.apiUrl('/dashboard-docs/list?docType=form-ssa89'));
       let j = {};
-      if (ct.indexOf('application/json') !== -1) {
-        try {
-          j = JSON.parse(raw);
-        } catch (parseErr) {
-          throw new Error('Investor API returned invalid JSON.');
-        }
-      } else if (!r.ok && raw.indexOf('<!DOCTYPE') === 0) {
-        throw new Error(
-          'Investor API not found (404). Use the MSFG Node server on this host (see PORT in .env), or set PUBLIC_APP_ORIGIN to your API origin if the UI is hosted elsewhere.'
-        );
-      } else {
-        throw new Error('Unexpected response from investor API (HTTP ' + r.status + ').');
-      }
-      if (!r.ok) throw new Error(j.message || 'Request failed');
+      try { j = await r.json(); } catch (_e) { throw new Error('Investor docs API returned invalid JSON.'); }
+      if (!r.ok || !j.success) throw new Error(j.message || ('Request failed (HTTP ' + r.status + ').'));
 
       while (sel.options.length > 1) sel.remove(1);
 
-      if (hint) {
-        hint.hidden = false;
-        if (!j.configured && j.message) {
-          hint.textContent = j.message;
-        } else if (j.investors && j.investors.length) {
-          hint.textContent = (j.investors.length + ' investor(s) loaded.') + (j.matchHint ? ' ' + j.matchHint : '');
-        } else {
-          hint.textContent = j.configured ? 'No rows in investors table yet.' : (j.message || '');
-        }
-      }
+      const buckets = j.investors || [];
+      const total = buckets.reduce(function(n, b) { return n + (b.docs ? b.docs.length : 0); }, 0);
 
-      if (j.investors && j.investors.length) {
-        j.investors.forEach(function(inv) {
-          const opt = document.createElement('option');
-          opt.value = String(inv.id);
-          opt.textContent = inv.label || ('Investor #' + inv.id);
-          sel.appendChild(opt);
-        });
+      if (total) {
+        buckets
+          .slice()
+          .sort(function(a, b) { return String(a.investorName || '').localeCompare(String(b.investorName || '')); })
+          .forEach(function(bucket) {
+            bucket.docs.forEach(function(doc) {
+              const opt = document.createElement('option');
+              opt.value = bucket.investorId + ':' + doc.docId;
+              opt.dataset.investorId = String(bucket.investorId);
+              opt.dataset.docId = String(doc.docId);
+              opt.textContent = (bucket.investorName || ('Investor #' + bucket.investorId))
+                + ' — ' + (doc.fileName || ('Doc #' + doc.docId));
+              sel.appendChild(opt);
+            });
+          });
         sel.disabled = false;
       } else {
-        sel.disabled = !j.configured;
+        sel.disabled = false;
       }
 
-      if (j.autoSelectId) {
-        sel.value = String(j.autoSelectId);
-        await fetchAndApplyInvestorFields(j.autoSelectId, {
-          silent: true,
-          hintText: j.matchHint || 'Investor matched for this loan.'
-        });
-      } else {
-        sel.value = '';
+      if (hint) {
+        hint.hidden = false;
+        if (total) {
+          hint.textContent = total + ' pre-filled SSA-89(s) available across ' + buckets.length + ' investor(s).';
+        } else {
+          hint.textContent = 'No investor has uploaded an SSA-89 tagged "Form SSA-89" in the dashboard yet.';
+        }
       }
+      sel.value = '';
     } catch (e) {
       console.error(e);
       if (hint) {
@@ -365,18 +312,16 @@
     }
   }
 
-  async function onInvestorSelectChange() {
+  function onInvestorSelectChange() {
     const sel = document.getElementById('sSsaInvestorSelect');
+    const hint = document.getElementById('sSsaInvestorDbHint');
     if (!sel) return;
-
-    const id = sel.value;
-    if (!id) {
-      clearCompanyFields();
-      buildPreview();
+    const opt = sel.selectedOptions[0];
+    if (!opt || !opt.value) {
+      if (hint) hint.textContent = 'No investor selected — will use the blank SSA-89 template.';
       return;
     }
-
-    await fetchAndApplyInvestorFields(id);
+    if (hint) hint.textContent = 'Will use ' + opt.textContent + ' as the PDF base.';
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -390,28 +335,12 @@
     if (invSel) {
       invSel.addEventListener('change', onInvestorSelectChange);
     }
-    loadInvestorDropdown('');
+    loadInvestorDropdown();
 
     document.querySelectorAll('#btnSsaDownloadPdf, #btnSsaDownloadPdfFooter').forEach(function(btn) {
       btn.addEventListener('click', function() {
         downloadFilledPdf(btn);
       });
-    });
-
-    window.addEventListener('message', function(e) {
-      if (e.origin !== window.location.origin) return;
-      if (!e.data || e.data.type !== 'MSFG_INVESTOR_SSA89') return;
-      applyInvestorFields(e.data.fields || {});
-    });
-
-    window.addEventListener('message', function(e) {
-      if (e.origin !== window.location.origin) return;
-      if (!e.data || e.data.type !== 'MSFG_MISMO') return;
-      if (!isSsa89Page()) return;
-      setTimeout(function() {
-        const loan = val('sSsaLoanNumber');
-        loadInvestorDropdown(loan);
-      }, 0);
     });
 
     if (MSFG.ReportTemplates) {

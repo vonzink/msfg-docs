@@ -206,12 +206,18 @@ router.get('/:investorId/:docId/edit', async (req, res) => {
    API ROUTES
    ================================================================ */
 
-/** Flat list of all editable investor docs across all investors. Used
- *  by the workspace selector. We fetch the investor list once and then
- *  fan out per-investor document fetches in parallel. */
+/** Flat list of editable investor docs across all investors. The
+ *  optional ?docType= query restricts to one classification, which the
+ *  per-tool investor pickers (4506-C / SSA-89) use to scope their lists.
+ *  Without the filter, returns every editable doc across investors. */
 router.get('/list', async (req, res) => {
   try {
     const token = getAuthToken(req);
+    const filter = String(req.query.docType || '').trim().toLowerCase();
+    const allowed = filter
+      ? new Set([filter])  // caller asked for a specific type
+      : EDITABLE_DOC_TYPES; // default: anything editable
+
     const investors = await dashboardClient.listInvestors(token);
     const active = (investors || []).filter((i) => i.is_active !== false);
 
@@ -220,7 +226,7 @@ router.get('/list', async (req, res) => {
     const buckets = await Promise.all(active.map(async (inv) => {
       try {
         const docs = await dashboardClient.listInvestorDocuments(inv.id, token);
-        const editable = (docs || []).filter((d) => EDITABLE_DOC_TYPES.has(d.doc_type));
+        const editable = (docs || []).filter((d) => allowed.has(d.doc_type));
         if (!editable.length) return null;
         return {
           investorId: inv.id,
@@ -246,6 +252,18 @@ router.get('/list', async (req, res) => {
     res.status(err.status || 500).json({ success: false, message: err.message });
   }
 });
+
+/** Internal helper: ensure a dashboard PDF is cached locally and return
+ *  its bytes. Used by the existing per-doc PDF generators (4506-C, SSA-89)
+ *  when they need to overlay onto an investor's pre-filled base PDF. */
+async function ensureCachedPdfBytes(investorId, docId, token) {
+  // Same staleness check as the page routes — re-sync when file_key changes.
+  const cfg = await loadOrSyncDashboardDoc(investorId, docId, token);
+  if (!cfg) return null;
+  return dashboardDocStore.readPdfBytes(investorId, docId);
+}
+
+router.ensureCachedPdfBytes = ensureCachedPdfBytes;
 
 router.get('/api/:investorId/:docId', async (req, res) => {
   try {
