@@ -132,23 +132,42 @@
       });
   });
 
-  /* ---- MISMO auto-fill support ---- */
-  window.addEventListener('message', function (e) {
-    if (!e.data || e.data.type !== 'mismoData') return;
-    var mismo = e.data.payload;
-    if (!mismo) return;
-
-    // Auto-fill fields that have mismoPath set
+  /* ---- MISMO auto-fill support ----
+     Workspace broadcasts { type: 'MSFG_MISMO', payload: { xmlString, parsed } }.
+     Each field with a mismoPath set in the editor pulls its value from parsed[mismoPath]. */
+  function applyMismo(parsed) {
+    if (!parsed) return;
     config.fields.forEach(function (f) {
-      if (!f.mismoPath || !mismo[f.mismoPath]) return;
+      if (!f.mismoPath) return;
+      var value = parsed[f.mismoPath];
+      if (value == null || value === '') return;
       var inputId = 'tplf_' + sanitizeId(f.pdfField);
       var el = document.getElementById(inputId);
-      if (el) {
-        el.value = mismo[f.mismoPath];
-        el.dispatchEvent(new Event('change'));
+      if (!el) return;
+      if (el.type === 'checkbox') {
+        // MISMO values won't usually drive checkboxes, but support truthy strings just in case
+        el.checked = value === true || value === 'true' || value === '1' || value === 'on';
+      } else {
+        el.value = String(value);
       }
+      el.dispatchEvent(new Event('change', { bubbles: true }));
     });
+  }
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== window.location.origin) return;
+    if (!e.data || e.data.type !== 'MSFG_MISMO') return;
+    var payload = e.data.payload;
+    applyMismo(payload && payload.parsed);
   });
+
+  // If this fill page loaded after MISMO was already imported into the workspace,
+  // ask the parent to re-broadcast so we don't render an empty form.
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'MSFG_MISMO_REQUEST' }, window.location.origin);
+    }
+  } catch (_e) { /* ignore */ }
 
   renderForm();
 })();

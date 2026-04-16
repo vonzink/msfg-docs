@@ -51,19 +51,32 @@
   /* ---- Add document panel ---- */
   document.querySelectorAll('.workspace__selector-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      addPanel(btn.dataset.slug, btn.querySelector('.workspace__selector-name').textContent.trim(),
-               btn.querySelector('.workspace__selector-icon').textContent.trim());
+      addPanel(
+        btn.dataset.slug,
+        btn.querySelector('.workspace__selector-name').textContent.trim(),
+        btn.querySelector('.workspace__selector-icon').textContent.trim(),
+        btn.dataset.type || 'document'
+      );
     });
   });
 
-  function addPanel(slug, name, icon) {
+  function panelIframeSrc(slug, type) {
+    if (type === 'template') {
+      return MSFG.appUrl('/templates/' + slug + '/fill') + '?embed=1';
+    }
+    return MSFG.appUrl('/documents/' + slug) + '?embed=1';
+  }
+
+  function addPanel(slug, name, icon, type) {
     panelCounter++;
     const panelId = 'ws-panel-' + panelCounter;
+    const panelType = type || 'document';
 
     const panel = document.createElement('div');
     panel.className = 'ws-panel';
     panel.id = panelId;
     panel.dataset.slug = slug;
+    panel.dataset.type = panelType;
 
     panel.innerHTML =
       '<div class="ws-panel__header">' +
@@ -79,7 +92,7 @@
         '</div>' +
       '</div>' +
       '<div class="ws-panel__body">' +
-        '<iframe class="ws-panel__iframe" src="' + MSFG.appUrl('/documents/' + slug) + '?embed=1" title="' + MSFG.escHtml(name) + '"></iframe>' +
+        '<iframe class="ws-panel__iframe" src="' + panelIframeSrc(slug, panelType) + '" title="' + MSFG.escHtml(name) + '"></iframe>' +
       '</div>';
 
     panels.appendChild(panel);

@@ -17,6 +17,57 @@
 
   var fields = config.fields.slice(); // working copy
 
+  /* ---- MISMO source options ----
+     Keys must match what mismo-parser.js puts on the parsed object.
+     Used both in the editor dropdown and at fill time (parsed[mismoPath]). */
+  var MISMO_PATH_GROUPS = [
+    { group: 'Borrower', items: [
+      { value: 'borrowerName',      label: 'Borrower full name' },
+      { value: 'coBorrowerName',    label: 'Co-borrower full name' },
+      { value: 'borrowerTin',       label: 'Borrower SSN / TIN' },
+      { value: 'spouseTin',         label: 'Co-borrower SSN / TIN' },
+      { value: 'borrowerBirthDate', label: 'Borrower date of birth' }
+    ]},
+    { group: 'Loan', items: [
+      { value: 'loanNumber',        label: 'Loan number' },
+      { value: 'baseLoanAmount',    label: 'Base loan amount' },
+      { value: 'noteRate',          label: 'Note rate (%)' },
+      { value: 'loanTermMonths',    label: 'Loan term (months)' },
+      { value: 'loanPurposeType',   label: 'Loan purpose' },
+      { value: 'mortgageType',      label: 'Mortgage type' }
+    ]},
+    { group: 'Property', items: [
+      { value: 'propertyAddress',   label: 'Subject property address (full)' }
+    ]},
+    { group: 'Current residence', items: [
+      { value: 'currentResidenceAddress', label: 'Current residence (full)' },
+      { value: 'currentResidenceLine',    label: 'Current residence — street' },
+      { value: 'currentResidenceCity',    label: 'Current residence — city' },
+      { value: 'currentResidenceState',   label: 'Current residence — state' },
+      { value: 'currentResidencePostal',  label: 'Current residence — ZIP' }
+    ]},
+    { group: 'Prior residence', items: [
+      { value: 'previousResidenceAddress', label: 'Prior residence (full)' },
+      { value: 'priorResidenceLine',       label: 'Prior residence — street' },
+      { value: 'priorResidenceCity',       label: 'Prior residence — city' },
+      { value: 'priorResidenceState',      label: 'Prior residence — state' },
+      { value: 'priorResidencePostal',     label: 'Prior residence — ZIP' }
+    ]}
+  ];
+
+  function mismoOptions(current) {
+    var html = '<option value=""' + (current ? '' : ' selected') + '>— None —</option>';
+    MISMO_PATH_GROUPS.forEach(function (grp) {
+      html += '<optgroup label="' + MSFG.escHtml(grp.group) + '">';
+      grp.items.forEach(function (it) {
+        var sel = it.value === current ? ' selected' : '';
+        html += '<option value="' + MSFG.escHtml(it.value) + '"' + sel + '>' + MSFG.escHtml(it.label) + '</option>';
+      });
+      html += '</optgroup>';
+    });
+    return html;
+  }
+
   /* ---- Render field rows ---- */
   function renderFields() {
     fieldCountEl.textContent = fields.length;
@@ -27,6 +78,7 @@
       + '<span class="tpl-fh-group">Group</span>'
       + '<span class="tpl-fh-type">Type</span>'
       + '<span class="tpl-fh-placeholder">Placeholder</span>'
+      + '<span class="tpl-fh-mismo">MISMO source</span>'
       + '</div>';
 
     fields.forEach(function (f, idx) {
@@ -45,6 +97,9 @@
         + typeOption('radio', f.type)
         + '</select>'
         + '<input class="tpl-fr-placeholder" value="' + MSFG.escHtml(f.placeholder || '') + '" data-key="placeholder" data-idx="' + idx + '" placeholder="hint text">'
+        + '<select class="tpl-fr-mismo" data-key="mismoPath" data-idx="' + idx + '" title="Auto-fill source from imported MISMO XML">'
+        + mismoOptions(f.mismoPath || '')
+        + '</select>'
         + '</div>';
     });
 

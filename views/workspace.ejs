@@ -54,13 +54,26 @@
               <%= cat.label %>
             </div>
             <% documents.filter(d => d.category === cat.id).forEach(doc => { %>
-              <button class="workspace__selector-btn" data-slug="<%= doc.slug %>" data-name="<%= doc.name.toLowerCase() %>">
+              <button class="workspace__selector-btn" data-type="document" data-slug="<%= doc.slug %>" data-name="<%= doc.name.toLowerCase() %>">
                 <span class="workspace__selector-icon"><%= doc.icon %></span>
                 <span class="workspace__selector-name"><%= doc.name %></span>
               </button>
             <% }) %>
           </div>
         <% }) %>
+        <% if (templates && templates.length) { %>
+          <div class="workspace__selector-group" data-cat="templates">
+            <div class="workspace__selector-label" data-border-color="#6b7280">
+              Your PDF Templates
+            </div>
+            <% templates.forEach(tpl => { %>
+              <button class="workspace__selector-btn" data-type="template" data-slug="<%= tpl.slug %>" data-name="<%= tpl.name.toLowerCase() %>">
+                <span class="workspace__selector-icon"><%= tpl.icon || '📄' %></span>
+                <span class="workspace__selector-name"><%= tpl.name %></span>
+              </button>
+            <% }) %>
+          </div>
+        <% } %>
       </div>
     </div>
   </div>

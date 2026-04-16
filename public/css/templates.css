@@ -131,7 +131,7 @@
 .tpl-field-header,
 .tpl-field-row {
   display: grid;
-  grid-template-columns: 50px 1fr 1fr 120px 90px 1fr;
+  grid-template-columns: 50px 0.9fr 1fr 100px 90px 0.9fr 1.3fr;
   gap: var(--space-xs, 6px);
   align-items: center;
   padding: var(--space-xs, 6px) var(--space-sm, 12px);
@@ -232,7 +232,7 @@
 @media (max-width: 900px) {
   .tpl-field-header,
   .tpl-field-row {
-    grid-template-columns: 40px 1fr 1fr 80px;
+    grid-template-columns: 40px 1fr 1fr 80px 1fr;
     font-size: 0.8rem;
   }
   .tpl-fh-placeholder,
