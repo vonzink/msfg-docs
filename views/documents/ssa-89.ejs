@@ -1,0 +1,178 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <div class="calc-section ssa-89__notice">
+      <p class="text-muted" style="margin:0 0 var(--space-sm);">
+        Fill the worksheet below, then use <strong>Download filled SSA PDF</strong> to get an AcroForm-filled copy
+        (browser “Open blank SSA PDF” is the blank template only).
+        After you <strong>import MISMO</strong> in the workspace, the loan number is used to match an investor when you set the
+        MYSQL_INVESTORS_LOAN_COLUMN env var or store matching loan numbers inside the <code>doc_ssa</code> JSON.
+      </p>
+      <div class="ssa-89__pdf-actions">
+        <button type="button" class="btn btn-primary icon-inline" id="btnSsaDownloadPdf">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download filled SSA PDF
+        </button>
+        <a class="btn btn-secondary icon-inline" href="<%= basePath %>/documents/ssa-89.pdf" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Open blank SSA PDF
+        </a>
+      </div>
+    </div>
+
+    <!-- Section 1: File reference -->
+    <div class="calc-section">
+      <h2><span class="section-number">1</span> Loan file</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="sSsaLoanNumber">Loan number</label>
+          <input type="text" id="sSsaLoanNumber" placeholder="From MISMO / LOS" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Borrower (subject of the SSN verification) -->
+    <div class="calc-section">
+      <h2><span class="section-number">2</span> Borrower (subject of verification)</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group form-group--full">
+          <label for="sSsaPrintedName">Printed name</label>
+          <input type="text" id="sSsaPrintedName" placeholder="First Middle Last" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="sSsaDob">Date of birth</label>
+          <input type="text" id="sSsaDob" placeholder="MM/DD/YYYY" autocomplete="bday" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label for="sSsaSsn">SSN</label>
+          <input type="text" id="sSsaSsn" placeholder="XXX-XX-XXXX" inputmode="numeric" autocomplete="off" maxlength="11">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Reason for verification -->
+    <div class="calc-section">
+      <h2><span class="section-number">3</span> Reason for verification</h2>
+      <p class="text-muted" style="margin-top:0;">
+        For mortgage origination the <strong>Mortgage</strong> reason is checked by default.
+      </p>
+      <div class="ssa-89__reasons">
+        <label class="ssa-89__check"><input type="checkbox" id="sSsaReasonMortgage" checked> Mortgage service</label>
+        <label class="ssa-89__check"><input type="checkbox" id="sSsaReasonBankAccount"> Banking service</label>
+        <label class="ssa-89__check"><input type="checkbox" id="sSsaReasonCreditCard"> Credit card</label>
+        <label class="ssa-89__check"><input type="checkbox" id="sSsaReasonLoan"> Loan check</label>
+        <label class="ssa-89__check"><input type="checkbox" id="sSsaReasonRetirement"> Retirement account</label>
+        <label class="ssa-89__check"><input type="checkbox" id="sSsaReasonJob"> Apply for a job</label>
+        <label class="ssa-89__check"><input type="checkbox" id="sSsaReasonLicense"> Licensing requirement</label>
+        <label class="ssa-89__check"><input type="checkbox" id="sSsaReasonOther"> Other</label>
+      </div>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="sSsaOtherText">Other reason — explanation <span class="text-muted">(only used when “Other” is checked)</span></label>
+          <input type="text" id="sSsaOtherText" placeholder="Optional">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Requesting company (the lender) -->
+    <div class="calc-section">
+      <h2><span class="section-number">4</span> Requesting company</h2>
+      <p class="text-muted" style="margin-top:0;">
+        Choose an investor from your MSFG database (same source as
+        <a href="https://dashboard.msfgco.com/Calculators/Admin%20Settings/admin-settings.html" target="_blank" rel="noopener noreferrer">Admin Settings</a>).
+        Selecting an investor populates Company / Agent below; you can still edit after.
+      </p>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="sSsaInvestorSelect">Investor</label>
+          <select id="sSsaInvestorSelect">
+            <option value="">Select investor…</option>
+          </select>
+          <p class="text-muted ssa-89__hint" id="sSsaInvestorDbHint" hidden></p>
+        </div>
+        <div class="form-group form-group--full">
+          <label for="sSsaCompanyName">Company name</label>
+          <input type="text" id="sSsaCompanyName" placeholder="Lender or requesting company">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="sSsaCompanyAddress">Company address</label>
+          <input type="text" id="sSsaCompanyAddress" placeholder="Street, City, ST ZIP">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Agent / verification vendor -->
+    <div class="calc-section">
+      <h2><span class="section-number">5</span> Agent / verification vendor <span class="text-muted">(optional)</span></h2>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="sSsaAgentName">Agent name</label>
+          <input type="text" id="sSsaAgentName" placeholder="e.g. verification service vendor">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="sSsaAgentAddress">Agent address</label>
+          <input type="text" id="sSsaAgentAddress" placeholder="Street, City, ST ZIP">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: Validity + signature line -->
+    <div class="calc-section">
+      <h2><span class="section-number">6</span> Validity &amp; signature</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="sSsaValidFor">Valid for (days)</label>
+          <input type="text" id="sSsaValidFor" placeholder="60" maxlength="4" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label for="sSsaInitial">Borrower initial</label>
+          <input type="text" id="sSsaInitial" placeholder="ABC" maxlength="5">
+        </div>
+        <div class="form-group">
+          <label for="sSsaSignature">Signature line <span class="text-muted">(printed name; borrower signs in pen)</span></label>
+          <input type="text" id="sSsaSignature" placeholder="Borrower's printed name">
+        </div>
+        <div class="form-group">
+          <label for="sSsaDateSigned">Date signed</label>
+          <input type="text" id="sSsaDateSigned" placeholder="MM/DD/YYYY" inputmode="numeric">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="sSsaRelationship">Relationship <span class="text-muted">(only if not signed by the borrower)</span></label>
+          <input type="text" id="sSsaRelationship" placeholder="e.g. Power of Attorney, Guardian">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 7: Preview -->
+    <div class="calc-section">
+      <h2><span class="section-number">7</span> Summary preview</h2>
+      <div id="sSsaPreview" class="letter-preview ssa-89__preview">
+        <p class="text-muted text-center">Data will appear here for printing.</p>
+      </div>
+    </div>
+
+    <div class="action-bar doc-actions">
+      <button type="button" class="btn btn-primary icon-inline" id="btnSsaDownloadPdfFooter">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download filled PDF
+      </button>
+      <a class="btn btn-secondary icon-inline" href="<%= basePath %>/documents/ssa-89.pdf" target="_blank" rel="noopener noreferrer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Blank SSA PDF
+      </a>
+      <button type="button" class="btn btn-secondary icon-inline" data-action="doc-print">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      <button type="button" class="btn btn-secondary icon-inline" data-action="doc-email">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email
+      </button>
+    </div>
+  </div>
+</div>

@@ -125,6 +125,18 @@
     setInput(document.getElementById('f4506Zip'), zip);
   }
 
+  function applyToSsa89(parsed) {
+    setInput(document.getElementById('sSsaLoanNumber'), parsed.loanNumber || '');
+    setInput(document.getElementById('sSsaPrintedName'), parsed.borrowerName || '');
+    if (parsed.borrowerTin) setInput(document.getElementById('sSsaSsn'), parsed.borrowerTin);
+    if (parsed.borrowerBirthDate) setInput(document.getElementById('sSsaDob'), parsed.borrowerBirthDate);
+
+    // Default the signature line to the borrower's printed name; the borrower
+    // signs in pen, but we pre-fill the name so the worksheet preview reads cleanly.
+    const sig = document.getElementById('sSsaSignature');
+    if (sig && !sig.value && parsed.borrowerName) setInput(sig, parsed.borrowerName);
+  }
+
   function applyMismoPayload(payload) {
     const parsed = payload && payload.parsed;
     if (!parsed) return;
@@ -134,6 +146,7 @@
     if (slug === 'address-lox') return applyToAddressLox(parsed);
     if (slug === 'credit-inquiry') return applyToCreditInquiry(parsed);
     if (slug === 'form-4506-c') return applyToForm4506c(parsed);
+    if (slug === 'ssa-89') return applyToSsa89(parsed);
   }
 
   window.addEventListener('message', function(e) {

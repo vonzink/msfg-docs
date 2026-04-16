@@ -3,6 +3,7 @@
 const express = require('express');
 const { generateCreditInquiryPdfBuffer } = require('../lib/pdf/creditInquiryPdf');
 const { generateForm4506cPdfBuffer } = require('../lib/pdf/form4506cPdf');
+const { generateSsa89PdfBuffer } = require('../lib/pdf/ssa89Pdf');
 
 const router = express.Router();
 
@@ -27,6 +28,18 @@ router.post('/form-4506-c', express.json({ limit: '2mb' }), async (req, res) => 
   } catch (err) {
     console.error('[PDF] Form 4506-C error:', err);
     res.status(500).json({ success: false, message: err.message || 'Failed to generate Form 4506-C PDF.' });
+  }
+});
+
+router.post('/ssa-89', express.json({ limit: '2mb' }), async (req, res) => {
+  try {
+    const bytes = await generateSsa89PdfBuffer(req.body || {});
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="SSA-89-filled.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error('[PDF] SSA-89 error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to generate SSA-89 PDF.' });
   }
 });
 

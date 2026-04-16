@@ -18,7 +18,8 @@ const docRoutes = [
   { slug: 'income-statement',  view: 'documents/income-statement',  title: 'Income Statement',        css: 'income-statement' },
   { slug: 'balance-sheet',    view: 'documents/balance-sheet',    title: 'Balance Sheet',           css: 'balance-sheet' },
   { slug: 'invoice',          view: 'documents/invoice',          title: 'Generic Invoice',         css: 'invoice' },
-  { slug: 'form-4506-c',      view: 'documents/form-4506-c',      title: 'IRS Form 4506-C',         css: 'form-4506-c' }
+  { slug: 'form-4506-c',      view: 'documents/form-4506-c',      title: 'IRS Form 4506-C',         css: 'form-4506-c' },
+  { slug: 'ssa-89',           view: 'documents/ssa-89',           title: 'SSA-89',                  css: 'ssa-89' }
 ];
 
 docRoutes.forEach(dr => {
