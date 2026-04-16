@@ -71,6 +71,19 @@
   font-weight: 600;
   color: var(--clr-text, #1a1a1a);
 }
+.tpl-card__investor {
+  display: inline-block;
+  margin-left: var(--space-xs, 6px);
+  padding: 1px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(45, 106, 79, 0.10);
+  color: var(--clr-primary, #2d6a4f);
+  border-radius: 999px;
+  vertical-align: middle;
+}
 .tpl-card__meta {
   margin: 2px 0 0;
   font-size: 0.82rem;

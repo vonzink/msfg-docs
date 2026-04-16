@@ -62,17 +62,47 @@
           </div>
         <% }) %>
         <% if (templates && templates.length) { %>
-          <div class="workspace__selector-group" data-cat="templates">
-            <div class="workspace__selector-label" data-border-color="#6b7280">
-              Your PDF Templates
+          <%
+            // Bucket templates by investorName. Templates without one fall
+            // into "Generic Templates"; per-investor groups render first
+            // (alphabetical) so the loan officer can scan to their bank.
+            const _byInvestor = {};
+            templates.forEach(t => {
+              const key = (t.investorName || '').trim();
+              const bucket = key || '__generic__';
+              if (!_byInvestor[bucket]) _byInvestor[bucket] = [];
+              _byInvestor[bucket].push(t);
+            });
+            const _investorNames = Object.keys(_byInvestor)
+              .filter(k => k !== '__generic__')
+              .sort((a, b) => a.localeCompare(b));
+          %>
+          <% _investorNames.forEach(name => { %>
+            <div class="workspace__selector-group" data-cat="templates">
+              <div class="workspace__selector-label" data-border-color="#6b7280">
+                <%= name %>
+              </div>
+              <% _byInvestor[name].forEach(tpl => { %>
+                <button class="workspace__selector-btn" data-type="template" data-slug="<%= tpl.slug %>" data-name="<%= (tpl.name || '').toLowerCase() + ' ' + name.toLowerCase() %>">
+                  <span class="workspace__selector-icon"><%= tpl.icon || '📄' %></span>
+                  <span class="workspace__selector-name"><%= tpl.name %></span>
+                </button>
+              <% }) %>
             </div>
-            <% templates.forEach(tpl => { %>
-              <button class="workspace__selector-btn" data-type="template" data-slug="<%= tpl.slug %>" data-name="<%= tpl.name.toLowerCase() %>">
-                <span class="workspace__selector-icon"><%= tpl.icon || '📄' %></span>
-                <span class="workspace__selector-name"><%= tpl.name %></span>
-              </button>
-            <% }) %>
-          </div>
+          <% }) %>
+          <% if (_byInvestor['__generic__']) { %>
+            <div class="workspace__selector-group" data-cat="templates">
+              <div class="workspace__selector-label" data-border-color="#9ca3af">
+                Generic Templates
+              </div>
+              <% _byInvestor['__generic__'].forEach(tpl => { %>
+                <button class="workspace__selector-btn" data-type="template" data-slug="<%= tpl.slug %>" data-name="<%= (tpl.name || '').toLowerCase() %>">
+                  <span class="workspace__selector-icon"><%= tpl.icon || '📄' %></span>
+                  <span class="workspace__selector-name"><%= tpl.name %></span>
+                </button>
+              <% }) %>
+            </div>
+          <% } %>
         <% } %>
       </div>
     </div>

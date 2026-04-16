@@ -65,6 +65,7 @@
     fd.append('name', document.getElementById('tplName').value);
     fd.append('category', document.getElementById('tplCategory').value);
     fd.append('description', document.getElementById('tplDescription').value);
+    fd.append('investorName', document.getElementById('tplInvestorName').value);
 
     MSFG.fetch(MSFG.apiUrl('/templates/api/upload'), { method: 'POST', body: fd })
       .then(function (r) { return r.json(); })
@@ -95,6 +96,7 @@
           return;
         }
         listEmptyEl.style.display = 'none';
+        renderInvestorDatalist(data.templates);
         renderList(data.templates);
       })
       .catch(function () {
@@ -102,13 +104,36 @@
       });
   }
 
+  /** Populate the upload form's investor autocomplete with the unique
+   *  investor names already used across existing templates. Free text is
+   *  still allowed; this is just a convenience suggestion list. */
+  function renderInvestorDatalist(templates) {
+    var dl = document.getElementById('tplInvestorList');
+    if (!dl) return;
+    var seen = {};
+    var names = [];
+    templates.forEach(function (t) {
+      var n = (t.investorName || '').trim();
+      if (!n || seen[n.toLowerCase()]) return;
+      seen[n.toLowerCase()] = true;
+      names.push(n);
+    });
+    names.sort();
+    dl.innerHTML = names.map(function (n) {
+      return '<option value="' + MSFG.escHtml(n) + '"></option>';
+    }).join('');
+  }
+
   function renderList(templates) {
     var html = '';
     templates.forEach(function (tpl) {
+      var inv = (tpl.investorName || '').trim();
       html += '<div class="tpl-card" data-id="' + MSFG.escHtml(tpl.id) + '">'
         + '<div class="tpl-card__icon">' + MSFG.escHtml(tpl.icon || '📄') + '</div>'
         + '<div class="tpl-card__body">'
-        + '<h3 class="tpl-card__name">' + MSFG.escHtml(tpl.name) + '</h3>'
+        + '<h3 class="tpl-card__name">' + MSFG.escHtml(tpl.name)
+        + (inv ? ' <span class="tpl-card__investor">' + MSFG.escHtml(inv) + '</span>' : '')
+        + '</h3>'
         + '<p class="tpl-card__meta">'
         + MSFG.escHtml(tpl.category) + ' &middot; '
         + tpl.fieldCount + ' fields'

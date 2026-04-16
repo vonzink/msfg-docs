@@ -87,7 +87,8 @@ router.post('/api/upload', uploadLimiter, upload.single('pdf'), async (req, res)
       name: req.body.name || undefined,
       category: req.body.category || undefined,
       icon: req.body.icon || undefined,
-      description: req.body.description || undefined
+      description: req.body.description || undefined,
+      investorName: req.body.investorName || undefined
     };
     const config = await templateService.createTemplate(req.file.buffer, req.file.originalname, meta);
     res.json({ success: true, template: config });

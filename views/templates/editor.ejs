@@ -37,6 +37,10 @@
           <label for="edIcon">Icon</label>
           <input type="text" id="edIcon" value="<%= templateConfig.icon %>" placeholder="Emoji or leave blank" maxlength="4">
         </div>
+        <div class="form-group">
+          <label for="edInvestorName">Investor <span class="text-muted">(optional)</span></label>
+          <input type="text" id="edInvestorName" value="<%= templateConfig.investorName || '' %>" placeholder="e.g. Keystone Funding">
+        </div>
         <div class="form-group form-group--full">
           <label for="edDescription">Description</label>
           <input type="text" id="edDescription" value="<%= templateConfig.description %>">

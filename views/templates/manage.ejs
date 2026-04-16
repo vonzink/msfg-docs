@@ -27,6 +27,11 @@
             <input type="text" id="tplName" name="name" placeholder="e.g. IRS Form 4506-C">
           </div>
           <div class="form-group">
+            <label for="tplInvestorName">Investor <span class="text-muted">(optional)</span></label>
+            <input type="text" id="tplInvestorName" name="investorName" list="tplInvestorList" placeholder="e.g. Keystone Funding" autocomplete="off">
+            <datalist id="tplInvestorList"></datalist>
+          </div>
+          <div class="form-group">
             <label for="tplCategory">Category</label>
             <select id="tplCategory" name="category">
               <% categories.forEach(cat => { %>

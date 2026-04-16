@@ -46,17 +46,13 @@
       { value: 'mismo:priorResidenceState',      label: 'Prior residence — state' },
       { value: 'mismo:priorResidencePostal',     label: 'Prior residence — ZIP' }
     ]},
-    { group: 'Investor record (database)', items: [
-      { value: 'investor:companyName',     label: 'Company name' },
-      { value: 'investor:companyAddress',  label: 'Company address' },
-      { value: 'investor:agentName',       label: 'Agent name' },
-      { value: 'investor:agentAddress',    label: 'Agent address' },
-      { value: 'investor:mailingAddress',  label: 'Mailing address' },
-      { value: 'investor:phone',           label: 'Phone' },
-      { value: 'investor:email',           label: 'Email' },
-      { value: 'investor:caf',             label: 'CAF number' },
-      { value: 'investor:validFor',        label: 'Valid for (days)' }
-    ]}
+    // Note: the database-pull "Investor record" optgroup was deliberately
+    // removed from the picker. The /api/investors/for-template +
+    // /:id/template-fields endpoints and templateMapper.js remain in place
+    // (see commit f6f85fe) so we can re-enable this source type later
+    // without rebuilding the back end. The new primary flow is per-investor
+    // pre-filled PDF templates: investor info is baked into the uploaded
+    // PDF, MISMO fills the borrower fields, no DB hydration needed.
   ];
 
   /** Normalize a stored source value:
@@ -244,6 +240,7 @@
     saveMetaBtn.disabled = true;
     metaStatusEl.textContent = 'Saving...';
 
+    var investorEl = document.getElementById('edInvestorName');
     MSFG.fetch(MSFG.apiUrl('/templates/api/' + config.id), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -251,7 +248,8 @@
         name: document.getElementById('edName').value,
         category: document.getElementById('edCategory').value,
         icon: document.getElementById('edIcon').value,
-        description: document.getElementById('edDescription').value
+        description: document.getElementById('edDescription').value,
+        investorName: investorEl ? investorEl.value : ''
       })
     })
       .then(function (r) { return r.json(); })
