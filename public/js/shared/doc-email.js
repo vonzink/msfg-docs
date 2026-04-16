@@ -178,7 +178,7 @@
     setStatus('Sending...', '');
 
     try {
-      const resp = await fetch(MSFG.apiUrl('/api/email/send'), {
+      const resp = await MSFG.fetch(MSFG.apiUrl('/api/email/send'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: to, subject: subject, message: message, calcData: data })

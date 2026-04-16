@@ -66,7 +66,7 @@
     fd.append('category', document.getElementById('tplCategory').value);
     fd.append('description', document.getElementById('tplDescription').value);
 
-    fetch(MSFG.apiUrl('/templates/api/upload'), { method: 'POST', body: fd })
+    MSFG.fetch(MSFG.apiUrl('/templates/api/upload'), { method: 'POST', body: fd })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (!data.success) {
@@ -87,7 +87,7 @@
 
   /* ---- Load template list ---- */
   function loadList() {
-    fetch(MSFG.apiUrl('/templates/api/list'))
+    MSFG.fetch(MSFG.apiUrl('/templates/api/list'))
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (!data.success || !data.templates.length) {
@@ -128,7 +128,7 @@
       btn.addEventListener('click', function () {
         if (!confirm('Delete this template? This cannot be undone.')) return;
         var id = btn.dataset.id;
-        fetch(MSFG.apiUrl('/templates/api/' + id), { method: 'DELETE' })
+        MSFG.fetch(MSFG.apiUrl('/templates/api/' + id), { method: 'DELETE' })
           .then(function (r) { return r.json(); })
           .then(function (data) {
             if (data.success) {

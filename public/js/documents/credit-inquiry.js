@@ -214,7 +214,7 @@
   async function exportPdf() {
     const payload = buildPdfPayload();
 
-    const resp = await fetch(MSFG.apiUrl('/api/pdf/credit-inquiry'), {
+    const resp = await MSFG.fetch(MSFG.apiUrl('/api/pdf/credit-inquiry'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

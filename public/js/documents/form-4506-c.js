@@ -139,7 +139,7 @@
       btn.textContent = 'Building PDF…';
     }
     try {
-      const resp = await fetch(MSFG.apiUrl('/api/pdf/form-4506-c'), {
+      const resp = await MSFG.fetch(MSFG.apiUrl('/api/pdf/form-4506-c'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(collectWorksheetPayload())
@@ -182,7 +182,7 @@
     }
     clearThirdPartyFields();
     try {
-      const r = await fetch(MSFG.apiUrl('/api/investors/' + encodeURIComponent(id) + '/form-4506c-fields'));
+      const r = await MSFG.fetch(MSFG.apiUrl('/api/investors/' + encodeURIComponent(id) + '/form-4506c-fields'));
       const ct = (r.headers.get('content-type') || '').toLowerCase();
       const raw = await r.text();
       let j = {};
@@ -265,7 +265,7 @@
     const url = MSFG.apiUrl('/api/investors/for-form-4506c') + (loan ? '?loan=' + encodeURIComponent(loan) : '');
 
     try {
-      const r = await fetch(url);
+      const r = await MSFG.fetch(url);
       const ct = (r.headers.get('content-type') || '').toLowerCase();
       const raw = await r.text();
       let j = {};

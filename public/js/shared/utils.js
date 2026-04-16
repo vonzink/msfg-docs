@@ -76,6 +76,54 @@ MSFG.apiUrl = function(path) {
 /** Short alias for building app-relative URLs in dynamic HTML. */
 MSFG.appUrl = MSFG.apiUrl;
 
+/**
+ * Read the Cognito auth token from where the parent dashboard stores it.
+ * The dashboard writes the same JWT to localStorage, sessionStorage, and a
+ * shared *.msfgco.com cookie. The cookie path and SameSite settings can vary
+ * across browsers and iframe contexts, so we explicitly source from storage
+ * (most reliable across same-origin iframes) before falling back to cookie.
+ */
+MSFG.getAuthToken = function() {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      var ls = localStorage.getItem('auth_token');
+      if (ls) return ls;
+    }
+  } catch (_e) { /* storage may be blocked */ }
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      var ss = sessionStorage.getItem('auth_token');
+      if (ss) return ss;
+    }
+  } catch (_e) { /* storage may be blocked */ }
+  try {
+    if (typeof document !== 'undefined' && document.cookie) {
+      var m = document.cookie.match(/(?:^|;\s*)auth_token=([^;]*)/);
+      if (m) return decodeURIComponent(m[1]);
+    }
+  } catch (_e) { /* cookie may be blocked */ }
+  return null;
+};
+
+/**
+ * Wrapper around fetch that automatically attaches the Cognito Bearer token
+ * from MSFG.getAuthToken(). Use for all calls to /docs/api/* — the dashboard
+ * does not auto-share its token with this app, so we must attach it ourselves.
+ */
+MSFG.fetch = function(input, init) {
+  init = init || {};
+  var headers = new Headers(init.headers || {});
+  var token = MSFG.getAuthToken();
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', 'Bearer ' + token);
+  }
+  init.headers = headers;
+  // Same-origin by default; explicit so cookies still flow in case fallback
+  // auth via cookie ever becomes available.
+  if (!init.credentials) init.credentials = 'same-origin';
+  return fetch(input, init);
+};
+
 /* Mobile menu toggle + doc metadata from data attributes */
 document.addEventListener('DOMContentLoaded', function() {
   const toggle = document.getElementById('mobileMenuToggle');

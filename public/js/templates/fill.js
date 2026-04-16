@@ -101,7 +101,7 @@
 
     var values = collectValues();
 
-    fetch(MSFG.apiUrl('/templates/api/' + config.id + '/fill'), {
+    MSFG.fetch(MSFG.apiUrl('/templates/api/' + config.id + '/fill'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: values })

@@ -100,7 +100,7 @@
       }
     });
 
-    fetch(MSFG.apiUrl('/templates/api/' + config.id), {
+    MSFG.fetch(MSFG.apiUrl('/templates/api/' + config.id), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: fields })
@@ -130,12 +130,12 @@
 
     // Fetch a fresh config by re-reading the PDF fields server-side
     // We do this by fetching the template PDF and having the server re-analyze
-    fetch(MSFG.apiUrl('/templates/api/' + config.id))
+    MSFG.fetch(MSFG.apiUrl('/templates/api/' + config.id))
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (!data.success) throw new Error(data.message);
         // We need to ask the server to re-detect — use a PUT with a special flag
-        return fetch(MSFG.apiUrl('/templates/api/' + config.id), {
+        return MSFG.fetch(MSFG.apiUrl('/templates/api/' + config.id), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ redetect: true })
@@ -164,7 +164,7 @@
     saveMetaBtn.disabled = true;
     metaStatusEl.textContent = 'Saving...';
 
-    fetch(MSFG.apiUrl('/templates/api/' + config.id), {
+    MSFG.fetch(MSFG.apiUrl('/templates/api/' + config.id), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
