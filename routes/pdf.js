@@ -6,6 +6,8 @@ const { generateForm4506cPdfBuffer } = require('../lib/pdf/form4506cPdf');
 const { generateSsa89PdfBuffer } = require('../lib/pdf/ssa89Pdf');
 const { generateGiftLetterPdfBuffer } = require('../lib/pdf/giftLetterPdf');
 const { generateGenericLoxPdfBuffer } = require('../lib/pdf/genericLoxPdf');
+const { generateAddressLoxPdfBuffer } = require('../lib/pdf/addressLoxPdf');
+const { generatePreApprovalPdfBuffer } = require('../lib/pdf/preApprovalPdf');
 const { generateStructuredPdfBuffer } = require('../lib/pdf/structuredPdf');
 const { ensurePdfBytes } = require('../services/dashboardSync');
 
@@ -97,6 +99,30 @@ router.post('/structured', express.json({ limit: '2mb' }), async (req, res) => {
   } catch (err) {
     console.error('[PDF] Structured error:', err);
     res.status(500).json({ success: false, message: err.message || 'Failed to generate PDF.' });
+  }
+});
+
+router.post('/address-lox', express.json({ limit: '2mb' }), async (req, res) => {
+  try {
+    const bytes = await generateAddressLoxPdfBuffer(req.body || {});
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Address-LOX.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error('[PDF] Address LOX error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to generate LOX PDF.' });
+  }
+});
+
+router.post('/pre-approval', express.json({ limit: '2mb' }), async (req, res) => {
+  try {
+    const bytes = await generatePreApprovalPdfBuffer(req.body || {});
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Pre-Approval-Letter.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error('[PDF] Pre-Approval error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to generate Pre-Approval PDF.' });
   }
 });
 

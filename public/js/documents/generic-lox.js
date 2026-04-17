@@ -78,6 +78,7 @@
         for (let j = idx + 1; j < all.length; j++) if (all[j].name) return true;
         return false;
       });
+    const style = document.getElementById('letterStyleSelect');
     return {
       borrowerNames: val('loxBorrowerNames'),
       loanNumber: val('loxLoanNumber'),
@@ -85,7 +86,8 @@
       letterDate: val('loxLetterDate') || todayLong(),
       topic: val('loxTopic'),
       explanation: val('loxExplanation'),
-      signers
+      signers,
+      letterStyle: style ? style.value : 'classic'
     };
   }
 

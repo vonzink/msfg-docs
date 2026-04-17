@@ -135,6 +135,45 @@
     preview.innerHTML = html;
   }
 
+  /* ---- Download PDF ---- */
+  function collectPdfPayload() {
+    const style = document.getElementById('letterStyleSelect');
+    return {
+      borrowerName: val('borrowerName'),
+      loanNumber: val('loanNumber'),
+      currentAddress: val('currentAddress'),
+      letterDate: val('letterDate') || todayLong(),
+      addresses: collectRows(),
+      letterStyle: style ? style.value : 'classic'
+    };
+  }
+
+  async function downloadPdf(btn) {
+    if (btn) { btn.disabled = true; btn.dataset._lbl = btn.dataset._lbl || btn.textContent; btn.textContent = 'Building PDF…'; }
+    try {
+      const resp = await MSFG.fetch(MSFG.apiUrl('/api/pdf/address-lox'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(collectPdfPayload())
+      });
+      if (!resp.ok) throw new Error('PDF generation failed');
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Address-LOX.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) {
+      console.error(e);
+      alert(e.message || 'Could not generate PDF.');
+    } finally {
+      if (btn) { btn.disabled = false; if (btn.dataset._lbl) btn.textContent = btn.dataset._lbl; }
+    }
+  }
+
   /* ---- Email / report extractor ---- */
 
   function getEmailData() {
@@ -196,6 +235,9 @@
 
     if (addBtn) addBtn.addEventListener('click', function () { addRow({}); });
 
+    const dlBtn = document.getElementById('btnAddressLoxDownloadPdf');
+    if (dlBtn) dlBtn.addEventListener('click', function () { downloadPdf(this); });
+
     // Track when the user types into the preview so we stop
     // overwriting their edits.
     const preview = document.getElementById('letterPreview');
@@ -224,6 +266,29 @@
     if (window.MSFG && MSFG.DocActions) MSFG.DocActions.register(getEmailData);
     if (window.MSFG && MSFG.ReportTemplates) {
       MSFG.ReportTemplates.registerExtractor('address-lox', getEmailData);
+    }
+    // Add-to-Session uses the same styled PDF as Download so the
+    // report archives what the LO would actually send.
+    if (window.MSFG && MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
+      MSFG.DocActions.registerCapture(function () {
+        return MSFG.fetch(MSFG.apiUrl('/api/pdf/address-lox'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(collectPdfPayload())
+        }).then(function (resp) {
+          if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
+          return resp.arrayBuffer();
+        }).then(function (buf) {
+          return {
+            pdfBytes: new Uint8Array(buf),
+            name: 'Address LOX',
+            icon: '📍',
+            slug: 'address-lox',
+            data: getEmailData(),
+            filename: 'Address-LOX.pdf'
+          };
+        });
+      });
     }
 
     // The shared mismo-embed.js dispatcher already populates a few base

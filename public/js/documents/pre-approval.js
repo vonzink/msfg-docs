@@ -138,6 +138,55 @@
     }
   }
 
+  /* ---- Download PDF ---- */
+  function collectPdfPayload() {
+    const style = document.getElementById('letterStyleSelect');
+    return {
+      borrowerName: val('borrowerName'),
+      borrowerAddress: val('borrowerAddress'),
+      loanType: val('loanType'),
+      loanPurpose: val('loanPurpose'),
+      approvalAmount: val('approvalAmount'),
+      interestRate: val('interestRate'),
+      includeInterestRate: isChecked('includeInterestRate'),
+      loanTerm: val('loanTerm'),
+      downPayment: val('downPayment'),
+      expirationDate: val('expirationDate'),
+      loName: val('loName'),
+      loNMLS: val('loNMLS'),
+      loPhone: val('loPhone'),
+      loEmail: val('loEmail'),
+      conditions: val('conditions'),
+      letterStyle: style ? style.value : 'classic'
+    };
+  }
+
+  async function downloadPdf(btn) {
+    if (btn) { btn.disabled = true; btn.dataset._lbl = btn.dataset._lbl || btn.textContent; btn.textContent = 'Building PDF…'; }
+    try {
+      const resp = await MSFG.fetch(MSFG.apiUrl('/api/pdf/pre-approval'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(collectPdfPayload())
+      });
+      if (!resp.ok) throw new Error('PDF generation failed');
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Pre-Approval-Letter.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) {
+      console.error(e);
+      alert(e.message || 'Could not generate PDF.');
+    } finally {
+      if (btn) { btn.disabled = false; if (btn.dataset._lbl) btn.textContent = btn.dataset._lbl; }
+    }
+  }
+
   function formatCurrency(n) {
     const num = typeof n === 'number' ? n : parseFloat(String(n).replace(/[,$]/g, ''));
     if (!isFinite(num) || num <= 0) return '';
@@ -171,11 +220,37 @@
 
     generateLetter();
 
+    const dlBtn = document.getElementById('btnPreApprovalDownloadPdf');
+    if (dlBtn) dlBtn.addEventListener('click', function () { downloadPdf(this); });
+
     if (MSFG.DocActions) MSFG.DocActions.register(getEmailData);
 
     if (MSFG.ReportTemplates) {
       MSFG.ReportTemplates.registerExtractor('pre-approval', function() {
         return getEmailData();
+      });
+    }
+
+    // Add-to-Session captures the styled PDF the LO would actually send.
+    if (MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
+      MSFG.DocActions.registerCapture(function () {
+        return MSFG.fetch(MSFG.apiUrl('/api/pdf/pre-approval'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(collectPdfPayload())
+        }).then(function (resp) {
+          if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
+          return resp.arrayBuffer();
+        }).then(function (buf) {
+          return {
+            pdfBytes: new Uint8Array(buf),
+            name: 'Pre-Approval Letter',
+            icon: '✅',
+            slug: 'pre-approval',
+            data: getEmailData(),
+            filename: 'Pre-Approval-Letter.pdf'
+          };
+        });
       });
     }
 

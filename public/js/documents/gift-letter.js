@@ -83,6 +83,7 @@
   }
 
   function collectPayload() {
+    const style = document.getElementById('letterStyleSelect');
     return {
       donorName: val('giftDonorName'),
       donorAddress: val('giftDonorAddress'),
@@ -95,7 +96,8 @@
       recipientName: val('giftRecipientName'),
       loanNumber: val('giftLoanNumber'),
       subjectPropertyAddress: val('giftPropertyAddress'),
-      letterDate: val('giftLetterDate') || todayLong()
+      letterDate: val('giftLetterDate') || todayLong(),
+      letterStyle: style ? style.value : 'classic'
     };
   }
 
