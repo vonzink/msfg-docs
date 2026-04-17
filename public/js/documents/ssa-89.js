@@ -312,6 +312,34 @@
     }
   }
 
+  /** Populate the worksheet's Section 4 (Company / Agent) from the
+   *  investor's stored doc_ssa JSON when an investor is picked. The
+   *  investor's pre-filled PDF is still used as the AcroForm base, but
+   *  the loan officer wants to SEE the company/agent block in the
+   *  worksheet too — so they can edit before generating. */
+  async function applyInvestorWorksheetFields(investorId) {
+    if (!investorId) return;
+    try {
+      const r = await MSFG.fetch(MSFG.apiUrl('/api/investors/' + encodeURIComponent(investorId) + '/ssa-89-fields'));
+      if (!r.ok) return;
+      const j = await r.json();
+      if (!j || !j.success || !j.fields) return;
+      const fields = j.fields;
+      ['sSsaCompanyName', 'sSsaCompanyAddress', 'sSsaAgentName', 'sSsaAgentAddress', 'sSsaValidFor'].forEach(function (id) {
+        const v = fields[id];
+        if (v == null || v === '') return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = String(v);
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      buildPreview();
+    } catch (err) {
+      console.warn('[SSA-89] could not pull investor worksheet fields:', err);
+    }
+  }
+
   function onInvestorSelectChange() {
     const sel = document.getElementById('sSsaInvestorSelect');
     const hint = document.getElementById('sSsaInvestorDbHint');
@@ -321,7 +349,10 @@
       if (hint) hint.textContent = 'No investor selected — will use the blank SSA-89 template.';
       return;
     }
-    if (hint) hint.textContent = 'Will use ' + opt.textContent + ' as the PDF base.';
+    if (hint) hint.textContent = 'Will use ' + opt.textContent + ' as the PDF base. Company / Agent fields below pre-filled from investor record.';
+    // Pull worksheet field values too (Company / Agent / Valid for) so
+    // the loan officer can see + edit them before generating.
+    applyInvestorWorksheetFields(opt.dataset.investorId);
   }
 
   document.addEventListener('DOMContentLoaded', function() {

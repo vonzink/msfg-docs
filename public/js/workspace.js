@@ -9,7 +9,6 @@
   const emptyState = document.getElementById('wsEmpty');
   const countEl = document.getElementById('wsCount');
   const selectorEl = document.getElementById('wsSelector');
-  const selectorSearch = document.getElementById('wsSelectorSearch');
   const toggleSelectorBtn = document.getElementById('wsToggleSelector');
   const collapseAllBtn = document.getElementById('wsCollapseAll');
   const clearAllBtn = document.getElementById('wsClearAll');
@@ -27,25 +26,6 @@
   if (toggleSelectorBtn) {
     toggleSelectorBtn.addEventListener('click', function() {
       selectorEl.classList.toggle('u-hidden');
-      if (!selectorEl.classList.contains('u-hidden') && selectorSearch) {
-        selectorSearch.value = '';
-        selectorSearch.focus();
-        filterSelector('');
-      }
-    });
-  }
-
-  if (selectorSearch) {
-    selectorSearch.addEventListener('input', function() {
-      filterSelector(this.value.toLowerCase().trim());
-    });
-  }
-
-  function filterSelector(q) {
-    const btns = document.querySelectorAll('.workspace__selector-btn');
-    btns.forEach(function(btn) {
-      const name = btn.dataset.name || '';
-      btn.classList.toggle('hidden', q && name.indexOf(q) === -1);
     });
   }
 
@@ -185,8 +165,9 @@
       updateCount();
     });
 
-    // Close selector after adding
-    if (selectorEl) selectorEl.classList.add('u-hidden');
+    // Selector intentionally stays open so the user can pick multiple
+    // documents in a row without re-opening the drawer each time.
+    // Toggle button on the toolbar closes it manually.
   }
 
   /** Reach into the iframe's window for a registered capture function,

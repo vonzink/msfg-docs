@@ -115,8 +115,17 @@
           </select>
         </div>
         <div class="form-group form-group--full">
-          <label for="f4506TaxYears">Tax year(s) or period</label>
-          <input type="text" id="f4506TaxYears" placeholder="e.g. 2023 or 2021, 2022, 2023">
+          <label>Tax year(s) or period <span class="text-muted">(MM/DD/YYYY — one per slot, up to 4)</span></label>
+          <div class="form-grid u-grid-4col" id="f4506TaxYearsGrid">
+            <input type="text" id="f4506TaxYear1" class="f4506-tax-year" placeholder="MM/DD/YYYY" inputmode="numeric" autocomplete="off" maxlength="10">
+            <input type="text" id="f4506TaxYear2" class="f4506-tax-year" placeholder="MM/DD/YYYY" inputmode="numeric" autocomplete="off" maxlength="10">
+            <input type="text" id="f4506TaxYear3" class="f4506-tax-year" placeholder="MM/DD/YYYY" inputmode="numeric" autocomplete="off" maxlength="10">
+            <input type="text" id="f4506TaxYear4" class="f4506-tax-year" placeholder="MM/DD/YYYY" inputmode="numeric" autocomplete="off" maxlength="10">
+          </div>
+          <!-- Hidden field that the existing collectWorksheetPayload reads
+               and the backend distributeTaxYears parses. JS keeps it in
+               sync with the four MM/DD/YYYY inputs above. -->
+          <input type="hidden" id="f4506TaxYears">
         </div>
         <div class="form-group form-group--full">
           <label for="f4506Notes">Notes</label>

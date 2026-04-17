@@ -295,12 +295,34 @@
     if (hint) hint.textContent = 'Will use ' + opt.textContent + ' as the PDF base.';
   }
 
+  /** Sync the four MM/DD/YYYY tax-year inputs into the hidden
+   *  f4506TaxYears comma-list that the backend distributeTaxYears
+   *  helper parses. We accept both bare years (e.g. "2023") and full
+   *  MM/DD/YYYY — the backend already handles both, but guiding the
+   *  user to MM/DD/YYYY makes the IRS form fill match exactly. */
+  function syncTaxYearsHidden() {
+    const slots = document.querySelectorAll('.f4506-tax-year');
+    const parts = [];
+    slots.forEach(function (s) {
+      const v = String(s.value || '').trim();
+      if (v) parts.push(v);
+    });
+    const hidden = document.getElementById('f4506TaxYears');
+    if (hidden) hidden.value = parts.join(', ');
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     const body = document.querySelector('.doc-page__body');
     if (body) {
       body.addEventListener('input', buildPreview);
       body.addEventListener('change', buildPreview);
     }
+
+    // Per-slot tax-year inputs feed the hidden f4506TaxYears field.
+    document.querySelectorAll('.f4506-tax-year').forEach(function (el) {
+      el.addEventListener('input', syncTaxYearsHidden);
+      el.addEventListener('change', syncTaxYearsHidden);
+    });
 
     const invSel = document.getElementById('f4506InvestorSelect');
     if (invSel) {

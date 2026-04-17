@@ -6,24 +6,9 @@
 
   <div class="doc-page__body">
 
-    <div class="calc-section ssa-89__notice">
-      <p class="text-muted" style="margin:0 0 var(--space-sm);">
-        Fill the worksheet below, then use <strong>Download filled SSA PDF</strong> to get an AcroForm-filled copy
-        (browser “Open blank SSA PDF” is the blank template only).
-        After you <strong>import MISMO</strong> in the workspace, the loan number is used to match an investor when you set the
-        MYSQL_INVESTORS_LOAN_COLUMN env var or store matching loan numbers inside the <code>doc_ssa</code> JSON.
-      </p>
-      <div class="ssa-89__pdf-actions">
-        <button type="button" class="btn btn-primary icon-inline" id="btnSsaDownloadPdf">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download filled SSA PDF
-        </button>
-        <a class="btn btn-secondary icon-inline" href="<%= basePath %>/documents/ssa-89.pdf" target="_blank" rel="noopener noreferrer">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Open blank SSA PDF
-        </a>
-      </div>
-    </div>
+    <!-- (Top action buttons removed by request — Download / Blank are
+         only at the bottom of the form now to keep the header clean.) -->
+
 
     <!-- Section 1: File reference -->
     <div class="calc-section">
