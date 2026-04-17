@@ -137,14 +137,14 @@
 
   /* ---- Download PDF ---- */
   function collectPdfPayload() {
-    const style = document.getElementById('letterStyleSelect');
+    const ls = (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null;
     return {
       borrowerName: val('borrowerName'),
       loanNumber: val('loanNumber'),
       currentAddress: val('currentAddress'),
       letterDate: val('letterDate') || todayLong(),
       addresses: collectRows(),
-      letterStyle: style ? style.value : 'classic'
+      letterSettings: ls
     };
   }
 

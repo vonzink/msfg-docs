@@ -140,7 +140,7 @@
 
   /* ---- Download PDF ---- */
   function collectPdfPayload() {
-    const style = document.getElementById('letterStyleSelect');
+    const ls = (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null;
     return {
       borrowerName: val('borrowerName'),
       borrowerAddress: val('borrowerAddress'),
@@ -157,7 +157,7 @@
       loPhone: val('loPhone'),
       loEmail: val('loEmail'),
       conditions: val('conditions'),
-      letterStyle: style ? style.value : 'classic'
+      letterSettings: ls
     };
   }
 

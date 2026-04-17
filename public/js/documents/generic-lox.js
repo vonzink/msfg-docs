@@ -78,7 +78,7 @@
         for (let j = idx + 1; j < all.length; j++) if (all[j].name) return true;
         return false;
       });
-    const style = document.getElementById('letterStyleSelect');
+    const ls = (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null;
     return {
       borrowerNames: val('loxBorrowerNames'),
       loanNumber: val('loxLoanNumber'),
@@ -87,7 +87,7 @@
       topic: val('loxTopic'),
       explanation: val('loxExplanation'),
       signers,
-      letterStyle: style ? style.value : 'classic'
+      letterSettings: ls
     };
   }
 

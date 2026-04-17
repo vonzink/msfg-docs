@@ -1,265 +1,284 @@
 /* =====================================================
-   Letter style variants — 4 looks for borrower letter docs
-   (Credit Inquiry, Address LOX, Pre-Approval, Gift Letter,
-   Generic LOX). Wire via partials/letter-style-picker.ejs +
-   public/js/shared/letter-style.js: the picker stamps the
-   chosen `letter-preview--style-<id>` class on `.letter-preview`.
+   Letter appearance — CSS-variable driven.
+   The gear-icon settings panel (views/partials/letter-settings-panel.ejs)
+   writes values onto .letter-preview as custom properties and state
+   classes; this file does all the actual styling from those.
+
+   Presets can be applied by setting all vars at once — see the
+   .letter-preview--preset-* classes at the bottom (the picker JS
+   sets those temporarily when a preset button is clicked, then
+   resolves the individual settings from them).
    ===================================================== */
 
-/* ---- Picker chrome ---- */
-.letter-style-picker {
+/* ---- Settings toolbar + collapsible panel ---- */
+.letter-settings {
+  margin-bottom: var(--space-md, 16px);
+}
+.letter-settings__toolbar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm, 12px);
   padding: var(--space-sm, 12px) var(--space-md, 16px);
-  margin-bottom: var(--space-md, 16px);
   background: var(--color-gray-50, #f7f7f7);
   border: 1px solid var(--color-gray-200, #e5e7eb);
   border-radius: var(--border-radius, 8px);
 }
-.letter-style-picker__label {
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--color-gray-700, #374151);
-  margin: 0;
-}
-.letter-style-picker__select {
-  flex: 0 0 auto;
-  padding: 4px 8px;
-  font-size: 0.85rem;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: var(--radius-sm, 6px);
-  background: #fff;
-}
-.letter-style-picker__chips {
-  display: flex;
-  gap: 6px;
-  flex: 1;
-  flex-wrap: wrap;
-}
-.letter-style-picker__chip {
+.letter-settings__gear {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  gap: 8px;
+  padding: 6px 12px;
   background: #fff;
-  color: var(--color-gray-700, #374151);
   border: 1px solid var(--color-gray-300, #d1d5db);
   border-radius: var(--radius-sm, 6px);
   cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-gray-700, #374151);
   transition: all 0.15s;
 }
-.letter-style-picker__chip span {
-  display: inline-block;
-  width: 22px;
-  height: 22px;
-  line-height: 22px;
-  text-align: center;
-  border-radius: 50%;
-  background: var(--color-gray-200, #e5e7eb);
-  font-style: normal;
-  font-size: 0.7rem;
-}
-.letter-style-picker__chip em {
-  font-style: normal;
-}
-.letter-style-picker__chip:hover {
+.letter-settings__gear:hover {
   border-color: var(--brand-accent, #2d6a4f);
   color: var(--brand-primary, #1b4332);
 }
-.letter-style-picker__chip[aria-pressed="true"] {
-  background: rgba(45, 106, 79, 0.10);
+.letter-settings__gear[aria-expanded="true"] {
+  background: rgba(45, 106, 79, 0.08);
   border-color: var(--brand-accent, #2d6a4f);
   color: var(--brand-primary, #1b4332);
 }
-.letter-style-picker__chip[aria-pressed="true"] span {
-  background: var(--brand-accent, #2d6a4f);
-  color: #fff;
+.letter-settings__gear svg {
+  transition: transform 0.3s;
 }
-
-/* Each variant overrides the shared .letter-preview base. The
-   `--style-classic` class is the default look; the other three
-   completely change the typography, layout and colors so users
-   immediately see the difference when they switch. */
-
-/* ---- Classic — serif, traditional ---- */
-.letter-preview--style-classic {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  color: #1a1a1a;
-  background: #fff;
-  padding: var(--space-xl, 32px) var(--space-xl, 32px);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
-  line-height: 1.7;
-  font-size: 14px;
-  text-align: justify;
+.letter-settings__gear[aria-expanded="true"] svg {
+  transform: rotate(45deg);
 }
-.letter-preview--style-classic .letter-date,
-.letter-preview--style-classic .letter-content > p:first-of-type {
-  text-align: right;
-  color: var(--color-gray-700, #374151);
-}
-.letter-preview--style-classic table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1rem 0;
-}
-.letter-preview--style-classic table td {
-  padding: 6px 10px;
-  border-bottom: 1px dotted var(--color-gray-300, #d1d5db);
-  font-size: 13px;
-}
-
-/* ---- Modern — sans-serif, accent green, generous whitespace ---- */
-.letter-preview--style-modern {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #111827;
-  background: #fff;
-  padding: 40px;
-  border: none;
-  border-left: 6px solid var(--brand-accent, #2d6a4f);
-  line-height: 1.65;
-  font-size: 15px;
-  letter-spacing: -0.005em;
-}
-.letter-preview--style-modern strong {
-  color: var(--brand-primary, #1b4332);
-}
-.letter-preview--style-modern .letter-date {
+.letter-settings__reset {
+  margin-left: auto;
   font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--brand-accent, #2d6a4f);
-  font-weight: 700;
+  color: var(--color-gray-600, #4b5563);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.letter-settings__reset:hover {
+  color: var(--color-danger, #dc3545);
+}
+
+.letter-settings__panel {
+  margin-top: var(--space-sm, 12px);
+  padding: var(--space-md, 16px);
+  background: #fff;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: var(--border-radius, 8px);
+  animation: lsSlide 0.15s ease-out;
+}
+@keyframes lsSlide {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.letter-settings__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 12px);
   margin-bottom: var(--space-md, 16px);
 }
-.letter-preview--style-modern table {
-  border-collapse: separate;
-  border-spacing: 0;
-  width: 100%;
-  margin: 1.2rem 0;
-  background: #f9fafb;
-  border-radius: 8px;
-  overflow: hidden;
+.letter-settings__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-gray-500, #6b7280);
+  min-width: 90px;
 }
-.letter-preview--style-modern table td {
-  padding: 10px 14px;
-  font-size: 14px;
+.letter-settings__preset-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
-.letter-preview--style-modern table tr:nth-child(odd) td {
+.letter-settings__preset {
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
   background: #fff;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  color: var(--color-gray-700, #374151);
+  transition: all 0.15s;
 }
-.letter-preview--style-modern .lox-row-list > li {
-  padding: var(--space-sm, 12px);
-  border-left: 3px solid var(--brand-accent, #2d6a4f);
-  background: #f9fafb;
-  margin-bottom: var(--space-sm, 12px);
-  border-radius: 0 8px 8px 0;
-  list-style: none;
-}
-.letter-preview--style-modern .lox-row-list {
-  padding-left: 0;
+.letter-settings__preset:hover {
+  border-color: var(--brand-accent, #2d6a4f);
+  color: var(--brand-primary, #1b4332);
+  background: rgba(45, 106, 79, 0.06);
 }
 
-/* ---- Branded — header band + footer band ---- */
-.letter-preview--style-branded {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #111827;
+.letter-settings__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md, 16px);
+  margin-bottom: var(--space-md, 16px);
+}
+.letter-settings__field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-gray-700, #374151);
+  margin-bottom: 4px;
+}
+.letter-settings__field select,
+.letter-settings__field input[type="text"] {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 0.85rem;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: var(--radius-sm, 6px);
   background: #fff;
-  padding: 0;
+}
+.letter-settings__color {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.letter-settings__color input[type="color"] {
+  width: 36px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  background: #fff;
+}
+.letter-settings__color input[type="text"] {
+  flex: 1;
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 0.78rem;
+  text-transform: lowercase;
+}
+
+.letter-settings__toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md, 16px) var(--space-lg, 24px);
+}
+.letter-settings__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--color-gray-700, #374151);
+  cursor: pointer;
+  user-select: none;
+}
+.letter-settings__toggle input {
+  cursor: pointer;
+  accent-color: var(--brand-accent, #2d6a4f);
+}
+
+/* ---- Live letter preview — all styling keyed off CSS variables
+   the settings JS sets on the .letter-preview element. Sensible
+   defaults match the old "Classic" preset. ---- */
+.letter-preview {
+  --lp-font: Georgia, 'Times New Roman', serif;
+  --lp-size: 11pt;
+  --lp-accent: #2d6a4f;
+  --lp-margin: 32px;
+  --lp-title-align: center;
+  --lp-text-align: justify;
+  --lp-ink: #1a1a1a;
+  --lp-muted: #6b7280;
+
+  background: #fff;
   border: 1px solid var(--color-gray-200, #e5e7eb);
+  padding: var(--lp-margin);
+  min-height: 200px;
+  font-family: var(--lp-font);
+  font-size: var(--lp-size);
+  color: var(--lp-ink);
   line-height: 1.6;
-  font-size: 14px;
+  text-align: var(--lp-text-align);
   position: relative;
   overflow: hidden;
 }
-.letter-preview--style-branded::before {
-  content: 'MSFG';
-  display: block;
-  background: var(--brand-accent, #2d6a4f);
-  color: #fff;
-  padding: 16px 32px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  font-size: 1.1rem;
+.letter-preview strong {
+  color: var(--lp-ink);
 }
-.letter-preview--style-branded::after {
-  content: 'Mountain State Financial Group  |  msfginfo.com';
+.letter-preview .letter-date {
+  color: var(--lp-muted);
+  font-size: 0.85em;
+  margin-bottom: var(--space-md, 16px);
+}
+.letter-preview .letter-content > h1,
+.letter-preview .letter-content > h2,
+.letter-preview .letter-content > h3 {
+  text-align: var(--lp-title-align);
+  color: var(--lp-ink);
+}
+.letter-preview .letter-content h2:first-child {
+  text-align: var(--lp-title-align);
+}
+
+/* ---- Table variants toggled by .letter-preview--table-<style> ---- */
+.letter-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-sm, 12px) 0;
+  font-size: 0.95em;
+}
+.letter-preview table td {
+  padding: 6px 10px;
+  vertical-align: top;
+}
+.letter-preview--table-plain table td { border: none; }
+.letter-preview--table-dotted table td {
+  border-bottom: 1px dotted var(--color-gray-300, #d1d5db);
+}
+.letter-preview--table-striped table tr:nth-child(even) td {
+  background: rgba(45, 106, 79, 0.04);
+}
+.letter-preview--table-accentKey table td:first-child {
+  background: rgba(45, 106, 79, 0.06);
+  color: var(--lp-accent);
+  font-weight: 600;
+  width: 38%;
+}
+.letter-preview--table-thin table td {
+  border-bottom: 0.5px solid var(--color-gray-200, #e5e7eb);
+}
+
+/* ---- Layout toggles (header band / footer band / left rail) ---- */
+.letter-preview--header-band {
+  padding-top: 0;
+}
+.letter-preview--header-band::before {
+  content: 'MSFG — Mountain State Financial Group';
+  display: block;
+  background: var(--lp-accent);
+  color: #fff;
+  padding: 14px 32px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-size: 0.95em;
+  margin: 0 calc(-1 * var(--lp-margin)) var(--space-lg, 24px);
+}
+.letter-preview--footer-band::after {
+  content: 'Mountain State Financial Group LLC  |  msfginfo.com';
   display: block;
   background: var(--color-gray-100, #f3f4f6);
-  color: var(--color-gray-600, #4b5563);
-  padding: 10px 32px;
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
+  color: var(--lp-muted);
+  padding: 8px 32px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.75em;
   text-align: center;
-  border-top: 2px solid var(--brand-accent, #2d6a4f);
-  margin-top: var(--space-lg, 24px);
+  border-top: 2px solid var(--lp-accent);
+  margin: var(--space-lg, 24px) calc(-1 * var(--lp-margin)) calc(-1 * var(--lp-margin));
 }
-.letter-preview--style-branded .letter-content {
-  padding: 24px 32px;
-}
-.letter-preview--style-branded .letter-date {
-  background: rgba(45, 106, 79, 0.06);
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-weight: 600;
-  color: var(--brand-primary, #1b4332);
-  font-size: 0.8rem;
-}
-.letter-preview--style-branded table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: var(--space-md, 16px) 0;
-}
-.letter-preview--style-branded table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--color-gray-100, #f3f4f6);
-}
-.letter-preview--style-branded table td:first-child {
-  background: rgba(45, 106, 79, 0.05);
-  width: 35%;
-  font-weight: 600;
-  color: var(--brand-primary, #1b4332);
+.letter-preview--left-rail {
+  border-left: 6px solid var(--lp-accent);
 }
 
-/* ---- Compact — small font, tight spacing, fits more on a page ---- */
-.letter-preview--style-compact {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #1f2937;
-  background: #fff;
-  padding: var(--space-md, 16px) var(--space-lg, 24px);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
-  line-height: 1.4;
-  font-size: 12px;
-}
-.letter-preview--style-compact p {
-  margin: 0 0 var(--space-xs, 6px);
-}
-.letter-preview--style-compact h1,
-.letter-preview--style-compact h2,
-.letter-preview--style-compact h3 {
-  margin: var(--space-sm, 12px) 0 var(--space-xs, 6px);
-  font-size: 0.95rem;
-}
-.letter-preview--style-compact table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: var(--space-xs, 6px) 0;
-  font-size: 11px;
-}
-.letter-preview--style-compact table td {
-  padding: 3px 6px;
-  border-bottom: 1px solid var(--color-gray-100, #f3f4f6);
-}
-.letter-preview--style-compact .letter-date {
-  font-size: 0.7rem;
-  color: var(--color-gray-500, #6b7280);
-}
-
-/* Print: drop the picker chrome — only the rendered letter prints. */
+/* Mobile: print hides the settings block — only the preview prints. */
 @media print {
-  .letter-style-picker { display: none !important; }
+  .letter-settings { display: none !important; }
 }

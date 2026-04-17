@@ -207,9 +207,9 @@
       subjectPropertyAddress: val('subjectPropertyAddress'),
       loanNumber: val('loanNumber'),
       letterDate: val('letterDate') || todayLong(),
-      // Letter style from the shared picker — backend dispatches to
-      // the matching theme in lib/pdf/letterPdf.js.
-      letterStyle: (function () { const s = document.getElementById('letterStyleSelect'); return s ? s.value : 'classic'; })(),
+      // Full per-user letter settings (font/size/accent/table/margins/toggles).
+      // Backend mirrors these into the PDF theme in lib/pdf/letterPdf.js.
+      letterSettings: (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null,
       inquiries: getRows().map(r => ({
         no: r.no,
         inquiryDate: r.date,

@@ -83,7 +83,7 @@
   }
 
   function collectPayload() {
-    const style = document.getElementById('letterStyleSelect');
+    const ls = (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null;
     return {
       donorName: val('giftDonorName'),
       donorAddress: val('giftDonorAddress'),
@@ -97,7 +97,7 @@
       loanNumber: val('giftLoanNumber'),
       subjectPropertyAddress: val('giftPropertyAddress'),
       letterDate: val('giftLetterDate') || todayLong(),
-      letterStyle: style ? style.value : 'classic'
+      letterSettings: ls
     };
   }
 
