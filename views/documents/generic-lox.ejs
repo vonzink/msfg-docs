@@ -60,6 +60,24 @@
       </div>
     </div>
 
+    <%- include('../partials/letter-style-picker') %>
+
+    <!-- Section 4: Letter Preview — editable. Same pattern as the
+         other borrower-letter docs. The Download button still
+         regenerates the PDF from form fields. -->
+    <div class="calc-section">
+      <h2>
+        <span class="section-number">4</span> Letter Preview
+        <button type="button" class="btn btn-link btn-sm" id="loxResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
+      </h2>
+      <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
+        <p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>
+      </div>
+      <p class="text-muted" style="margin:var(--space-xs) 0 0;font-size:0.82rem;">
+        Click anywhere to edit. <strong>Download</strong> rebuilds the PDF from the form fields, not from manual edits in this preview.
+      </p>
+    </div>
+
     <!-- Action bar -->
     <div class="action-bar doc-actions">
       <button type="button" class="btn btn-primary icon-inline" id="btnLoxDownloadPdf">

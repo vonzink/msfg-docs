@@ -18,6 +18,55 @@
     return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   }
 
+  /* ---- In-page preview rendering ---- */
+  let previewDirty = false;
+
+  function generateLetter() {
+    const preview = document.getElementById('letterPreview');
+    if (!preview) return;
+    if (previewDirty) return;
+
+    const borrowerNames = val('loxBorrowerNames');
+    const loanNumber = val('loxLoanNumber');
+    const propertyAddress = val('loxPropertyAddress');
+    const letterDate = val('loxLetterDate') || todayLong();
+    const topic = val('loxTopic');
+    const explanation = val('loxExplanation');
+    const signers = ['loxSigner1', 'loxSigner2', 'loxSigner3', 'loxSigner4', 'loxSigner5']
+      .map(function (id, i) { return val(id) || ('Borrower ' + (i + 1)); });
+
+    if (!borrowerNames && !explanation) {
+      preview.innerHTML = '<p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>';
+      return;
+    }
+
+    const v = function (x) { return x ? MSFG.escHtml(x) : '&mdash;'; };
+
+    let html = '<div class="letter-content">';
+    html += '<h2 style="text-align:center;margin:0 0 var(--space-md);">Letter of Explanation</h2>';
+    html += '<p class="letter-date">' + MSFG.escHtml(letterDate) + '</p>';
+    html += '<table>';
+    html += '<tr><td>Loan Number</td><td>' + v(loanNumber) + '</td></tr>';
+    html += '<tr><td>Borrower(s)</td><td>' + v(borrowerNames) + '</td></tr>';
+    html += '<tr><td>Property Address</td><td>' + v(propertyAddress) + '</td></tr>';
+    if (topic) html += '<tr><td>Subject</td><td>' + v(topic) + '</td></tr>';
+    html += '</table>';
+
+    if (explanation) {
+      html += '<p>' + MSFG.escHtml(explanation).replace(/\n/g, '<br>') + '</p>';
+    }
+
+    html += '<p>I certify that the above information is true and correct to the best of my knowledge.</p>';
+    html += '<table style="margin-top:var(--space-lg);">';
+    signers.slice(0, 5).forEach(function (name) {
+      html += '<tr><td>' + MSFG.escHtml(name) + '</td><td>____________________________</td><td>Date</td><td>__________</td></tr>';
+    });
+    html += '</table>';
+    html += '</div>';
+
+    preview.innerHTML = html;
+  }
+
   function collectPayload() {
     const signers = ['loxSigner1', 'loxSigner2', 'loxSigner3', 'loxSigner4', 'loxSigner5']
       .map((id) => ({ name: val(id) }))
@@ -117,6 +166,24 @@
     document.getElementById('btnLoxDownloadPdf').addEventListener('click', function () {
       downloadPdf(this);
     });
+
+    // Live preview wiring
+    const previewFields = ['loxBorrowerNames', 'loxLoanNumber', 'loxPropertyAddress',
+      'loxLetterDate', 'loxTopic', 'loxExplanation',
+      'loxSigner1', 'loxSigner2', 'loxSigner3', 'loxSigner4', 'loxSigner5'];
+    previewFields.forEach(function (id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', generateLetter);
+      el.addEventListener('change', generateLetter);
+    });
+    const preview = document.getElementById('letterPreview');
+    if (preview) preview.addEventListener('input', function () { previewDirty = true; });
+    const reset = document.getElementById('loxResetPreview');
+    if (reset) reset.addEventListener('click', function (e) {
+      e.preventDefault(); previewDirty = false; generateLetter();
+    });
+    generateLetter();
 
     window.addEventListener('message', function (e) {
       if (e.origin !== window.location.origin) return;

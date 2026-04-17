@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="<%= basePath %>/css/components.css?v=<%= v %>">
   <link rel="stylesheet" href="<%= basePath %>/css/print.css?v=<%= v %>" media="print">
   <link rel="stylesheet" href="<%= basePath %>/css/email-modal.css?v=<%= v %>">
+  <link rel="stylesheet" href="<%= basePath %>/css/shared/letter-styles.css?v=<%= v %>">
   <meta name="msfg-base-path" content="<%= basePath || '' %>">
   <% if (locals.appOrigin) { %>
   <meta name="msfg-app-origin" content="<%= locals.appOrigin %>">
@@ -33,6 +34,7 @@
   <script src="<%= basePath %>/js/shared/report<%= jsExt %>?v=<%= v %>"></script>
   <script src="<%= basePath %>/js/shared/doc-email<%= jsExt %>?v=<%= v %>"></script>
   <script src="<%= basePath %>/js/shared/mismo-embed<%= jsExt %>?v=<%= v %>"></script>
+  <script src="<%= basePath %>/js/shared/letter-style<%= jsExt %>?v=<%= v %>"></script>
   <%- typeof extraScripts !== 'undefined' ? extraScripts : '' %>
 </body>
 </html>

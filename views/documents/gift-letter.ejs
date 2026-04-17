@@ -75,6 +75,27 @@
       </div>
     </div>
 
+    <%- include('../partials/letter-style-picker') %>
+
+    <!-- Section 4: Letter Preview — editable. Click to type directly
+         in the rendered letter. The Download button below always
+         regenerates the PDF from the field values above (so manual
+         edits in the preview stay browser-side; if you want them in
+         the printed PDF, type them into the fields and click "Reset
+         preview" to refresh). -->
+    <div class="calc-section">
+      <h2>
+        <span class="section-number">4</span> Letter Preview
+        <button type="button" class="btn btn-link btn-sm" id="giftResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
+      </h2>
+      <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
+        <p class="text-muted text-center">Fill in the fields above to generate your gift letter.</p>
+      </div>
+      <p class="text-muted" style="margin:var(--space-xs) 0 0;font-size:0.82rem;">
+        Click anywhere in the preview to edit. Note: <strong>Download</strong> rebuilds the PDF from the form fields, not from manual edits in this preview.
+      </p>
+    </div>
+
     <!-- Action bar -->
     <div class="action-bar doc-actions">
       <button type="button" class="btn btn-primary icon-inline" id="btnGiftDownloadPdf">

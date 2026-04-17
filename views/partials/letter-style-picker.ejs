@@ -1,0 +1,20 @@
+<!-- Letter style picker — included by every borrower-letter doc that
+     supports the 4 visual styles. The select carries the canonical
+     style id; public/js/shared/letter-style.js wires it into the
+     .letter-preview class list and persists the choice per-doc-slug
+     to localStorage so a user's preferred style sticks. -->
+<div class="letter-style-picker" data-doc-slug="<%= (typeof doc !== 'undefined' && doc) ? doc.slug : '' %>">
+  <label for="letterStyleSelect" class="letter-style-picker__label">Letter style</label>
+  <select id="letterStyleSelect" class="letter-style-picker__select">
+    <option value="classic">Classic — serif, traditional</option>
+    <option value="modern">Modern — sans-serif, accent green</option>
+    <option value="branded">Branded — header band + footer</option>
+    <option value="compact">Compact — tighter spacing, smaller type</option>
+  </select>
+  <div class="letter-style-picker__chips" role="tablist" aria-label="Letter style preview">
+    <button type="button" class="letter-style-picker__chip" data-style="classic" title="Classic"><span>Aa</span><em>Classic</em></button>
+    <button type="button" class="letter-style-picker__chip" data-style="modern" title="Modern"><span>Aa</span><em>Modern</em></button>
+    <button type="button" class="letter-style-picker__chip" data-style="branded" title="Branded"><span>Aa</span><em>Branded</em></button>
+    <button type="button" class="letter-style-picker__chip" data-style="compact" title="Compact"><span>Aa</span><em>Compact</em></button>
+  </div>
+</div>
