@@ -254,10 +254,39 @@
       _captureForReport = asyncFn;
     },
     captureForReport: function () {
-      if (!_captureForReport) {
+      if (_captureForReport) return Promise.resolve(_captureForReport());
+
+      // Default fallback — any document that registered a getEmailData
+      // handler can be captured via /api/pdf/structured. The output is
+      // a simple branded PDF built from { title, sections } so missing
+      // per-doc generators no longer block "Add to Session".
+      if (!_getEmailData) {
         return Promise.reject(new Error('No capture handler registered for this document.'));
       }
-      return Promise.resolve(_captureForReport());
+      var data = _getEmailData();
+      return MSFG.fetch(MSFG.apiUrl('/api/pdf/structured'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(function (resp) {
+        if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
+        return resp.arrayBuffer();
+      }).then(function (buf) {
+        var titleText = String((data && data.title) || 'Document');
+        // First glyph (icon emoji) becomes the report-card icon.
+        var iconMatch = titleText.match(/^(\S+)\s+/);
+        var icon = iconMatch ? iconMatch[1] : '📄';
+        var name = iconMatch ? titleText.slice(iconMatch[0].length) : titleText;
+        var slug = (window.__docSlug || 'document').toString();
+        return {
+          pdfBytes: new Uint8Array(buf),
+          name: name,
+          icon: icon,
+          slug: slug,
+          data: data,
+          filename: slug.replace(/[^a-z0-9-]+/gi, '-') + '.pdf'
+        };
+      });
     },
     openEmail: openModal,
     print: handlePrint

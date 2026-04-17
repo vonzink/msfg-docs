@@ -42,9 +42,14 @@
     }).filter(r => r.date || r.creditor || r.explanation);
   }
 
+  // Track manual edits — preview is contenteditable, and we shouldn't
+  // overwrite user typing on every form input.
+  let previewDirty = false;
+
   function generateLetter() {
     const preview = document.getElementById('letterPreview');
     if (!preview) return;
+    if (previewDirty) return;
 
     const senderName = val('senderName');
     const coBorrowerName = val('coBorrowerName');
@@ -253,6 +258,16 @@
         generateLetter();
       });
     }
+
+    // Editable preview wiring
+    const preview = document.getElementById('letterPreview');
+    if (preview) preview.addEventListener('input', function () { previewDirty = true; });
+    const reset = document.getElementById('ciResetPreview');
+    if (reset) reset.addEventListener('click', function (e) {
+      e.preventDefault();
+      previewDirty = false;
+      generateLetter();
+    });
 
     generateLetter();
 

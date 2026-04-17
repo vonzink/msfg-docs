@@ -91,6 +91,21 @@
       f4506ThirdPartyName: val('f4506ThirdPartyName'),
       f4506ThirdPartyAddress: val('f4506ThirdPartyAddress'),
       f4506ThirdPartyCaf: val('f4506ThirdPartyCaf'),
+      // Optional split IVES (5a) overrides — when filled, the backend
+      // uses these instead of parsing f4506ThirdPartyAddress.
+      f4506IvesParticipantId: val('f4506IvesParticipantId'),
+      f4506IvesSorMailbox: val('f4506IvesSorMailbox'),
+      f4506IvesCity: val('f4506IvesCity'),
+      f4506IvesState: val('f4506IvesState'),
+      f4506IvesZip: val('f4506IvesZip'),
+      // 5d Client block (lender contact). Optional — only used when
+      // no investor PDF is selected.
+      f4506ClientName: val('f4506ClientName'),
+      f4506ClientPhone: val('f4506ClientPhone'),
+      f4506ClientStreet: val('f4506ClientStreet'),
+      f4506ClientCity: val('f4506ClientCity'),
+      f4506ClientState: val('f4506ClientState'),
+      f4506ClientZip: val('f4506ClientZip'),
       investorPdfRef: getInvestorPdfRef()
     };
   }
@@ -288,11 +303,17 @@
     const hint = document.getElementById('f4506InvestorDbHint');
     if (!sel) return;
     const opt = sel.selectedOptions[0];
+    const manualBlock = document.getElementById('f4506ManualBlock');
     if (!opt || !opt.value) {
-      if (hint) hint.textContent = 'No investor selected — will use the blank IRS template.';
+      if (hint) hint.textContent = 'No investor selected — will use the blank IRS template. Fill the manual IVES + Client fields below.';
+      // Open the manual block since the LO needs to fill it.
+      if (manualBlock) manualBlock.open = true;
       return;
     }
-    if (hint) hint.textContent = 'Will use ' + opt.textContent + ' as the PDF base.';
+    if (hint) hint.textContent = 'Will use ' + opt.textContent + ' as the PDF base — IVES + Client blocks come from that PDF.';
+    // Collapse the manual block since it's not needed when an investor
+    // PDF is the source of truth.
+    if (manualBlock) manualBlock.open = false;
   }
 
   /** Sync the four MM/DD/YYYY tax-year inputs into the hidden

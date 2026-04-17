@@ -138,9 +138,9 @@
     <div class="calc-section">
       <h2><span class="section-number">5</span> Third party to receive transcript</h2>
       <p class="text-muted" style="margin-top:0;">
-        Choose an investor from your MSFG database (same source as
-        <a href="https://dashboard.msfgco.com/Calculators/Admin%20Settings/admin-settings.html" target="_blank" rel="noopener noreferrer">Admin Settings</a>).
-        You can still edit the fields below after selection.
+        Pick an investor whose pre-filled 4506-C is uploaded in
+        <a href="https://dashboard.msfgco.com/Calculators/Admin%20Settings/admin-settings.html" target="_blank" rel="noopener noreferrer">Admin Settings</a>.
+        Picking one swaps the underlying PDF — IVES (5a) and Client (5d) blocks come from that PDF, so you don't need to fill them here.
       </p>
       <div class="form-grid">
         <div class="form-group form-group--full">
@@ -150,19 +150,78 @@
           </select>
           <p class="text-muted form-4506-c__hint" id="f4506InvestorDbHint" hidden></p>
         </div>
-        <div class="form-group">
-          <label for="f4506ThirdPartyName">Name</label>
-          <input type="text" id="f4506ThirdPartyName" placeholder="Company or individual">
-        </div>
-        <div class="form-group">
-          <label for="f4506ThirdPartyCaf">CAF number <span class="text-muted">(if applicable)</span></label>
-          <input type="text" id="f4506ThirdPartyCaf" placeholder="Optional">
-        </div>
-        <div class="form-group form-group--full">
-          <label for="f4506ThirdPartyAddress">Address</label>
-          <input type="text" id="f4506ThirdPartyAddress" placeholder="Street, city, ST ZIP">
-        </div>
       </div>
+
+      <!-- Manual IVES + Client fields — only needed when no investor PDF
+           is selected. <details> opens automatically (via JS) when the
+           picker is empty so the LO sees them as a fallback. -->
+      <details class="form-4506-c__manual" id="f4506ManualBlock" open>
+        <summary>Manual IVES (5a) &amp; Client (5d) fields <span class="text-muted">(only used when no investor is picked)</span></summary>
+
+        <h3 class="form-4506-c__sub-h">5a &mdash; IVES participant</h3>
+        <div class="form-grid u-grid-2col">
+          <div class="form-group form-group--full">
+            <label for="f4506ThirdPartyName">i. IVES participant name</label>
+            <input type="text" id="f4506ThirdPartyName" placeholder="Company or individual">
+          </div>
+          <div class="form-group">
+            <label for="f4506IvesParticipantId">ii. IVES participant ID number</label>
+            <input type="text" id="f4506IvesParticipantId" placeholder="e.g. 0000301513">
+          </div>
+          <div class="form-group">
+            <label for="f4506IvesSorMailbox">iii. SOR mailbox ID</label>
+            <input type="text" id="f4506IvesSorMailbox" placeholder="e.g. ORDER4506">
+          </div>
+          <div class="form-group form-group--full">
+            <label for="f4506ThirdPartyAddress">iv. Street address (full)</label>
+            <input type="text" id="f4506ThirdPartyAddress" placeholder="Street, city, ST ZIP — split fields below override this">
+          </div>
+          <div class="form-group">
+            <label for="f4506IvesCity">v. City</label>
+            <input type="text" id="f4506IvesCity" placeholder="(optional override)">
+          </div>
+          <div class="form-group">
+            <label for="f4506IvesState">vi. State</label>
+            <input type="text" id="f4506IvesState" placeholder="2-letter" maxlength="2">
+          </div>
+          <div class="form-group">
+            <label for="f4506IvesZip">vii. ZIP code</label>
+            <input type="text" id="f4506IvesZip" placeholder="ZIP" inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label for="f4506ThirdPartyCaf">5b &mdash; Customer file number <span class="text-muted">(or CAF)</span></label>
+            <input type="text" id="f4506ThirdPartyCaf" placeholder="Optional">
+          </div>
+        </div>
+
+        <h3 class="form-4506-c__sub-h">5d &mdash; Client</h3>
+        <div class="form-grid u-grid-2col">
+          <div class="form-group form-group--full">
+            <label for="f4506ClientName">i. Client name</label>
+            <input type="text" id="f4506ClientName" placeholder="Lender / mortgage company">
+          </div>
+          <div class="form-group form-group--full">
+            <label for="f4506ClientPhone">ii. Telephone number</label>
+            <input type="text" id="f4506ClientPhone" placeholder="(555) 555-1234" inputmode="tel">
+          </div>
+          <div class="form-group form-group--full">
+            <label for="f4506ClientStreet">iii. Street address</label>
+            <input type="text" id="f4506ClientStreet" placeholder="Street">
+          </div>
+          <div class="form-group">
+            <label for="f4506ClientCity">iv. City</label>
+            <input type="text" id="f4506ClientCity">
+          </div>
+          <div class="form-group">
+            <label for="f4506ClientState">v. State</label>
+            <input type="text" id="f4506ClientState" placeholder="2-letter" maxlength="2">
+          </div>
+          <div class="form-group">
+            <label for="f4506ClientZip">vi. ZIP code</label>
+            <input type="text" id="f4506ClientZip" inputmode="numeric">
+          </div>
+        </div>
+      </details>
     </div>
 
     <!-- Section 6: Preview (print) -->

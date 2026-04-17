@@ -1,32 +1,31 @@
 <div class="workspace">
 
-  <!-- MISMO Import (auto-populate documents) -->
+  <!-- MISMO Import (auto-populate documents) — markup matches msfg-calc
+       so the workspace looks the same across both apps. -->
   <div class="mismo-drop" id="mismoDrop">
-    <input type="file" id="mismoFile" accept=".xml,text/xml,application/xml" class="u-sr-only">
+    <input type="file" id="mismoFile" accept=".xml,text/xml,application/xml,.mismo" class="u-sr-only">
     <div class="mismo-drop__inner">
       <div class="mismo-drop__icon" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="12" y1="18" x2="12" y2="12"></line>
-          <line x1="9" y1="15" x2="15" y2="15"></line>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <polyline points="9 15 12 12 15 15"/>
         </svg>
       </div>
       <div class="mismo-drop__text">
         <strong>Import MISMO XML</strong>
-        <span>Drag & drop a MISMO file here to auto-populate documents</span>
+        <span>Drag &amp; drop a MISMO file here to auto-populate documents</span>
       </div>
-      <label class="btn btn-sm btn-ghost mismo-drop__browse" id="mismoBrowse" for="mismoFile">Browse</label>
+      <label class="mismo-drop__browse btn btn-sm btn-ghost" id="mismoBrowse" for="mismoFile">Browse</label>
     </div>
     <div class="mismo-drop__active u-hidden" id="mismoActive">
       <div class="mismo-drop__badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        MISMO loaded
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="mismoBorrower">MISMO loaded</span>
       </div>
-      <div class="mismo-drop__meta" id="mismoMeta">—</div>
-      <button class="btn btn-sm btn-link mismo-drop__clear" id="mismoClear" type="button">Clear</button>
+      <div class="mismo-drop__meta" id="mismoMeta"></div>
+      <button class="btn btn-sm btn-ghost mismo-drop__clear" id="mismoClear" type="button" title="Clear MISMO data">Clear</button>
     </div>
   </div>
 

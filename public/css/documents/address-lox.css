@@ -35,3 +35,30 @@
 .doc-page__header p { color: var(--color-gray-500); font-size: 0.95rem; margin: 0; max-width: 700px; }
 
 .doc-page__body { padding: var(--space-lg); }
+
+/* Repeating address rows */
+.lox-row {
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+}
+.lox-row .lox-row-actions {
+  margin-top: var(--space-xs);
+  text-align: right;
+}
+.lox-row-remove {
+  color: var(--color-danger) !important;
+  font-size: 0.85rem !important;
+}
+.lox-row-list {
+  margin: 0 0 var(--space-md);
+  padding-left: var(--space-lg);
+}
+.lox-row-list > li {
+  margin-bottom: var(--space-sm);
+}
+.lox-row-actions {
+  margin-top: var(--space-sm);
+}

@@ -402,6 +402,86 @@
     return getPartyInfo(null);
   }
 
+  /** Borrower self-employment info — for the Income Statement and
+   *  Balance Sheet docs. Looks for an EMPLOYMENT block whose
+   *  SelfEmployedIndicator is true (or "Y"/"yes") and reaches into
+   *  the matching employer PARTY for company name + address. Falls
+   *  back to whatever it can find when the XML is sparse. */
+  function getSelfEmploymentInfo(doc) {
+    const blank = {
+      businessName: '',
+      businessAddress: '',
+      businessAddressLine: '',
+      businessCity: '',
+      businessState: '',
+      businessPostal: '',
+      businessPhone: '',
+      employmentStartDate: '',
+      monthlyIncomeAmount: ''
+    };
+
+    const flagNodes = nodesByLocalName(doc, 'SelfEmployedIndicator');
+    let employmentEl = null;
+    for (const f of flagNodes) {
+      const v = (f.textContent || '').trim().toLowerCase();
+      if (v === 'true' || v === 'y' || v === 'yes' || v === '1') {
+        employmentEl = closestAncestorByLocalName(f, 'EMPLOYMENT')
+          || closestAncestorByLocalName(f, 'Employment');
+        if (employmentEl) break;
+      }
+    }
+    if (!employmentEl) return blank;
+
+    const startDate = firstTextWithin(employmentEl, 'EmploymentStartDate')
+      || firstTextWithin(employmentEl, 'EmploymentDate');
+    const monthlyIncome = firstTextWithin(employmentEl, 'EmploymentMonthlyIncomeAmount')
+      || firstTextWithin(employmentEl, 'IncomeAmount');
+
+    // Two layouts seen across MISMO 3.4 closings: (1) employer info
+    // nested inside EMPLOYMENT itself, or (2) reachable via the
+    // EMPLOYER PARTY sibling. Try the inline path first, then
+    // fall back to the closest PARTY ancestor.
+    const inlineLegalName = firstTextWithin(employmentEl, 'LegalEntityName');
+    const inlineFullName = firstTextWithin(employmentEl, 'FullName');
+    const inlineAddr = nodesByLocalName(employmentEl, 'ADDRESS')[0];
+    const inlinePhone = firstTextWithin(employmentEl, 'ContactPointTelephoneValue');
+
+    let businessName = inlineLegalName || inlineFullName || '';
+    let addrEl = inlineAddr;
+    let phone = inlinePhone;
+
+    if (!businessName || !addrEl || !phone) {
+      const employerParty = closestAncestorByLocalName(employmentEl, 'PARTY')
+        || closestAncestorByLocalName(employmentEl, 'Party');
+      if (employerParty) {
+        if (!businessName) {
+          businessName = firstTextWithin(employerParty, 'LegalEntityName')
+            || firstTextWithin(employerParty, 'FullName');
+        }
+        if (!addrEl) addrEl = nodesByLocalName(employerParty, 'ADDRESS')[0];
+        if (!phone) phone = firstTextWithin(employerParty, 'ContactPointTelephoneValue');
+      }
+    }
+
+    const addressLine = addrEl ? firstTextWithin(addrEl, 'AddressLineText') : '';
+    const city = addrEl ? firstTextWithin(addrEl, 'CityName') : '';
+    const state = addrEl ? firstTextWithin(addrEl, 'StateCode') : '';
+    const postal = addrEl ? firstTextWithin(addrEl, 'PostalCode') : '';
+    const fullAddress = [addressLine, city, state, postal].filter(Boolean).join(', ');
+
+    return {
+      businessName: businessName || '',
+      businessAddress: fullAddress,
+      businessAddressLine: addressLine,
+      businessCity: city,
+      businessState: state,
+      businessPostal: postal,
+      businessPhone: phone || '',
+      employmentStartDate: startDate || '',
+      monthlyIncomeAmount: monthlyIncome || ''
+    };
+  }
+
   function parseMismoXml(xmlString) {
     const doc = new DOMParser().parseFromString(xmlString, 'text/xml');
     const parserError = doc.getElementsByTagName('parsererror');
@@ -429,6 +509,8 @@
     // Borrower / co-borrower contact + name parts
     const primaryBorrower = getBorrowerContact(doc, 'primary');
     const secondaryBorrower = getBorrowerContact(doc, 'secondary');
+
+    const selfEmployment = getSelfEmploymentInfo(doc);
 
     // Loan dates
     const loanDetails = getLoanDetails(doc);
@@ -551,7 +633,18 @@
       sellerAgentPhone: sellerAgent.phone,
       sellerAgentEmail: sellerAgent.email,
       sellerAgentLicense: sellerAgent.license,
-      sellerAgentAddress: sellerAgent.fullAddress
+      sellerAgentAddress: sellerAgent.fullAddress,
+
+      // ---- Self-employment (for Income Statement / Balance Sheet) ----
+      selfEmployedBusinessName: selfEmployment.businessName,
+      selfEmployedBusinessAddress: selfEmployment.businessAddress,
+      selfEmployedBusinessAddressLine: selfEmployment.businessAddressLine,
+      selfEmployedBusinessCity: selfEmployment.businessCity,
+      selfEmployedBusinessState: selfEmployment.businessState,
+      selfEmployedBusinessPostal: selfEmployment.businessPostal,
+      selfEmployedBusinessPhone: selfEmployment.businessPhone,
+      selfEmployedStartDate: selfEmployment.employmentStartDate,
+      selfEmployedMonthlyIncome: selfEmployment.monthlyIncomeAmount
     };
   }
 

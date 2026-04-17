@@ -229,6 +229,27 @@
 
 .workspace__selector-btn.hidden { display: none; }
 
+/* "Already added" state — visible green tint + check so the LO can
+   see at a glance which docs are already open in the workspace. */
+.workspace__selector-btn--added {
+  background: rgba(45, 106, 79, 0.10);
+  border-color: var(--brand-accent, #2d6a4f) !important;
+  color: var(--brand-primary, #1b4332);
+  position: relative;
+}
+.workspace__selector-btn--added::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: var(--brand-accent, #2d6a4f);
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+.workspace__selector-btn--added:hover {
+  background: rgba(45, 106, 79, 0.16);
+}
+
 .workspace__selector-icon { font-size: 1rem; width: 22px; text-align: center; }
 
 /* Panels */

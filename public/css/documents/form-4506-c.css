@@ -49,3 +49,33 @@
   line-height: 1.5;
   color: var(--color-gray-900);
 }
+
+/* Manual IVES + Client collapsible — auto-shown when no investor PDF
+   is picked, auto-collapsed when one is. The summary row is the
+   click target; everything below stays in the same calc-section. */
+.form-4506-c__manual {
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px dashed var(--color-gray-200);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-gray-50);
+}
+.form-4506-c__manual > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--color-gray-700);
+  padding: var(--space-xs) 0;
+  user-select: none;
+}
+.form-4506-c__manual[open] > summary {
+  margin-bottom: var(--space-sm);
+}
+.form-4506-c__sub-h {
+  margin: var(--space-md) 0 var(--space-xs);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-gray-500);
+  font-weight: 700;
+}

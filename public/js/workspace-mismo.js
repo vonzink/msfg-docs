@@ -12,16 +12,29 @@
   const activeBar = document.getElementById('mismoActive');
   const metaEl = document.getElementById('mismoMeta');
   const clearBtn = document.getElementById('mismoClear');
+  // Optional: borrower-name badge (added in the msfg-calc-parity rewrite).
+  // Mirrors msfg-calc — when MISMO loads we replace the generic
+  // "MISMO loaded" text with the parsed borrower name so the LO can
+  // sanity-check they imported the right loan file.
+  const borrowerEl = document.getElementById('mismoBorrower');
 
   if (!drop || !fileInput || !browseBtn || !activeBar || !metaEl || !clearBtn) return;
   if (!window.MSFG || !MSFG.MISMO || typeof MSFG.MISMO.parseXml !== 'function') return;
 
   const STORAGE_KEY = 'msfg_docs_mismo_xml_v1';
 
-  function setUiLoaded(metaText) {
+  function setBadge(name) {
+    if (!borrowerEl) return;
+    borrowerEl.textContent = name && String(name).trim()
+      ? String(name).trim()
+      : 'MISMO loaded';
+  }
+
+  function setUiLoaded(metaText, borrowerName) {
     drop.classList.add('has-data');
     activeBar.classList.remove('u-hidden');
     metaEl.textContent = metaText || 'Loaded';
+    setBadge(borrowerName);
   }
 
   function setUiLoading(metaText) {
@@ -69,7 +82,7 @@
     const parsed = MSFG.MISMO.parseXml(xmlString);
     const payload = { xmlString, parsed };
     sessionStorage.setItem(STORAGE_KEY, xmlString);
-    setUiLoaded(metaText);
+    setUiLoaded(metaText, parsed && parsed.borrowerName);
     broadcastToIframes(payload);
   }
 
@@ -157,7 +170,7 @@
   if (existing && existing.trim()) {
     try {
       const parsed = MSFG.MISMO.parseXml(existing);
-      setUiLoaded('Loaded from session');
+      setUiLoaded('Loaded from session', parsed && parsed.borrowerName);
       broadcastToIframes({ xmlString: existing, parsed });
     } catch (e) {
       sessionStorage.removeItem(STORAGE_KEY);

@@ -47,7 +47,13 @@
           <input type="text" id="approvalAmount" placeholder="$350,000">
         </div>
         <div class="form-group">
-          <label for="interestRate">Interest Rate</label>
+          <label for="interestRate">
+            Interest Rate
+            <label class="pre-approval__rate-toggle" style="font-weight:normal;font-size:0.82rem;margin-left:var(--space-sm);">
+              <input type="checkbox" id="includeInterestRate" checked>
+              Include in letter
+            </label>
+          </label>
           <input type="text" id="interestRate" placeholder="6.500%">
         </div>
         <div class="form-group">
@@ -102,12 +108,20 @@
       </div>
     </div>
 
-    <!-- Section 5: Letter Preview -->
+    <!-- Section 5: Letter Preview — editable. Click to type directly
+         in the rendered letter; manual edits stick until "Reset
+         preview" is pressed. -->
     <div class="calc-section">
-      <h2><span class="section-number">5</span> Letter Preview</h2>
-      <div id="letterPreview" class="letter-preview">
+      <h2>
+        <span class="section-number">5</span> Letter Preview
+        <button type="button" class="btn btn-link btn-sm" id="paResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
+      </h2>
+      <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
         <p class="text-muted text-center">Fill in the fields above to generate your pre-approval letter.</p>
       </div>
+      <p class="text-muted" style="margin:var(--space-xs) 0 0;font-size:0.82rem;">
+        Click anywhere in the preview to edit. Manual edits stick until you press <strong>Reset preview</strong>.
+      </p>
     </div>
 
     <%- include('../partials/doc-actions') %>

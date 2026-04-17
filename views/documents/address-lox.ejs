@@ -9,7 +9,7 @@
     <!-- Section 1: Borrower Information -->
     <div class="calc-section">
       <h2><span class="section-number">1</span> Borrower Information</h2>
-      <div class="form-grid">
+      <div class="form-grid u-grid-2col">
         <div class="form-group">
           <label for="borrowerName">Borrower Name</label>
           <input type="text" id="borrowerName" placeholder="John Doe">
@@ -18,50 +18,46 @@
           <label for="loanNumber">Loan Number</label>
           <input type="text" id="loanNumber" placeholder="LN-2026-001234">
         </div>
-      </div>
-    </div>
-
-    <!-- Section 2: Address Details -->
-    <div class="calc-section">
-      <h2><span class="section-number">2</span> Address Details</h2>
-      <div class="form-grid">
         <div class="form-group">
           <label for="currentAddress">Current Address</label>
           <input type="text" id="currentAddress" placeholder="456 Oak Ave, City, ST 12345">
         </div>
         <div class="form-group">
-          <label for="previousAddress">Previous Address</label>
-          <input type="text" id="previousAddress" placeholder="123 Main St, City, ST 12345">
-        </div>
-        <div class="form-group">
-          <label for="discrepancyType">Discrepancy Type</label>
-          <select id="discrepancyType">
-            <option value="">Select...</option>
-            <option value="recent-move">Recent Move</option>
-            <option value="mailing-vs-physical">Mailing vs Physical Address</option>
-            <option value="name-variation">Name Variation on Record</option>
-            <option value="typo">Typographical Error</option>
-            <option value="other">Other</option>
-          </select>
+          <label for="letterDate">Letter Date</label>
+          <input type="text" id="letterDate" placeholder="MM/DD/YYYY" inputmode="numeric">
         </div>
       </div>
     </div>
 
-    <!-- Section 3: Explanation -->
+    <!-- Section 2: Address history rows — repeating UX. Add a row per
+         past/alternate address with date range + explanation. -->
     <div class="calc-section">
-      <h2><span class="section-number">3</span> Explanation</h2>
-      <div class="form-group form-group--full">
-        <label for="explanation">Explanation of Address Discrepancy</label>
-        <textarea id="explanation" rows="5" placeholder="I am writing to explain the address discrepancy on my credit report. The address listed as..."></textarea>
+      <h2><span class="section-number">2</span> Past / alternate addresses</h2>
+      <p class="text-muted" style="margin-top:0;">
+        Add one row per address that needs explaining. Use the date range to anchor each move; the
+        explanation prints under the address in the letter.
+      </p>
+      <div id="addressRows"></div>
+      <div class="lox-row-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="addAddressRow">+ Add address</button>
       </div>
     </div>
 
-    <!-- Section 4: Letter Preview -->
+    <!-- Section 3: Letter Preview — editable. Auto-fills from the
+         fields above, but you can also click into the preview and
+         tweak the wording directly. Use "Reset preview" to throw
+         away your edits and re-render from the form. -->
     <div class="calc-section">
-      <h2><span class="section-number">4</span> Letter Preview</h2>
-      <div id="letterPreview" class="letter-preview">
+      <h2>
+        <span class="section-number">3</span> Letter Preview
+        <button type="button" class="btn btn-link btn-sm lox-reset-preview" id="loxResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
+      </h2>
+      <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
         <p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>
       </div>
+      <p class="text-muted" style="margin:var(--space-xs) 0 0;font-size:0.82rem;">
+        Click anywhere in the preview to edit the wording directly. Manual edits stick until you press <strong>Reset preview</strong> or change a field above.
+      </p>
     </div>
 
     <%- include('../partials/doc-actions') %>

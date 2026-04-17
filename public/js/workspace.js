@@ -16,10 +16,62 @@
   let activePanels = [];
   let panelCounter = 0;
   const DEFAULT_ZOOM = 85;
+  // Persisted across navigation so the workspace state survives
+  // navigating to /report (Session) and back. Cleared via "Clear All"
+  // or when the browser session ends.
+  const STORAGE_KEY = 'msfg-docs-workspace-panels-v1';
 
   function updateCount() {
     if (countEl) countEl.textContent = activePanels.length + ' active';
     if (emptyState) emptyState.style.display = activePanels.length ? 'none' : '';
+  }
+
+  /* ---- Panel state persistence ----
+     Persists the list of open panels (by slug + type + name + icon)
+     to sessionStorage so a workspace → /report → workspace round-trip
+     restores the same documents. Form values inside each iframe are
+     each iframe's responsibility — they re-read MISMO from sessionStorage
+     on mount via mismo-embed's MSFG_MISMO_REQUEST handshake. */
+
+  function snapshotPanelState() {
+    return Array.from(panels.querySelectorAll('.ws-panel')).map(function(p) {
+      const titleEl = p.querySelector('.ws-panel__title');
+      const iconEl = p.querySelector('.ws-panel__icon');
+      const labelEl = p.querySelector('.ws-panel__zoom-label');
+      return {
+        slug: p.dataset.slug || '',
+        type: p.dataset.type || 'document',
+        name: titleEl ? titleEl.textContent.trim() : '',
+        icon: iconEl ? iconEl.textContent.trim() : '',
+        zoom: labelEl ? parseInt(labelEl.textContent, 10) || DEFAULT_ZOOM : DEFAULT_ZOOM,
+        collapsed: !!p.querySelector('.ws-panel__body.collapsed')
+      };
+    });
+  }
+
+  function persistPanelState() {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshotPanelState()));
+    } catch (_e) { /* storage may be blocked */ }
+  }
+
+  function loadPersistedPanels() {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_e) { return []; }
+  }
+
+  /** Mark/unmark the matching selector button to show which docs are
+   *  already open in the workspace. Visual cue matches msfg-calc. */
+  function syncSelectorAddedState() {
+    if (!selectorGrid) return;
+    const open = new Set(snapshotPanelState().map(function(p) { return p.slug; }));
+    selectorGrid.querySelectorAll('.workspace__selector-btn').forEach(function(btn) {
+      btn.classList.toggle('workspace__selector-btn--added', open.has(btn.dataset.slug));
+    });
   }
 
   /* ---- Selector drawer ---- */
@@ -105,6 +157,8 @@
     panels.appendChild(panel);
     activePanels.push(panelId);
     updateCount();
+    persistPanelState();
+    syncSelectorAddedState();
 
     let panelZoom = DEFAULT_ZOOM;
 
@@ -163,7 +217,13 @@
       panel.remove();
       activePanels = activePanels.filter(function(id) { return id !== panelId; });
       updateCount();
+      persistPanelState();
+      syncSelectorAddedState();
     });
+
+    // Persist any time the user adjusts zoom (so the restore on
+    // navigate-back keeps the same scale).
+    slider.addEventListener('change', persistPanelState);
 
     // Selector intentionally stays open so the user can pick multiple
     // documents in a row without re-opening the drawer each time.
@@ -254,10 +314,40 @@
       });
       activePanels = [];
       updateCount();
+      persistPanelState();
+      syncSelectorAddedState();
     });
   }
 
   updateCount();
+
+  /* ---- Restore persisted panels on load ----
+     Re-creates each panel from sessionStorage so the user's open docs
+     survive navigation to /report and back. Restored before the user
+     interacts so the workspace looks the same as they left it. */
+  loadPersistedPanels().forEach(function(p) {
+    if (!p || !p.slug) return;
+    addPanel(p.slug, p.name || p.slug, p.icon || '📄', p.type || 'document');
+    // Apply persisted zoom + collapsed state to the just-added panel.
+    const last = panels.querySelector('.ws-panel:last-child');
+    if (!last) return;
+    if (typeof p.zoom === 'number' && p.zoom !== DEFAULT_ZOOM) {
+      const slider = last.querySelector('.ws-panel__zoom-slider');
+      const label = last.querySelector('.ws-panel__zoom-label');
+      const iframe = last.querySelector('.ws-panel__iframe');
+      if (slider) slider.value = String(p.zoom);
+      if (label) label.textContent = p.zoom + '%';
+      if (iframe) iframe.addEventListener('load', function once() {
+        iframe.removeEventListener('load', once);
+        MSFG.WS.applyZoomToIframe(iframe, p.zoom);
+      });
+    }
+    if (p.collapsed) {
+      const body = last.querySelector('.ws-panel__body');
+      if (body) body.classList.add('collapsed');
+    }
+  });
+  syncSelectorAddedState();
   // Dashboard-sourced investor docs no longer surface in the workspace
   // selector. Per-investor pre-filled PDFs are picked from inside the
   // existing 4506-C / SSA-89 documents (via /dashboard-docs/list?docType=...).

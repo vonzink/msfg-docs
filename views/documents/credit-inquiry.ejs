@@ -57,12 +57,21 @@
       </div>
     </div>
 
-    <!-- Section 3: Letter Preview -->
+    <!-- Section 3: Letter Preview — editable. Click anywhere in the
+         rendered letter to type. Manual edits stick until "Reset
+         preview" is pressed. Same UX as the Address LOX and
+         Pre-Approval previews. -->
     <div class="calc-section">
-      <h2><span class="section-number">3</span> Letter Preview</h2>
-      <div id="letterPreview" class="letter-preview">
+      <h2>
+        <span class="section-number">3</span> Letter Preview
+        <button type="button" class="btn btn-link btn-sm" id="ciResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
+      </h2>
+      <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
         <p class="text-muted text-center">Fill in the fields above to generate your letter.</p>
       </div>
+      <p class="text-muted" style="margin:var(--space-xs) 0 0;font-size:0.82rem;">
+        Click anywhere in the preview to edit. Manual edits stick until you press <strong>Reset preview</strong>.
+      </p>
     </div>
 
     <%- include('../partials/doc-actions-credit-inquiry') %>

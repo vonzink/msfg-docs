@@ -137,6 +137,30 @@
     if (sig && !sig.value && parsed.borrowerName) setInput(sig, parsed.borrowerName);
   }
 
+  function applyToIncomeStatement(parsed) {
+    // Borrower-as-business header — populates self-employer fields if
+    // present in MISMO; otherwise leaves the placeholder.
+    setInput(document.getElementById('businessName'), parsed.selfEmployedBusinessName || '');
+    setInput(document.getElementById('ownerName'), parsed.borrowerName || '');
+  }
+
+  function applyToBalanceSheet(parsed) {
+    setInput(document.getElementById('businessName'), parsed.selfEmployedBusinessName || '');
+    setInput(document.getElementById('ownerName'), parsed.borrowerName || '');
+  }
+
+  function applyToInvoice(parsed) {
+    // The Generic Invoice "To" block is the recipient — for a mortgage
+    // workflow that's the borrower at the subject property. "From" is
+    // already MSFG by default (placeholder is the company name).
+    setInput(document.getElementById('toName'), parsed.borrowerName || '');
+    setInput(document.getElementById('toAddress'), parsed.propertyAddress || '');
+    // Loan number maps naturally to the invoice number when one isn't
+    // already entered.
+    const inv = document.getElementById('invoiceNumber');
+    if (inv && !inv.value && parsed.loanNumber) setInput(inv, parsed.loanNumber);
+  }
+
   function applyMismoPayload(payload) {
     const parsed = payload && payload.parsed;
     if (!parsed) return;
@@ -147,6 +171,9 @@
     if (slug === 'credit-inquiry') return applyToCreditInquiry(parsed);
     if (slug === 'form-4506-c') return applyToForm4506c(parsed);
     if (slug === 'ssa-89') return applyToSsa89(parsed);
+    if (slug === 'invoice') return applyToInvoice(parsed);
+    if (slug === 'income-statement') return applyToIncomeStatement(parsed);
+    if (slug === 'balance-sheet') return applyToBalanceSheet(parsed);
   }
 
   window.addEventListener('message', function(e) {
