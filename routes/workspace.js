@@ -27,6 +27,7 @@ router.get('/', (req, res) => {
     extraHead: `<link rel="stylesheet" href="${bp}/css/workspace.css?v=${ver}">`,
     extraScripts:
       `<script src="${bp}/js/shared/mismo-parser${ext}?v=${ver}"></script>` +
+      `<script src="${bp}/js/shared/workspace-helpers${ext}?v=${ver}"></script>` +
       `<script src="${bp}/js/workspace-mismo${ext}?v=${ver}"></script>` +
       `<script src="${bp}/js/workspace${ext}?v=${ver}"></script>`
   });

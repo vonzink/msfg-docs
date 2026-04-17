@@ -318,6 +318,30 @@
       MSFG.ReportTemplates.registerExtractor('form-4506-c', getEmailData);
     }
     if (MSFG.DocActions) MSFG.DocActions.register(getEmailData);
+    // Workspace panel "Add to Session Report" → fetch the freshly-filled
+    // PDF (same payload the Download button uses) so the actual
+    // document gets archived in the session, not just a text extract.
+    if (MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
+      MSFG.DocActions.registerCapture(function () {
+        return MSFG.fetch(MSFG.apiUrl('/api/pdf/form-4506-c'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(collectWorksheetPayload())
+        }).then(function (resp) {
+          if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
+          return resp.arrayBuffer();
+        }).then(function (buf) {
+          return {
+            pdfBytes: new Uint8Array(buf),
+            name: 'IRS Form 4506-C',
+            icon: '📋',
+            slug: 'form-4506-c',
+            data: getEmailData(),
+            filename: 'IRS-Form-4506-C-filled.pdf'
+          };
+        });
+      });
+    }
 
     buildPreview();
   });

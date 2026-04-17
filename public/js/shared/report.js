@@ -208,6 +208,11 @@
           if (typeof it.order === 'number' && it.order > maxOrder) maxOrder = it.order;
         });
 
+        // pdfBase64 carries the rendered filled PDF so the session report
+        // can embed the actual document the user just filled out — not
+        // just a structured-data summary. Only set when the source doc
+        // returned bytes from its registerCapture handler. Drafts /
+        // calculators that don't generate a PDF set data only.
         const newItem = {
           id: generateId(),
           name: item.name || 'Document',
@@ -215,6 +220,8 @@
           slug: item.slug || '',
           timestamp: new Date().toISOString(),
           data: item.data || null,
+          pdfBase64: item.pdfBase64 || null,
+          filename: item.filename || ((item.slug || 'document') + '.pdf'),
           version: 2,
           order: maxOrder + 1
         };
@@ -365,34 +372,15 @@
     });
   }
 
-  /* ---- Auto-inject button on DOMContentLoaded ---- */
+  /* ---- Init: just update the global header badge ----
+     The legacy auto-inject of an "Add to Report" button on
+     .doc-page__header was removed when the workspace took over. Adding
+     to the session is now triggered by the workspace panel header
+     button (see public/js/workspace.js) which calls
+     MSFG.DocActions.captureForReport on the iframe — the standalone
+     document view (outside the workspace) intentionally has no
+     add-to-session control. */
   document.addEventListener('DOMContentLoaded', function() {
     MSFG.Report._updateBadge();
-
-    if (window.location.search.indexOf('embed=1') !== -1) return;
-    if (window.top !== window && !document.querySelector('.doc-page__header')) return;
-
-    const docHeader = document.querySelector('.doc-page__header');
-
-    if (docHeader) {
-      const h1 = docHeader.querySelector('h1');
-      const docName = h1 ? h1.textContent.trim() : document.title;
-      const docIcon = (typeof window.__docIcon !== 'undefined') ? window.__docIcon : '';
-
-      const btn = document.createElement('button');
-      btn.className = 'report-add-btn';
-      btn.title = 'Add to Report';
-      const defaultContent = SVG_ADD;
-      btn.innerHTML = defaultContent;
-
-      btn.addEventListener('click', function() {
-        handleReportClick(btn, docName, docIcon, defaultContent);
-      });
-
-      const headerWrapper = document.createElement('div');
-      headerWrapper.className = 'doc-page__header-actions';
-      headerWrapper.appendChild(btn);
-      docHeader.appendChild(headerWrapper);
-    }
   });
 })();

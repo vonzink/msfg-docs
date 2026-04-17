@@ -1,8 +1,11 @@
 /* =====================================================
-   MSFG Document Creator — Report Page
-   Branded report cards, drag-to-reorder, pdfmake PDF.
+   MSFG Document Creator — Session Report page
+   Renders captured documents (filled PDFs embedded inline) with
+   drag-to-reorder, per-item Remove, and bulk Print / Export PDF /
+   Clear All. Mirrors msfg-calc's session-report UX so the workspace
+   experience stays consistent across the two apps.
    ===================================================== */
-(function() {
+(function () {
   'use strict';
 
   var itemsContainer = document.getElementById('reportItems');
@@ -12,12 +15,16 @@
 
   var reportPageEl = document.getElementById('reportPage');
   var cfg = {};
-  try { cfg = JSON.parse(reportPageEl.dataset.siteConfig || '{}'); } catch (e) { /* ignore */ }
-  var COMPANY_NAME = cfg.companyName || 'Mountain State Financial Group LLC';
-  var COMPANY = COMPANY_NAME + (cfg.nmls ? ', NMLS# ' + cfg.nmls : '');
-  var LOGO_URL = cfg.logo || '/images/msfg-logo.png';
-  var DOMAIN = cfg.domain || 'msfginfo.com';
-  var EHL_URL = cfg.equalHousingLogo || '';
+  try { cfg = JSON.parse(reportPageEl.dataset.siteConfig || '{}'); } catch (_e) { /* ignore */ }
+
+  // Resolve the app's base path (e.g. "/docs") so we can call the
+  // server-side merge endpoint without hard-coding it.
+  var basePath = '';
+  var rpScript = document.querySelector('script[src*="report-page"]');
+  if (rpScript && rpScript.src) {
+    var m = rpScript.src.match(/^https?:\/\/[^/]+(\/.*?)\/js\/report-page/);
+    if (m && m[1]) basePath = m[1];
+  }
 
   var DRAG_HANDLE_SVG =
     '<svg class="report-item__drag-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">' +
@@ -31,32 +38,39 @@
     return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) +
            ' — ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
-  function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
-  /* ---- Branded card wrapper ---- */
-  function brandedHeader(name, icon) {
-    return '<div class="rpt-brand-bar">' +
-      '<img src="' + LOGO_URL + '" class="rpt-brand-logo" alt="MSFG">' +
-      '<div class="rpt-brand-calc">' + icon + ' ' + name + '</div>' +
-    '</div>';
-  }
-  function brandedFooter(timestamp) {
-    var ehlHtml = EHL_URL
-      ? '<div class="rpt-brand-ehl"><img src="' + EHL_URL + '" alt="Equal Housing Lender" class="rpt-brand-ehl-img" onerror="this.parentElement.innerHTML=\'Equal Housing Lender\'"></div>'
-      : '';
-    return '<div class="rpt-brand-footer-divider"></div>' +
-      ehlHtml +
-      '<div class="rpt-brand-footer">' +
-        '<span>' + COMPANY + '</span>' +
-        '<span>' + formatDate(timestamp) + '</span>' +
-        '<span>' + DOMAIN + '</span>' +
-      '</div>';
+  /* ---- Render the body of a card ----
+     Three modes, in priority order:
+     1. PDF mode  — item.pdfBase64 set (the new Add-to-Session flow):
+                    embed the PDF inline via a data: URL inside an
+                    <iframe>. The browser's PDF viewer handles paging,
+                    zoom, save-as, etc.
+     2. Data mode — item.data set, MSFG.ReportTemplates can render it:
+                    fall back to the structured-data summary (legacy
+                    items captured before the PDF flow shipped).
+     3. Empty     — nothing to show. */
+  function buildCardBody(item) {
+    if (item.pdfBase64) {
+      var dataUrl = 'data:application/pdf;base64,' + item.pdfBase64;
+      var nameAttr = escapeHtml(item.name + ' PDF preview');
+      return '<iframe class="report-item__pdf" src="' + dataUrl + '" title="' + nameAttr + '"></iframe>';
+    }
+    if (item.version === 2 && item.data && item.slug && window.MSFG && MSFG.ReportTemplates) {
+      try { return MSFG.ReportTemplates.render(item.slug, item.data); }
+      catch (_e) { /* fall through */ }
+    }
+    return '<p class="rpt-no-template">This item has no PDF attached. Re-add it from the workspace to capture the filled document.</p>';
   }
 
-  /* ---- Build a report card element ---- */
-  function buildCard(item, bodyContent) {
+  function buildCard(item) {
     var div = document.createElement('div');
     div.className = 'report-item';
     div.setAttribute('data-id', item.id);
@@ -65,52 +79,61 @@
       '<div class="report-item__header">' +
         '<div class="report-item__drag-handle" title="Drag to reorder">' + DRAG_HANDLE_SVG + '</div>' +
         '<div class="report-item__info">' +
-          '<span class="report-item__icon">' + item.icon + '</span>' +
-          '<span class="report-item__name">' + item.name + '</span>' +
-          '<span class="report-item__time">' + formatTime(item.timestamp) + '</span>' +
+          '<span class="report-item__icon">' + escapeHtml(item.icon || '📄') + '</span>' +
+          '<span class="report-item__name">' + escapeHtml(item.name) + '</span>' +
+          '<span class="report-item__time">' + escapeHtml(formatTime(item.timestamp)) + '</span>' +
         '</div>' +
-        '<button class="report-item__remove" data-id="' + item.id + '">Remove</button>' +
+        '<button class="report-item__remove" data-id="' + escapeHtml(item.id) + '">Remove</button>' +
       '</div>' +
-      '<div class="report-item__body">' +
-        brandedHeader(item.name, item.icon) +
-        bodyContent +
-        brandedFooter(item.timestamp) +
-      '</div>';
+      '<div class="report-item__body">' + buildCardBody(item) + '</div>';
     return div;
   }
 
-  /* ---- Drag & Drop Reordering ---- */
+  /* ---- Drag & Drop reorder (HTML5 native) ---- */
   var dragSrcEl = null;
+
+  function clearDropIndicators() {
+    itemsContainer.querySelectorAll('.report-item--drag-over-top, .report-item--drag-over-bottom').forEach(function (el) {
+      el.classList.remove('report-item--drag-over-top', 'report-item--drag-over-bottom');
+    });
+  }
+
+  function findCardParent(el) {
+    while (el && el !== itemsContainer) {
+      if (el.classList && el.classList.contains('report-item')) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
 
   function handleDragStart(e) {
     dragSrcEl = this;
     this.classList.add('report-item--dragging');
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', this.dataset.id);
+    e.dataTransfer.setData('text/plain', this.getAttribute('data-id'));
   }
 
   function handleDragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    var target = e.target.closest('.report-item');
+    var target = findCardParent(e.target);
     if (!target || target === dragSrcEl) return;
+    clearDropIndicators();
     var rect = target.getBoundingClientRect();
     var midY = rect.top + rect.height / 2;
-    document.querySelectorAll('.report-item--drag-over-top, .report-item--drag-over-bottom').forEach(function(el) {
-      el.classList.remove('report-item--drag-over-top', 'report-item--drag-over-bottom');
-    });
-    if (e.clientY < midY) {
-      target.classList.add('report-item--drag-over-top');
-    } else {
-      target.classList.add('report-item--drag-over-bottom');
-    }
+    target.classList.add(e.clientY < midY ? 'report-item--drag-over-top' : 'report-item--drag-over-bottom');
+  }
+
+  function handleDragLeave(e) {
+    var target = findCardParent(e.target);
+    if (target) target.classList.remove('report-item--drag-over-top', 'report-item--drag-over-bottom');
   }
 
   function handleDrop(e) {
     e.preventDefault();
-    var target = e.target.closest('.report-item');
+    e.stopPropagation();
+    var target = findCardParent(e.target);
     if (!target || !dragSrcEl || target === dragSrcEl) return;
-
     var rect = target.getBoundingClientRect();
     var midY = rect.top + rect.height / 2;
     if (e.clientY < midY) {
@@ -118,31 +141,36 @@
     } else {
       itemsContainer.insertBefore(dragSrcEl, target.nextSibling);
     }
-
-    var orderedIds = [];
-    itemsContainer.querySelectorAll('.report-item').forEach(function(el) {
-      orderedIds.push(el.dataset.id);
-    });
-    MSFG.Report.reorderItems(orderedIds);
+    clearDropIndicators();
+    persistOrder();
   }
 
   function handleDragEnd() {
-    this.classList.remove('report-item--dragging');
-    document.querySelectorAll('.report-item--drag-over-top, .report-item--drag-over-bottom').forEach(function(el) {
-      el.classList.remove('report-item--drag-over-top', 'report-item--drag-over-bottom');
+    if (dragSrcEl) dragSrcEl.classList.remove('report-item--dragging');
+    dragSrcEl = null;
+    clearDropIndicators();
+  }
+
+  function persistOrder() {
+    var ordered = [];
+    itemsContainer.querySelectorAll('.report-item').forEach(function (el) {
+      ordered.push(el.getAttribute('data-id'));
     });
+    MSFG.Report.reorderItems(ordered);
   }
 
   function attachDragHandlers(card) {
     card.addEventListener('dragstart', handleDragStart);
     card.addEventListener('dragover', handleDragOver);
+    card.addEventListener('dragleave', handleDragLeave);
     card.addEventListener('drop', handleDrop);
     card.addEventListener('dragend', handleDragEnd);
   }
 
-  /* ---- Render all items ---- */
+  /* ---- Render ---- */
   function renderItems(items) {
     itemsContainer.innerHTML = '';
+
     if (!items.length) {
       emptyState.style.display = '';
       actionsBar.classList.add('u-hidden');
@@ -152,27 +180,18 @@
 
     emptyState.style.display = 'none';
     actionsBar.classList.remove('u-hidden');
-    countEl.textContent = '(' + items.length + ')';
+    countEl.textContent = '(' + items.length + ' item' + (items.length !== 1 ? 's' : '') + ')';
 
-    items.forEach(function(item) {
-      var content;
-      if (item.version === 2 && item.data && MSFG.ReportTemplates) {
-        content = MSFG.ReportTemplates.render(item.slug, item.data);
-      } else {
-        content = '<p class="rpt-no-template">No template available for this document.</p>';
-      }
-      var card = buildCard(item, content);
+    items.forEach(function (item) {
+      var card = buildCard(item);
       itemsContainer.appendChild(card);
       attachDragHandlers(card);
     });
 
-    // Wire up remove buttons
-    itemsContainer.querySelectorAll('.report-item__remove').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var id = this.dataset.id;
-        MSFG.Report.removeItem(id).then(function() {
-          loadAndRender();
-        });
+    itemsContainer.querySelectorAll('.report-item__remove').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-id');
+        MSFG.Report.removeItem(id).then(loadAndRender);
       });
     });
   }
@@ -181,14 +200,17 @@
     MSFG.Report.getItems().then(renderItems);
   }
 
-  /* ---- Actions ---- */
+  /* ---- Action handlers ---- */
   var printBtn = document.getElementById('btnPrintReport');
   var pdfBtn = document.getElementById('btnPdfReport');
   var clearBtn = document.getElementById('btnClearReport');
 
-  if (printBtn) printBtn.addEventListener('click', function() { window.print(); });
+  if (printBtn) {
+    printBtn.addEventListener('click', function () { window.print(); });
+  }
+
   if (clearBtn) {
-    clearBtn.addEventListener('click', function() {
+    clearBtn.addEventListener('click', function () {
       if (confirm('Remove all items from the session report?')) {
         MSFG.Report.clear().then(loadAndRender);
       }
@@ -196,55 +218,43 @@
   }
 
   if (pdfBtn) {
-    pdfBtn.addEventListener('click', function() {
-      MSFG.Report.getItems().then(function(items) {
-        if (!items.length) return;
-        var content = [];
-        items.forEach(function(item, idx) {
-          if (idx > 0) content.push({ text: '', pageBreak: 'before' });
-          content.push({ text: item.icon + ' ' + item.name, style: 'header', margin: [0, 0, 0, 8] });
-          if (item.data && item.data.sections) {
-            item.data.sections.forEach(function(sec) {
-              content.push({ text: sec.heading, style: 'subheader', margin: [0, 8, 0, 4] });
-              var tableBody = [];
-              sec.rows.forEach(function(row) {
-                tableBody.push([
-                  { text: row.label || '', fontSize: 9, color: '#555' },
-                  { text: row.value || '', fontSize: 9, alignment: 'right', bold: !!row.isTotal }
-                ]);
-              });
-              if (tableBody.length) {
-                content.push({
-                  table: { widths: ['*', 'auto'], body: tableBody },
-                  layout: 'lightHorizontalLines',
-                  margin: [0, 0, 0, 4]
-                });
-              }
-            });
-          }
+    pdfBtn.addEventListener('click', function () {
+      var origText = pdfBtn.textContent;
+      pdfBtn.disabled = true;
+      pdfBtn.textContent = 'Building…';
+      MSFG.Report.getItems().then(function (items) {
+        // Only items with an attached PDF can be merged. Legacy items
+        // (data only) are skipped — surface a notice if all of them
+        // are skipped.
+        var pdfs = items.filter(function (it) { return !!it.pdfBase64; });
+        if (!pdfs.length) {
+          throw new Error('No items in the session have PDFs attached. Re-add them from the workspace.');
+        }
+        return MSFG.fetch(MSFG.apiUrl('/report/api/merge-pdfs'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdfs: pdfs.map(function (it) { return it.pdfBase64; }) })
         });
-        var dd = {
-          content: content,
-          styles: {
-            header: { fontSize: 14, bold: true, color: '#2d6a4f' },
-            subheader: { fontSize: 11, bold: true, color: '#1b4332' }
-          },
-          footer: function(currentPage, pageCount) {
-            return {
-              columns: [
-                { text: COMPANY, fontSize: 7, color: '#999', margin: [40, 0, 0, 0] },
-                { text: 'Page ' + currentPage + ' of ' + pageCount, fontSize: 7, color: '#999', alignment: 'right', margin: [0, 0, 40, 0] }
-              ]
-            };
-          },
-          pageSize: 'LETTER',
-          pageMargins: [40, 40, 40, 30]
-        };
-        pdfMake.createPdf(dd).download('MSFG-Document-Report.pdf');
+      }).then(function (resp) {
+        if (!resp.ok) return resp.text().then(function (t) { throw new Error('Merge failed: ' + t.slice(0, 120)); });
+        return resp.blob();
+      }).then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'MSFG-Session-Report-' + new Date().toISOString().slice(0, 10) + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+      }).catch(function (err) {
+        alert(err.message || 'Could not export PDF.');
+      }).finally(function () {
+        pdfBtn.disabled = false;
+        pdfBtn.textContent = origText;
       });
     });
   }
 
-  /* ---- Init ---- */
   loadAndRender();
 })();

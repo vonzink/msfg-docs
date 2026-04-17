@@ -257,6 +257,30 @@
     generateLetter();
 
     if (MSFG.DocActions) MSFG.DocActions.register(getEmailData);
+    // Workspace panel "Add to Session Report" — fetches the filled PDF
+    // (same payload buildPdfPayload + endpoint exportPdf uses).
+    if (MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
+      MSFG.DocActions.registerCapture(function () {
+        var payload = buildPdfPayload();
+        return MSFG.fetch(MSFG.apiUrl('/api/pdf/credit-inquiry'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(function (resp) {
+          if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
+          return resp.arrayBuffer();
+        }).then(function (buf) {
+          return {
+            pdfBytes: new Uint8Array(buf),
+            name: 'Credit Inquiry Letter',
+            icon: '📧',
+            slug: 'credit-inquiry',
+            data: getEmailData(),
+            filename: 'Credit-Inquiry-Letter-' + ((payload.loanNumber || 'draft').replace(/[^a-z0-9_-]+/gi, '-')) + '.pdf'
+          };
+        });
+      });
+    }
 
     // Report template extractor
     if (MSFG.ReportTemplates) {

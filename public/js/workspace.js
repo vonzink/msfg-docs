@@ -16,6 +16,7 @@
 
   let activePanels = [];
   let panelCounter = 0;
+  const DEFAULT_ZOOM = 85;
 
   function updateCount() {
     if (countEl) countEl.textContent = activePanels.length + ' active';
@@ -74,6 +75,11 @@
     return MSFG.appUrl('/documents/' + slug) + '?embed=1';
   }
 
+  function panelStandaloneHref(slug, type) {
+    if (type === 'template') return MSFG.appUrl('/templates/' + slug + '/fill');
+    return MSFG.appUrl('/documents/' + slug);
+  }
+
   function addPanel(slug, name, icon, type) {
     panelCounter++;
     const panelId = 'ws-panel-' + panelCounter;
@@ -85,16 +91,30 @@
     panel.dataset.slug = slug;
     panel.dataset.type = panelType;
 
+    // Header markup ported from msfg-calc workspace.js so the chrome
+    // matches across both apps: zoom slider + add-to-session +
+    // open-standalone + collapse + close, in that order.
     panel.innerHTML =
-      '<div class="ws-panel__header">' +
+      '<div class="ws-panel__header" data-slug="' + MSFG.escHtml(slug) + '">' +
         '<span class="ws-panel__icon">' + icon + '</span>' +
         '<h3 class="ws-panel__title">' + MSFG.escHtml(name) + '</h3>' +
+        '<div class="ws-panel__zoom">' +
+          '<svg class="ws-panel__zoom-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+            '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' +
+          '</svg>' +
+          '<input type="range" class="ws-panel__zoom-slider" min="50" max="100" value="' + DEFAULT_ZOOM + '" step="5" />' +
+          '<span class="ws-panel__zoom-label">' + DEFAULT_ZOOM + '%</span>' +
+        '</div>' +
         '<div class="ws-panel__actions">' +
+          '<button class="ws-panel__btn ws-panel__btn--report" title="Add to Session Report">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>' +
+          '</button>' +
+          '<a href="' + panelStandaloneHref(slug, panelType) + '" target="_blank" class="ws-panel__standalone" title="Open standalone">↗</a>' +
           '<button class="ws-panel__btn ws-panel__btn--collapse" title="Collapse">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>' +
           '</button>' +
           '<button class="ws-panel__btn ws-panel__btn--remove" title="Remove">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
           '</button>' +
         '</div>' +
       '</div>' +
@@ -106,6 +126,42 @@
     activePanels.push(panelId);
     updateCount();
 
+    let panelZoom = DEFAULT_ZOOM;
+
+    // Stop zoom-slider clicks from bubbling to the header (which would
+    // collapse the panel).
+    const zoomContainer = panel.querySelector('.ws-panel__zoom');
+    zoomContainer.addEventListener('click', function(e) { e.stopPropagation(); });
+
+    const slider = panel.querySelector('.ws-panel__zoom-slider');
+    const zoomLabel = panel.querySelector('.ws-panel__zoom-label');
+    const iframe = panel.querySelector('.ws-panel__iframe');
+
+    slider.addEventListener('input', function() {
+      const val = parseInt(this.value, 10);
+      zoomLabel.textContent = val + '%';
+      panelZoom = val;
+      MSFG.WS.applyZoomToIframe(iframe, val);
+    });
+
+    iframe.addEventListener('load', function() {
+      MSFG.WS.applyZoomToIframe(iframe, panelZoom);
+    });
+
+    // Stop standalone-link clicks from bubbling to the header.
+    panel.querySelector('.ws-panel__standalone').addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    // Add-to-Session-Report — calls into the iframe's MSFG.DocActions
+    // capture function (each document/template registers one) to fetch
+    // the freshly-filled PDF, then stores it via MSFG.Report.addItem.
+    const reportBtn = panel.querySelector('.ws-panel__btn--report');
+    reportBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      capturePanelToReport(panel, slug, name, icon, iframe, reportBtn);
+    });
+
     // Collapse/expand
     const collapseBtn = panel.querySelector('.ws-panel__btn--collapse');
     collapseBtn.addEventListener('click', function(e) {
@@ -114,7 +170,8 @@
       body.classList.toggle('collapsed');
     });
 
-    // Header click to collapse
+    // Header click to collapse (excluding controls inside it — they
+    // stopPropagation above)
     panel.querySelector('.ws-panel__header').addEventListener('click', function() {
       const body = panel.querySelector('.ws-panel__body');
       body.classList.toggle('collapsed');
@@ -130,6 +187,73 @@
 
     // Close selector after adding
     if (selectorEl) selectorEl.classList.add('u-hidden');
+  }
+
+  /** Reach into the iframe's window for a registered capture function,
+   *  invoke it to get the filled PDF + structured data, then save the
+   *  result to the session report via MSFG.Report.addItem. The capture
+   *  function is registered by each document's JS in
+   *  MSFG.DocActions.registerCapture(asyncFn). */
+  function capturePanelToReport(panel, slug, name, icon, iframe, reportBtn) {
+    const originalHtml = reportBtn.innerHTML;
+    reportBtn.disabled = true;
+    reportBtn.style.opacity = '0.5';
+
+    let iframeWin = null;
+    try { iframeWin = iframe.contentWindow; } catch (_e) { /* cross-origin */ }
+    const docActions = iframeWin && iframeWin.MSFG && iframeWin.MSFG.DocActions;
+    const captureFn = docActions && (docActions.captureForReport || docActions.capture);
+
+    if (!captureFn) {
+      MSFG.WS.showToast('This document does not support Add to Session yet', 'error');
+      restoreReportBtn();
+      return;
+    }
+
+    Promise.resolve(captureFn()).then(function(captured) {
+      if (!captured) throw new Error('Empty capture result');
+      // captured: { pdfBytes (Uint8Array|ArrayBuffer), name?, icon?,
+      //             slug?, data?, filename? }
+      const bytes = captured.pdfBytes
+        ? (captured.pdfBytes.buffer ? captured.pdfBytes : new Uint8Array(captured.pdfBytes))
+        : null;
+      const pdfBase64 = bytes ? uint8ToBase64(bytes) : null;
+
+      return MSFG.Report.addItem({
+        name: captured.name || name,
+        icon: captured.icon || icon,
+        slug: captured.slug || slug,
+        data: captured.data || null,
+        pdfBase64: pdfBase64,
+        filename: captured.filename || (slug + '-filled.pdf')
+      });
+    }).then(function() {
+      MSFG.WS.showToast('Added to Session Report');
+      reportBtn.style.color = 'var(--brand-primary, #2d6a4f)';
+      setTimeout(restoreReportBtn, 1500);
+    }).catch(function(err) {
+      console.error('[Workspace] capture failed:', err);
+      MSFG.WS.showToast(err.message || 'Capture failed', 'error');
+      restoreReportBtn();
+    });
+
+    function restoreReportBtn() {
+      reportBtn.disabled = false;
+      reportBtn.style.opacity = '';
+      reportBtn.innerHTML = originalHtml;
+    }
+  }
+
+  /** Encode a Uint8Array to base64 in chunks (avoids the call-stack
+   *  blow-up that happens when pushing >100KB through String.fromCharCode
+   *  in one shot). */
+  function uint8ToBase64(u8) {
+    var CHUNK = 0x8000;
+    var parts = [];
+    for (var i = 0; i < u8.length; i += CHUNK) {
+      parts.push(String.fromCharCode.apply(null, u8.subarray(i, i + CHUNK)));
+    }
+    return btoa(parts.join(''));
   }
 
   /* ---- Collapse all ---- */

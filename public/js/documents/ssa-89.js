@@ -347,6 +347,29 @@
       MSFG.ReportTemplates.registerExtractor('ssa-89', getEmailData);
     }
     if (MSFG.DocActions) MSFG.DocActions.register(getEmailData);
+    // Workspace panel "Add to Session Report" — fetches the filled PDF
+    // (same endpoint the Download button uses).
+    if (MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
+      MSFG.DocActions.registerCapture(function () {
+        return MSFG.fetch(MSFG.apiUrl('/api/pdf/ssa-89'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(collectWorksheetPayload())
+        }).then(function (resp) {
+          if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
+          return resp.arrayBuffer();
+        }).then(function (buf) {
+          return {
+            pdfBytes: new Uint8Array(buf),
+            name: 'SSA-89',
+            icon: '🆔',
+            slug: 'ssa-89',
+            data: getEmailData(),
+            filename: 'SSA-89-filled.pdf'
+          };
+        });
+      });
+    }
 
     buildPreview();
   });

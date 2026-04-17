@@ -235,11 +235,29 @@
     bindActionButtons();
   }
 
-  /* ---- Public API ---- */
+  /* ---- Public API ----
+     register(getEmailDataFn): structured data for the email modal +
+       printable summary (existing, unchanged).
+     registerCapture(asyncFn):  capture for the workspace's
+       "Add to Session Report". asyncFn returns
+         Promise<{ pdfBytes, name?, icon?, slug?, data?, filename? }>
+       Workspace POSTs the result to MSFG.Report.addItem so the actual
+       filled PDF lands in the session report (not just a text extract). */
+  let _captureForReport = null;
+
   window.MSFG = window.MSFG || {};
   window.MSFG.DocActions = {
     register: function (getEmailDataFn) {
       _getEmailData = getEmailDataFn;
+    },
+    registerCapture: function (asyncFn) {
+      _captureForReport = asyncFn;
+    },
+    captureForReport: function () {
+      if (!_captureForReport) {
+        return Promise.reject(new Error('No capture handler registered for this document.'));
+      }
+      return Promise.resolve(_captureForReport());
     },
     openEmail: openModal,
     print: handlePrint

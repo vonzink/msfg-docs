@@ -81,7 +81,10 @@ app.set('layout', 'layouts/main');
 app.use(compression());
 app.use(morgan('short'));
 app.use(cookieParser());
-app.use(express.json());
+// 50mb limit accommodates the session-report PDF-merge endpoint, which
+// receives a JSON array of base64-encoded filled PDFs. Per-route json()
+// middleware can still tighten the limit individually.
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false }));
 
 // Make config available to all templates

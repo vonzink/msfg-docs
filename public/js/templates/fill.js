@@ -337,6 +337,32 @@
     MSFG.ReportTemplates.registerExtractor('pdf-template-' + config.slug, getEmailData);
   }
 
+  /* ---- Capture for Session Report ----
+     Workspace panel calls this to fetch the freshly-filled PDF and
+     stash it in the session report alongside structured data. */
+  if (window.MSFG && MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
+    MSFG.DocActions.registerCapture(function () {
+      var values = collectValues();
+      return MSFG.fetch(MSFG.apiUrl(apiBasePath() + '/fill'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: values })
+      }).then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error((d && d.message) || 'PDF generation failed'); });
+        return r.arrayBuffer();
+      }).then(function (buf) {
+        return {
+          pdfBytes: new Uint8Array(buf),
+          name: config.name,
+          icon: config.icon || '📄',
+          slug: 'pdf-template-' + config.slug,
+          data: getEmailData(),
+          filename: (config.slug || 'template') + '-filled.pdf'
+        };
+      });
+    });
+  }
+
   /* ---- View filled PDF in a new tab ----
      Fetches the filled PDF (with Cognito Bearer via MSFG.fetch), wraps
      the bytes in a blob URL, then window.open() pops a new tab. Browser
