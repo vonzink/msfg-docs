@@ -1,0 +1,79 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <!-- Section 1: Loan / borrower (auto-filled from MISMO) -->
+    <div class="calc-section">
+      <h2><span class="section-number">1</span> Loan &amp; borrower</h2>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group">
+          <label for="loxLoanNumber">Loan number</label>
+          <input type="text" id="loxLoanNumber" placeholder="From MISMO / LOS" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="loxLetterDate">Letter date</label>
+          <input type="text" id="loxLetterDate" placeholder="MM/DD/YYYY" inputmode="numeric">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="loxBorrowerNames">Borrower(s) — comma separated</label>
+          <input type="text" id="loxBorrowerNames" placeholder="e.g. Kyle William Tawney, Alice Ann Tawney" autocomplete="off">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="loxPropertyAddress">Subject property address</label>
+          <input type="text" id="loxPropertyAddress" placeholder="Street, City, ST ZIP" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Topic + explanation -->
+    <div class="calc-section">
+      <h2><span class="section-number">2</span> Subject &amp; explanation</h2>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="loxTopic">Subject <span class="text-muted">(optional, e.g. "Large deposit on 03/12/2026")</span></label>
+          <input type="text" id="loxTopic" placeholder="Brief topic line">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="loxExplanation">Explanation</label>
+          <textarea id="loxExplanation" rows="9" placeholder="Type the borrower's explanation here…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Signers (up to 5) -->
+    <div class="calc-section">
+      <h2><span class="section-number">3</span> Signers <span class="text-muted">(up to 5)</span></h2>
+      <p class="text-muted" style="margin-top:0;">
+        These names print as the captions under each signature line. Leave a row blank to print a generic
+        "Borrower N" caption.
+      </p>
+      <div class="form-grid u-grid-2col">
+        <div class="form-group"><label for="loxSigner1">Signer 1 name</label><input type="text" id="loxSigner1" placeholder="Borrower 1"></div>
+        <div class="form-group"><label for="loxSigner2">Signer 2 name</label><input type="text" id="loxSigner2" placeholder="Borrower 2"></div>
+        <div class="form-group"><label for="loxSigner3">Signer 3 name</label><input type="text" id="loxSigner3"></div>
+        <div class="form-group"><label for="loxSigner4">Signer 4 name</label><input type="text" id="loxSigner4"></div>
+        <div class="form-group"><label for="loxSigner5">Signer 5 name</label><input type="text" id="loxSigner5"></div>
+      </div>
+    </div>
+
+    <!-- Action bar -->
+    <div class="action-bar doc-actions">
+      <button type="button" class="btn btn-primary icon-inline" id="btnLoxDownloadPdf">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download LOX PDF
+      </button>
+      <button type="button" class="btn btn-secondary icon-inline" data-action="doc-print">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      <button type="button" class="btn btn-secondary icon-inline" data-action="doc-email">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email
+      </button>
+    </div>
+  </div>
+</div>

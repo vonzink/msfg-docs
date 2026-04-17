@@ -1,0 +1,48 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+
+    <!-- Investor picker — lists every investor who has uploaded a
+         document tagged "Form Condo (pre-filled)" in the dashboard's
+         admin-settings Documents tab. Picking one swaps the iframe
+         below to that investor's pre-filled questionnaire (using the
+         same fill UI as a manually-uploaded template). -->
+    <div class="calc-section condo-q__chooser">
+      <h2><span class="section-number">1</span> Pick the investor</h2>
+      <p class="text-muted" style="margin-top:0;">
+        Each investor maintains their own copy of the limited condo
+        questionnaire. Upload a copy in
+        <a href="https://dashboard.msfgco.com/Calculators/Admin%20Settings/admin-settings.html" target="_blank" rel="noopener noreferrer">Admin Settings → Investor → Documents</a>
+        and tag it as <strong>Condo Questionnaire</strong>.
+      </p>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label for="condoInvestorSelect">Investor</label>
+          <select id="condoInvestorSelect">
+            <option value="">Select investor…</option>
+          </select>
+          <p class="text-muted condo-q__hint" id="condoInvestorHint" hidden></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Embedded fill UI — populated by JS once an investor is picked.
+         The iframe targets /dashboard-docs/{investorId}/{docId}/fill so
+         we reuse the exact same template fill page; field mapping
+         lives in the existing template editor. -->
+    <div class="calc-section condo-q__form" id="condoFormSection" hidden>
+      <h2><span class="section-number">2</span> Fill out the questionnaire</h2>
+      <p class="text-muted" style="margin-top:0;">
+        Borrower fields auto-populate from MISMO. Configure the field
+        mapping for an investor's PDF in the
+        <a href="#" id="condoEditMappingLink" target="_blank" rel="noopener noreferrer">template editor</a>
+        once and it persists for every future fill.
+      </p>
+      <iframe id="condoFillFrame" class="condo-q__iframe" title="Condo Questionnaire fill form"></iframe>
+    </div>
+  </div>
+</div>

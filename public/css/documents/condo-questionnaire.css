@@ -1,0 +1,23 @@
+/* Condo Questionnaire — chooser + embedded fill iframe */
+
+.condo-q__chooser .form-group--full {
+  margin-top: var(--space-sm, 12px);
+}
+
+.condo-q__hint {
+  font-size: 0.85rem;
+  margin: var(--space-xs, 6px) 0 0;
+}
+
+.condo-q__form {
+  margin-top: var(--space-md, 16px);
+}
+
+.condo-q__iframe {
+  width: 100%;
+  min-height: 900px;
+  border: 1px solid var(--clr-border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  background: #f9fafb;
+  display: block;
+}

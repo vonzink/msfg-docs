@@ -4,6 +4,8 @@ const express = require('express');
 const { generateCreditInquiryPdfBuffer } = require('../lib/pdf/creditInquiryPdf');
 const { generateForm4506cPdfBuffer } = require('../lib/pdf/form4506cPdf');
 const { generateSsa89PdfBuffer } = require('../lib/pdf/ssa89Pdf');
+const { generateGiftLetterPdfBuffer } = require('../lib/pdf/giftLetterPdf');
+const { generateGenericLoxPdfBuffer } = require('../lib/pdf/genericLoxPdf');
 const { ensurePdfBytes } = require('../services/dashboardSync');
 
 const router = express.Router();
@@ -66,6 +68,30 @@ router.post('/ssa-89', express.json({ limit: '2mb' }), async (req, res) => {
   } catch (err) {
     console.error('[PDF] SSA-89 error:', err);
     res.status(500).json({ success: false, message: err.message || 'Failed to generate SSA-89 PDF.' });
+  }
+});
+
+router.post('/gift-letter', express.json({ limit: '2mb' }), async (req, res) => {
+  try {
+    const bytes = await generateGiftLetterPdfBuffer(req.body || {});
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Gift-Letter.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error('[PDF] Gift Letter error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to generate Gift Letter PDF.' });
+  }
+});
+
+router.post('/generic-lox', express.json({ limit: '2mb' }), async (req, res) => {
+  try {
+    const bytes = await generateGenericLoxPdfBuffer(req.body || {});
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Letter-of-Explanation.pdf"');
+    res.send(Buffer.from(bytes));
+  } catch (err) {
+    console.error('[PDF] Generic LOX error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to generate LOX PDF.' });
   }
 });
 

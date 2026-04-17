@@ -12,14 +12,17 @@ function findDoc(slug) {
 /* ---- Document Routes ---- */
 
 const docRoutes = [
-  { slug: 'credit-inquiry',   view: 'documents/credit-inquiry',   title: 'Credit Inquiry Letter',   css: 'credit-inquiry' },
-  { slug: 'pre-approval',     view: 'documents/pre-approval',     title: 'Pre-Approval Letter',     css: 'pre-approval' },
-  { slug: 'address-lox',      view: 'documents/address-lox',      title: 'Address LOX',             css: 'address-lox' },
-  { slug: 'income-statement',  view: 'documents/income-statement',  title: 'Income Statement',        css: 'income-statement' },
-  { slug: 'balance-sheet',    view: 'documents/balance-sheet',    title: 'Balance Sheet',           css: 'balance-sheet' },
-  { slug: 'invoice',          view: 'documents/invoice',          title: 'Generic Invoice',         css: 'invoice' },
-  { slug: 'form-4506-c',      view: 'documents/form-4506-c',      title: 'IRS Form 4506-C',         css: 'form-4506-c' },
-  { slug: 'ssa-89',           view: 'documents/ssa-89',           title: 'SSA-89',                  css: 'ssa-89' }
+  { slug: 'credit-inquiry',      view: 'documents/credit-inquiry',      title: 'Credit Inquiry Letter',  css: 'credit-inquiry' },
+  { slug: 'pre-approval',        view: 'documents/pre-approval',        title: 'Pre-Approval Letter',    css: 'pre-approval' },
+  { slug: 'address-lox',         view: 'documents/address-lox',         title: 'Address LOX',            css: 'address-lox' },
+  { slug: 'generic-lox',         view: 'documents/generic-lox',         title: 'Generic LOX',            css: 'generic-lox' },
+  { slug: 'gift-letter',         view: 'documents/gift-letter',         title: 'Gift Letter',            css: 'gift-letter' },
+  { slug: 'income-statement',    view: 'documents/income-statement',    title: 'Income Statement',       css: 'income-statement' },
+  { slug: 'balance-sheet',       view: 'documents/balance-sheet',       title: 'Balance Sheet',          css: 'balance-sheet' },
+  { slug: 'invoice',             view: 'documents/invoice',             title: 'Generic Invoice',        css: 'invoice' },
+  { slug: 'form-4506-c',         view: 'documents/form-4506-c',         title: 'IRS Form 4506-C',        css: 'form-4506-c' },
+  { slug: 'ssa-89',              view: 'documents/ssa-89',              title: 'SSA-89',                 css: 'ssa-89' },
+  { slug: 'condo-questionnaire', view: 'documents/condo-questionnaire', title: 'Condo Questionnaire',    css: 'condo-questionnaire' }
 ];
 
 docRoutes.forEach(dr => {
