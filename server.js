@@ -64,7 +64,11 @@ app.use(helmet({
       ],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://msfg-media.s3.us-west-2.amazonaws.com"],
-      frameSrc: ["'self'"],
+      // blob: + data: needed by the session-report page so embedded
+      // filled PDFs (each item's filled PDF is loaded into an iframe
+      // via a blob URL) render. Without these the browser blocks the
+      // frame load with a CSP frame-src violation.
+      frameSrc: ["'self'", "blob:", "data:"],
       connectSrc: ["'self'"]
     }
   },

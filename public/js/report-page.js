@@ -47,27 +47,72 @@
       .replace(/"/g, '&quot;');
   }
 
-  /* ---- Render the body of a card ----
-     Three modes, in priority order:
-     1. PDF mode  — item.pdfBase64 set (the new Add-to-Session flow):
-                    embed the PDF inline via a data: URL inside an
-                    <iframe>. The browser's PDF viewer handles paging,
-                    zoom, save-as, etc.
-     2. Data mode — item.data set, MSFG.ReportTemplates can render it:
-                    fall back to the structured-data summary (legacy
-                    items captured before the PDF flow shipped).
-     3. Empty     — nothing to show. */
+  /* ---- Build the body of a card ----
+     Two modes:
+     1. PDF mode  — item.pdfBase64 set (new Add-to-Session flow): the
+                    actual filled PDF is wrapped in a blob URL and
+                    loaded into an <iframe>. blob: is preferred over
+                    data: because (a) far smaller DOM footprint when
+                    inspecting / debugging and (b) the browser PDF
+                    viewer hands us native paging/zoom/save-as for free.
+     2. Data mode — fall back to the legacy structured-data render so
+                    pre-PDF items (and items from documents without a
+                    capture handler) still appear with something useful.
+     The function returns a HTML string — an outer wrapper that gets
+     populated with a real iframe element by attachPdfIframes() after
+     it's appended to the DOM (we can't put a blob URL into innerHTML
+     without leaking the URL when the card is removed). */
   function buildCardBody(item) {
     if (item.pdfBase64) {
-      var dataUrl = 'data:application/pdf;base64,' + item.pdfBase64;
+      // Placeholder div — attachPdfIframes() resolves blob URLs and
+      // inserts the iframe + tracks it for revoke on card removal.
       var nameAttr = escapeHtml(item.name + ' PDF preview');
-      return '<iframe class="report-item__pdf" src="' + dataUrl + '" title="' + nameAttr + '"></iframe>';
+      return '<div class="report-item__pdf-mount" data-pdf-id="' + escapeHtml(item.id) + '" data-pdf-title="' + nameAttr + '"></div>';
     }
     if (item.version === 2 && item.data && item.slug && window.MSFG && MSFG.ReportTemplates) {
       try { return MSFG.ReportTemplates.render(item.slug, item.data); }
       catch (_e) { /* fall through */ }
     }
     return '<p class="rpt-no-template">This item has no PDF attached. Re-add it from the workspace to capture the filled document.</p>';
+  }
+
+  // Track every blob URL we created so we can revoke them when items
+  // get re-rendered (avoiding a leak that grows with each render).
+  var activeBlobUrls = [];
+
+  function revokeAllBlobUrls() {
+    activeBlobUrls.forEach(function (url) {
+      try { URL.revokeObjectURL(url); } catch (_e) { /* ignore */ }
+    });
+    activeBlobUrls = [];
+  }
+
+  function base64ToBlob(b64, mime) {
+    var binary = atob(b64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+
+  /** After cards are mounted to the DOM, build a blob URL per PDF and
+   *  insert the actual <iframe>. Done post-mount because we need a
+   *  stable target element for the URL revoke lifecycle. */
+  function attachPdfIframes(items) {
+    revokeAllBlobUrls();
+    var byId = {};
+    items.forEach(function (it) { byId[it.id] = it; });
+    itemsContainer.querySelectorAll('.report-item__pdf-mount').forEach(function (mount) {
+      var item = byId[mount.dataset.pdfId];
+      if (!item || !item.pdfBase64) return;
+      var blob = base64ToBlob(item.pdfBase64, 'application/pdf');
+      var url = URL.createObjectURL(blob);
+      activeBlobUrls.push(url);
+      var iframe = document.createElement('iframe');
+      iframe.className = 'report-item__pdf';
+      iframe.src = url;
+      iframe.title = mount.dataset.pdfTitle || 'PDF preview';
+      mount.replaceWith(iframe);
+    });
   }
 
   function buildCard(item) {
@@ -187,6 +232,10 @@
       itemsContainer.appendChild(card);
       attachDragHandlers(card);
     });
+
+    // Cards are now in the DOM — swap each .report-item__pdf-mount
+    // placeholder for a real <iframe> with a fresh blob URL.
+    attachPdfIframes(items);
 
     itemsContainer.querySelectorAll('.report-item__remove').forEach(function (btn) {
       btn.addEventListener('click', function () {
