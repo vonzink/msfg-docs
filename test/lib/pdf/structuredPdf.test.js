@@ -71,7 +71,7 @@ test('generateStructuredPdfBuffer', async (t) => {
     assert.ok(loaded.getPageCount() > 1, 'should produce more than one page');
   });
 
-  await t.test('renders application summary sessions as one landscape page per application', async () => {
+  await t.test('renders application summary sessions as one portrait letter review sheet per application', async () => {
     const bytes = await generateStructuredPdfBuffer({
       title: 'Application Summary',
       template: 'application-summary-session',
@@ -136,7 +136,9 @@ test('generateStructuredPdfBuffer', async (t) => {
     const size = loaded.getPage(0).getSize();
 
     assert.equal(loaded.getPageCount(), 2);
-    assert.ok(size.width > size.height, 'application session pages should be landscape');
+    assert.equal(size.width, 612);
+    assert.equal(size.height, 792);
+    assert.ok(size.height > size.width, 'application session pages should be portrait letter');
   });
 
   await t.test('renders legacy application summary section sessions as one page per application', async () => {
