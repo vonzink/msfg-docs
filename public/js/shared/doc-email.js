@@ -57,6 +57,18 @@
     let html = '<div style="font-family: Arial, sans-serif; font-size: 13px;">';
     html += '<h3 style="color:#2d6a4f; margin:0 0 12px;">' + MSFG.escHtml(data.title) + '</h3>';
     data.sections.forEach(function (sec) {
+      if (sec.variant === 'application-divider') {
+        html += '<div style="background:#eef7f1;border-left:4px solid #2d6a4f;border-top:1px solid #cfe4d6;border-bottom:1px solid #cfe4d6;margin:18px 0 12px;padding:12px 14px;">';
+        html += '<h3 style="color:#163f2f;font-size:15px;line-height:1.3;margin:0 0 8px;">' + MSFG.escHtml(sec.heading) + '</h3>';
+        html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+        (sec.rows || []).forEach(function (row) {
+          html += '<tr><td style="padding:3px 10px 3px 0;color:#4f5f58;width:38%;vertical-align:top;">' + MSFG.escHtml(row.label).replace(/\n/g, '<br>') + '</td>';
+          html += '<td style="padding:3px 0;color:#1f2d27;font-weight:600;line-height:1.4;vertical-align:top;">' + MSFG.escHtml(row.value).replace(/\n/g, '<br>') + '</td></tr>';
+        });
+        html += '</table></div>';
+        return;
+      }
+
       html += '<h4 style="color:#333; margin:12px 0 6px;"><span style="border-bottom:1px solid #e0e0e0; padding-bottom:4px;">' + MSFG.escHtml(sec.heading) + '</span></h4>';
       html += '<table style="width:100%; border-collapse:collapse; font-size:13px;">';
       sec.rows.forEach(function (row) {
@@ -65,17 +77,17 @@
           var bullet = row.bulletColor
             ? '<span style="color:' + row.bulletColor + ';">&#9679;</span>&nbsp;&nbsp;'
             : '';
-          html += '<tr><td colspan="2" style="padding:4px 8px ' + (row.value ? '0' : '4px') + ' 0; color:#333; font-size:13px;">' + bullet + MSFG.escHtml(row.label) + '</td></tr>';
+          html += '<tr><td colspan="2" style="padding:4px 8px ' + (row.value ? '0' : '4px') + ' 0; color:#333; font-size:13px;">' + bullet + MSFG.escHtml(row.label).replace(/\n/g, '<br>') + '</td></tr>';
           if (row.value) {
-            html += '<tr><td colspan="2" style="padding:0 8px 4px ' + (row.bulletColor ? '22px' : '16px') + '; color:#999; font-size:11px; line-height:1.3;">' + MSFG.escHtml(row.value) + '</td></tr>';
+            html += '<tr><td colspan="2" style="padding:0 8px 4px ' + (row.bulletColor ? '22px' : '16px') + '; color:#999; font-size:11px; line-height:1.3;">' + MSFG.escHtml(row.value).replace(/\n/g, '<br>') + '</td></tr>';
           }
         } else if (valueLong) {
-          html += '<tr><td colspan="2" style="padding:3px 8px 0 0; color:#555; font-size:12px;">' + MSFG.escHtml(row.label) + '</td></tr>';
-          html += '<tr><td colspan="2" style="padding:0 8px 4px 0; color:#222; line-height:1.4;">' + MSFG.escHtml(row.value) + '</td></tr>';
+          html += '<tr><td colspan="2" style="padding:3px 8px 0 0; color:#555; font-size:12px;">' + MSFG.escHtml(row.label).replace(/\n/g, '<br>') + '</td></tr>';
+          html += '<tr><td colspan="2" style="padding:0 8px 4px 0; color:#222; line-height:1.4;">' + MSFG.escHtml(row.value).replace(/\n/g, '<br>') + '</td></tr>';
         } else {
           var boldStyle = row.bold ? 'font-weight:700;font-size:1.05em;' : '';
-          html += '<tr><td style="padding:3px 8px 3px 0; color:#555;">' + MSFG.escHtml(row.label) + '</td>';
-          html += '<td style="padding:3px 0; font-weight:600; text-align:right;' + boldStyle + '">' + MSFG.escHtml(row.value) + '</td></tr>';
+          html += '<tr><td style="padding:3px 8px 3px 0; color:#555;">' + MSFG.escHtml(row.label).replace(/\n/g, '<br>') + '</td>';
+          html += '<td style="padding:3px 0; font-weight:600; text-align:right;' + boldStyle + '">' + MSFG.escHtml(row.value).replace(/\n/g, '<br>') + '</td></tr>';
         }
       });
       html += '</table>';
@@ -116,12 +128,12 @@
       ]);
       setStatus('Copied to clipboard!', 'success');
       setTimeout(function () { if (statusEl) statusEl.textContent = ''; }, 2000);
-    } catch (err) {
+    } catch (_err) {
       try {
         await navigator.clipboard.writeText(previewToPlainText(data));
         setStatus('Copied as plain text.', 'success');
         setTimeout(function () { if (statusEl) statusEl.textContent = ''; }, 2000);
-      } catch (e) {
+      } catch (_e) {
         setStatus('Copy failed — check browser permissions.', 'error');
       }
     }
@@ -191,7 +203,7 @@
       } else {
         setStatus(result.message || 'Failed to send email.', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
       setStatus('Network error. Please try again.', 'error');
     } finally {
       sendBtn.disabled = false;

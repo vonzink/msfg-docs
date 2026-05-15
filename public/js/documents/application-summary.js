@@ -846,7 +846,8 @@
     pages.forEach(function (page, idx) {
       const profileRow = borrowerProfileRows(page.borrowerProfile)[0] || [];
       sections.push({
-        heading: 'URLA ' + (idx + 1) + ': ' + page.borrowerName,
+        heading: 'Application ' + (idx + 1) + ' of ' + pages.length + ' - ' + page.borrowerName,
+        variant: 'application-divider',
         rows: [
           { label: 'Borrower', value: profileRow.filter(Boolean).join(' | ') },
           { label: 'Residence history', value: historyStatusText(page.residenceCoverage) },
@@ -884,27 +885,6 @@
         heading: 'Liabilities - ' + page.borrowerName,
         rows: liabilityRows({ liabilities: page.liabilities || [] }).map(function (row) {
           return { label: [row[0], row[1], row[2]].filter(Boolean).join(' - '), value: row.slice(3).filter(Boolean).join(' | ') };
-        })
-      });
-      sections.push({
-        heading: 'Declarations - ' + page.borrowerName,
-        rows: page.declarationSummaries.map(function (row) {
-          return {
-            label: row.borrowerName,
-            value: [
-              row.intentToOccupy,
-              row.sellerRelationship,
-              row.undisclosedBorrowedFunds,
-              row.undisclosedCredit,
-              row.undisclosedMortgage,
-              row.judgments,
-              row.delinquentFederalDebt,
-              row.lawsuit,
-              row.bankruptcy,
-              row.foreclosure,
-              row.shortSale
-            ].filter(Boolean).join(' | ')
-          };
         })
       });
     });

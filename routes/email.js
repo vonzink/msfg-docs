@@ -22,6 +22,10 @@ function escHTML(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function cellHTML(str) {
+  return escHTML(str).replace(/\n/g, '<br>');
+}
+
 /**
  * Build HTML email body from document data.
  *  docData: { title, sections: [{ heading, rows: [{label, value}] }] }
@@ -51,6 +55,30 @@ function buildEmailHTML(docData, personalMessage, siteConfig) {
 
   if (docData.sections && docData.sections.length) {
     docData.sections.forEach(function (sec) {
+      if (sec.variant === 'application-divider') {
+        html += `
+<tr><td style="padding:24px 30px 0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef7f1;border-left:4px solid ${primaryColor};border-top:1px solid #cfe4d6;border-bottom:1px solid #cfe4d6;">
+    <tr><td style="padding:14px 16px 10px;">
+      <h2 style="color:#163f2f;font-size:16px;line-height:1.3;margin:0 0 10px;font-weight:700;">${escHTML(sec.heading)}</h2>
+      <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">`;
+
+        (sec.rows || []).forEach(function (row) {
+          html += `
+        <tr>
+          <td style="padding:4px 10px 4px 0;color:#4f5f58;width:38%;vertical-align:top;">${cellHTML(row.label)}</td>
+          <td style="padding:4px 0;color:#1f2d27;font-weight:600;line-height:1.4;vertical-align:top;">${cellHTML(row.value)}</td>
+        </tr>`;
+        });
+
+        html += `
+      </table>
+    </td></tr>
+  </table>
+</td></tr>`;
+        return;
+      }
+
       html += `
 <tr><td style="padding:20px 30px 0;">
   <h3 style="color:${primaryColor};font-size:15px;margin:0 0 10px;"><span style="padding-bottom:6px;border-bottom:2px solid ${primaryColor};">${escHTML(sec.heading)}</span></h3>
@@ -68,28 +96,28 @@ function buildEmailHTML(docData, personalMessage, siteConfig) {
             : '';
           html += `
     <tr style="background:${bg};">
-      <td colspan="2" style="padding:8px 12px ${row.value ? '1px' : '8px'};color:#333;font-size:13px;">${bullet}${escHTML(row.label)}</td>
+      <td colspan="2" style="padding:8px 12px ${row.value ? '1px' : '8px'};color:#333;font-size:13px;">${bullet}${cellHTML(row.label)}</td>
     </tr>`;
           if (row.value) {
             html += `
     <tr style="background:${bg};">
-      <td colspan="2" style="padding:0 12px 8px ${row.bulletColor ? '28px' : '28px'};color:#888;font-size:11px;line-height:1.4;">${escHTML(row.value)}</td>
+      <td colspan="2" style="padding:0 12px 8px ${row.bulletColor ? '28px' : '28px'};color:#888;font-size:11px;line-height:1.4;">${cellHTML(row.value)}</td>
     </tr>`;
           }
         } else if (useStacked) {
           html += `
     <tr style="background:${bg};${border}">
-      <td colspan="2" style="padding:8px 12px 2px;color:#555;${weight}font-size:13px;">${escHTML(row.label)}</td>
+      <td colspan="2" style="padding:8px 12px 2px;color:#555;${weight}font-size:13px;">${cellHTML(row.label)}</td>
     </tr>
     <tr style="background:${bg};">
-      <td colspan="2" style="padding:2px 12px 8px;color:#222;font-size:13px;line-height:1.4;">${escHTML(row.value)}</td>
+      <td colspan="2" style="padding:2px 12px 8px;color:#222;font-size:13px;line-height:1.4;">${cellHTML(row.value)}</td>
     </tr>`;
         } else {
           const boldVal = row.bold ? 'font-weight:700;font-size:1.05em;' : '';
           html += `
     <tr style="background:${bg};${border}">
-      <td style="padding:8px 12px;color:#555;${weight}">${escHTML(row.label)}</td>
-      <td style="padding:8px 12px;text-align:right;color:#222;${weight}${boldVal}">${escHTML(row.value)}</td>
+      <td style="padding:8px 12px;color:#555;${weight}">${cellHTML(row.label)}</td>
+      <td style="padding:8px 12px;text-align:right;color:#222;${weight}${boldVal}">${cellHTML(row.value)}</td>
     </tr>`;
         }
       });
@@ -199,3 +227,4 @@ router.post('/send', emailLimiter, express.json(), async (req, res) => {
 });
 
 module.exports = router;
+module.exports.buildEmailHTML = buildEmailHTML;
