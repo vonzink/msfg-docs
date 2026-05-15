@@ -18,6 +18,14 @@
     return text(value) || 'Not provided';
   }
 
+  function blankCell() {
+    return { __appSummaryBlank: true };
+  }
+
+  function isBlankCell(value) {
+    return value && typeof value === 'object' && value.__appSummaryBlank;
+  }
+
   function localName(node) {
     return node ? (node.localName || String(node.nodeName || '').split(':').pop()) : '';
   }
@@ -169,6 +177,15 @@
 
   function money(value) {
     return MSFG.ApplicationSummary.formatCurrency(value);
+  }
+
+  function moneyOrZero(value) {
+    const raw = text(value);
+    if (!raw) return '';
+    const formatted = money(raw);
+    if (formatted) return formatted;
+    const n = parseFloat(raw.replace(/[$,%\s,]/g, ''));
+    return Number.isFinite(n) && n === 0 ? '$0' : '';
   }
 
   function aliasNames(party) {
@@ -332,19 +349,55 @@
     });
   }
 
-  function extractAssets(doc) {
+  function roleToBorrowerMap(doc, parsed) {
+    const out = {};
+    borrowerParties(doc, parsed).forEach(function (borrower) {
+      if (borrower.roleLabel && borrower.name) out[borrower.roleLabel] = borrower.name;
+    });
+    return out;
+  }
+
+  function relationshipBorrowerMap(doc, parsed, arcroleText) {
+    const roleMap = roleToBorrowerMap(doc, parsed);
+    const out = {};
+    relationshipEndpoints(doc, arcroleText).forEach(function (relationship) {
+      const borrowerName = roleMap[relationship.to];
+      if (!borrowerName) return;
+      out[relationship.from] = out[relationship.from] || [];
+      if (out[relationship.from].indexOf(borrowerName) === -1) out[relationship.from].push(borrowerName);
+    });
+    return out;
+  }
+
+  function extractAssets(doc, parsed) {
+    const borrowerMap = relationshipBorrowerMap(doc, parsed, 'ASSET_IsAssociatedWith_ROLE');
     return nodesByLocalName(doc, 'ASSET').map(function (asset) {
       const detail = nodesByLocalName(asset, 'ASSET_DETAIL')[0] || asset;
+      const ownedProperty = nodesByLocalName(asset, 'OWNED_PROPERTY')[0] || asset;
+      const ownedDetail = nodesByLocalName(ownedProperty, 'OWNED_PROPERTY_DETAIL')[0] || ownedProperty;
+      const property = nodesByLocalName(ownedProperty, 'PROPERTY')[0] || ownedProperty;
+      const type = firstTextWithin(detail, 'AssetType');
+      const label = attr(asset, ['xlink:label', 'label']);
+      const borrowerNames = label && borrowerMap[label] ? borrowerMap[label] : [];
       return {
-        type: firstTextWithin(detail, 'AssetType'),
+        borrowerName: borrowerNames[0] || '',
+        borrowerNames,
+        type,
         holder: firstTextWithin(asset, 'FullName'),
-        value: money(firstTextWithin(detail, 'AssetCashOrMarketValueAmount')),
-        propertyValue: money(firstTextWithin(asset, 'PropertyEstimatedValueAmount')),
-        usage: firstTextWithin(asset, 'PropertyUsageType'),
-        disposition: firstTextWithin(asset, 'OwnedPropertyDispositionStatusType')
+        value: moneyOrZero(firstTextWithin(detail, 'AssetCashOrMarketValueAmount')),
+        isReo: type.toLowerCase() === 'realestateowned' || Boolean(nodesByLocalName(asset, 'OWNED_PROPERTY').length),
+        address: addressFrom(property),
+        propertyValue: moneyOrZero(firstTextWithin(property, 'PropertyEstimatedValueAmount') || firstTextWithin(asset, 'PropertyEstimatedValueAmount')),
+        usage: firstTextWithin(property, 'PropertyUsageType'),
+        currentUsage: firstTextWithin(property, 'PropertyCurrentUsageType'),
+        disposition: firstTextWithin(ownedDetail, 'OwnedPropertyDispositionStatusType'),
+        lienUpb: moneyOrZero(firstTextWithin(ownedDetail, 'OwnedPropertyLienUPBAmount')),
+        maintenanceExpense: moneyOrZero(firstTextWithin(ownedDetail, 'OwnedPropertyMaintenanceExpenseAmount')),
+        netRentalIncome: moneyOrZero(firstTextWithin(ownedDetail, 'OwnedPropertyRentalIncomeNetAmount')),
+        subjectIndicator: yesNo(firstTextWithin(ownedDetail, 'OwnedPropertySubjectIndicator'))
       };
     }).filter(function (asset) {
-      return asset.type || asset.value || asset.propertyValue;
+      return asset.type || asset.value || asset.propertyValue || asset.address;
     });
   }
 
@@ -361,19 +414,7 @@
   }
 
   function liabilityBorrowerMap(doc, parsed) {
-    const roleToBorrower = {};
-    borrowerParties(doc, parsed).forEach(function (borrower) {
-      if (borrower.roleLabel && borrower.name) roleToBorrower[borrower.roleLabel] = borrower.name;
-    });
-
-    const out = {};
-    relationshipEndpoints(doc, 'LIABILITY_IsAssociatedWith_ROLE').forEach(function (relationship) {
-      const borrowerName = roleToBorrower[relationship.to];
-      if (!borrowerName) return;
-      out[relationship.from] = out[relationship.from] || [];
-      if (out[relationship.from].indexOf(borrowerName) === -1) out[relationship.from].push(borrowerName);
-    });
-    return out;
+    return relationshipBorrowerMap(doc, parsed, 'LIABILITY_IsAssociatedWith_ROLE');
   }
 
   function extractLiabilities(doc, parsed) {
@@ -448,7 +489,7 @@
       borrowerProfiles: doc ? extractBorrowerProfiles(doc, parsed) : [],
       residences: histories.residences,
       employments: histories.employments,
-      assets: doc ? extractAssets(doc) : [],
+      assets: doc ? extractAssets(doc, parsed) : [],
       liabilities: doc ? extractLiabilities(doc, parsed) : [],
       declarationSummaries: doc ? extractDeclarations(doc, parsed) : []
     });
@@ -497,6 +538,7 @@
   }
 
   function cellHtml(value) {
+    if (isBlankCell(value)) return '';
     const rendered = display(value);
     if (rendered === 'Not provided') return '<span class="app-summary-missing">Not provided</span>';
     return esc(rendered);
@@ -506,7 +548,7 @@
     const pairs = [];
     for (let i = 0; i < rows.length; i += 2) {
       const left = rows[i] || ['', ''];
-      const right = rows[i + 1] || ['', ''];
+      const right = rows[i + 1] || [blankCell(), blankCell()];
       pairs.push([left[0], left[1], right[0], right[1]]);
     }
     return pairs;
@@ -562,8 +604,25 @@
   }
 
   function assetRows(model) {
-    return model.assets.map(function (asset) {
+    return model.assets.filter(function (asset) {
+      return !asset.isReo;
+    }).map(function (asset) {
       return [asset.type, asset.holder, asset.value || asset.propertyValue, asset.usage, asset.disposition];
+    });
+  }
+
+  function reoRows(model) {
+    const reoProperties = model.reoProperties || (model.assets || []).filter(function (asset) { return asset.isReo; });
+    return reoProperties.map(function (asset) {
+      return [
+        asset.address,
+        asset.currentUsage || asset.usage,
+        asset.propertyValue,
+        asset.lienUpb,
+        asset.netRentalIncome,
+        asset.maintenanceExpense,
+        asset.disposition
+      ];
     });
   }
 
@@ -598,11 +657,15 @@
   }
 
   function borrowerPageHtml(model, page, idx, total) {
+    function endDateFor(row) {
+      return text(row.type).toLowerCase().indexOf('current') !== -1 ? blankCell() : row.endDate;
+    }
+
     const residenceRows = page.residences.map(function (row) {
-      return [row.type, row.address, row.durationLabel, row.startDate, row.endDate];
+      return [row.type, row.address, row.durationLabel, row.startDate, endDateFor(row)];
     });
     const employmentRows = page.employments.map(function (row) {
-      return [row.type, row.employerName, row.title, row.durationLabel, row.startDate, row.endDate, row.monthlyIncome ? MSFG.ApplicationSummary.formatCurrency(row.monthlyIncome) : ''];
+      return [row.type, row.employerName, row.title, row.durationLabel, row.startDate, endDateFor(row), row.monthlyIncome ? MSFG.ApplicationSummary.formatCurrency(row.monthlyIncome) : ''];
     });
     const declarationRowsForPage = page.declarationSummaries.map(function (row) {
       return [
@@ -619,7 +682,18 @@
         row.shortSale
       ];
     });
+    const assetsForPage = Object.prototype.hasOwnProperty.call(page, 'assets') ? page.assets : model.assets;
+    const reoRowsForPage = reoRows({
+      assets: assetsForPage,
+      reoProperties: Object.prototype.hasOwnProperty.call(page, 'reoProperties') ? page.reoProperties : undefined
+    });
     const liabilitiesForPage = Object.prototype.hasOwnProperty.call(page, 'liabilities') ? page.liabilities : model.liabilities;
+    const reoSection = reoRowsForPage.length
+      ? '<div class="app-summary-section">' +
+          '<h4>Real estate owned</h4>' +
+          rowsTable(['Address', 'Usage', 'Value', 'Lien UPB', 'Net rental', 'Maintenance', 'Disposition'], reoRowsForPage, 'No real estate owned data was found in the MISMO data for this borrower.') +
+        '</div>'
+      : '';
 
     return '<div class="app-summary-packet app-summary-page">' +
       '<div class="app-summary-packet__header">' +
@@ -662,9 +736,10 @@
         rowsTable(['Type', 'Employer', 'Title', 'Duration', 'Start', 'End', 'Monthly income'], employmentRows, 'No employment history was found in the MISMO data for this borrower.') +
       '</div>' +
       '<div class="app-summary-section">' +
-        '<h4>Assets</h4>' +
-        rowsTable(['Type', 'Institution / property', 'Value', 'Usage', 'Disposition'], assetRows(model), 'No asset data was found in the MISMO data.') +
+        '<h4>Financial assets</h4>' +
+        rowsTable(['Type', 'Institution / account', 'Value', 'Usage', 'Disposition'], assetRows({ assets: assetsForPage }), 'No cash or financial asset data was found in the MISMO data for this borrower.') +
       '</div>' +
+      reoSection +
       '<div class="app-summary-section">' +
         '<h4>Liabilities</h4>' +
         rowsTable(['Type', 'Creditor', 'Account', 'Balance', 'Payment', 'Paid off at closing', 'Excluded'], liabilityRows({ liabilities: liabilitiesForPage }), 'No liability data was found in the MISMO data for this borrower.') +
@@ -689,6 +764,8 @@
         borrowerProfile: fallbackBorrowerProfile(model),
         residences: model.residences,
         employments: model.employments,
+        assets: model.assets,
+        reoProperties: model.assets.filter(function (asset) { return asset.isReo; }),
         liabilities: model.liabilities,
         declarationSummaries: model.declarationSummaries,
         residenceCoverage: model.residenceCoverage,
@@ -744,6 +821,8 @@
         borrowerProfile: fallbackBorrowerProfile(currentModel),
         residences: currentModel.residences,
         employments: currentModel.employments,
+        assets: currentModel.assets,
+        reoProperties: currentModel.assets.filter(function (asset) { return asset.isReo; }),
         liabilities: currentModel.liabilities,
         declarationSummaries: currentModel.declarationSummaries,
         residenceCoverage: currentModel.residenceCoverage,
@@ -788,6 +867,20 @@
         })
       });
       sections.push({
+        heading: 'Financial assets - ' + page.borrowerName,
+        rows: assetRows({ assets: page.assets || [] }).map(function (row) {
+          return { label: [row[0], row[1]].filter(Boolean).join(' - '), value: row.slice(2).filter(Boolean).join(' | ') };
+        })
+      });
+      if (page.reoProperties && page.reoProperties.length) {
+        sections.push({
+          heading: 'Real estate owned - ' + page.borrowerName,
+          rows: reoRows({ reoProperties: page.reoProperties }).map(function (row) {
+            return { label: [row[0], row[1]].filter(Boolean).join(' - '), value: row.slice(2).filter(Boolean).join(' | ') };
+          })
+        });
+      }
+      sections.push({
         heading: 'Liabilities - ' + page.borrowerName,
         rows: liabilityRows({ liabilities: page.liabilities || [] }).map(function (row) {
           return { label: [row[0], row[1], row[2]].filter(Boolean).join(' - '), value: row.slice(3).filter(Boolean).join(' | ') };
@@ -816,14 +909,6 @@
       });
     });
 
-    sections.push(
-      {
-        heading: 'Assets',
-        rows: assetRows(currentModel).map(function (row) {
-          return { label: [row[0], row[1]].filter(Boolean).join(' - '), value: row.slice(2).filter(Boolean).join(' | ') };
-        })
-      }
-    );
     return { title: 'Application Summary', sections };
   }
 

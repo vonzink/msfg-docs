@@ -182,11 +182,27 @@
     return profile || { name };
   }
 
-  function buildBorrowerPages(borrowers, borrowerProfiles, residences, employments, liabilities, declarationSummaries, now) {
+  function hasBorrowerOwnership(records) {
+    return (Array.isArray(records) ? records : []).some(function (record) {
+      return text(record && record.borrowerName) || (Array.isArray(record && record.borrowerNames) && record.borrowerNames.length);
+    });
+  }
+
+  function assetRecordsForBorrower(records, borrowerName) {
+    if (!hasBorrowerOwnership(records)) return Array.isArray(records) ? records : [];
+    return recordsForBorrower(records, borrowerName);
+  }
+
+  function isReoAsset(asset) {
+    return text(asset && asset.type).toLowerCase() === 'realestateowned' || Boolean(asset && asset.isReo);
+  }
+
+  function buildBorrowerPages(borrowers, borrowerProfiles, residences, employments, assets, liabilities, declarationSummaries, now) {
     return (Array.isArray(borrowers) ? borrowers : []).map(function (borrowerName) {
       const profile = profileForBorrower(borrowerProfiles, borrowerName);
       const borrowerResidences = recordsForBorrower(residences, borrowerName);
       const borrowerEmployments = recordsForBorrower(employments, borrowerName);
+      const borrowerAssets = assetRecordsForBorrower(assets, borrowerName);
       const borrowerLiabilities = recordsForBorrower(liabilities, borrowerName);
       const borrowerDeclarations = recordsForBorrower(declarationSummaries, borrowerName);
       const residenceCoverage = coverage(borrowerResidences, { now });
@@ -206,6 +222,8 @@
         borrowerProfile: profile,
         residences: borrowerResidences,
         employments: borrowerEmployments,
+        assets: borrowerAssets,
+        reoProperties: borrowerAssets.filter(isReoAsset),
         liabilities: borrowerLiabilities,
         declarationSummaries: borrowerDeclarations,
         residenceCoverage,
@@ -227,6 +245,7 @@
     borrowers = borrowers.map(text).filter(Boolean);
     const residences = normalizeHistory(source.residences, now);
     const employments = normalizeHistory(source.employments, now);
+    const assets = Array.isArray(source.assets) ? source.assets : [];
     const liabilities = Array.isArray(source.liabilities) ? source.liabilities : [];
     const declarationSummaries = Array.isArray(source.declarationSummaries) ? source.declarationSummaries : [];
     const residenceCoverage = coverageByBorrower(residences, borrowers, { now });
@@ -243,10 +262,10 @@
       parsed,
       borrowers,
       borrowerProfiles,
-      assets: Array.isArray(source.assets) ? source.assets : [],
+      assets,
       liabilities,
       declarationSummaries,
-      borrowerPages: buildBorrowerPages(borrowers, borrowerProfiles, residences, employments, liabilities, declarationSummaries, now),
+      borrowerPages: buildBorrowerPages(borrowers, borrowerProfiles, residences, employments, assets, liabilities, declarationSummaries, now),
       borrowerName: text(parsed.borrowerName),
       coBorrowerName: text(parsed.coBorrowerName),
       loanNumber: text(parsed.loanNumber),

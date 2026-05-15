@@ -75,6 +75,10 @@ test('application summary core', async (t) => {
         { borrowerName: 'Jane Borrower', type: 'Current', employerName: 'Long Job', years: 5, months: 0 },
         { borrowerName: 'John CoBorrower', type: 'Current', employerName: 'Short Job', years: 0, months: 10 }
       ],
+      assets: [
+        { borrowerNames: ['Jane Borrower'], type: 'CheckingAccount', holder: 'Jane Bank', value: '$5,000' },
+        { borrowerNames: ['John CoBorrower'], type: 'RealEstateOwned', isReo: true, address: '200 REO Lane', propertyValue: '$300,000' }
+      ],
       liabilities: [
         { borrowerNames: ['Jane Borrower'], creditor: 'Jane Card', balance: '$1,000' },
         { borrowerNames: ['John CoBorrower'], creditor: 'John Auto', balance: '$9,000' },
@@ -89,10 +93,13 @@ test('application summary core', async (t) => {
     assert.equal(model.borrowerPages.length, 2);
     assert.equal(model.borrowerPages[0].borrowerName, 'Jane Borrower');
     assert.equal(model.borrowerPages[0].residences.length, 1);
+    assert.deepEqual(model.borrowerPages[0].assets.map(item => item.holder), ['Jane Bank']);
+    assert.equal(model.borrowerPages[0].reoProperties.length, 0);
     assert.deepEqual(model.borrowerPages[0].liabilities.map(item => item.creditor), ['Jane Card']);
     assert.equal(model.borrowerPages[0].actionItems.length, 0);
     assert.equal(model.borrowerPages[1].borrowerName, 'John CoBorrower');
     assert.equal(model.borrowerPages[1].employments[0].employerName, 'Short Job');
+    assert.deepEqual(model.borrowerPages[1].reoProperties.map(item => item.address), ['200 REO Lane']);
     assert.deepEqual(model.borrowerPages[1].liabilities.map(item => item.creditor), ['John Auto', 'John Card']);
     assert.deepEqual(model.borrowerPages[1].actionItems.map(item => item.area), ['Residence', 'Employment']);
   });
