@@ -526,7 +526,6 @@
       ['Purchase price', money(parsed.purchasePriceAmount)],
       ['Property value', money(parsed.propertyValueAmount)],
       ['Note rate', model.noteRate],
-      ['Total monthly income', money(parsed.totalMonthlyIncomeAmount)],
       ['Proposed housing payment', money(parsed.totalMonthlyProposedHousingExpenseAmount)]
     ];
   }
@@ -545,7 +544,6 @@
       cellPhone: '',
       workPhone: parsed.coBorrowerPhone,
       email: parsed.borrowerEmail,
-      qualifyingIncome: '',
       aliases: ''
     };
   }
@@ -562,7 +560,6 @@
       profile.dependents,
       [profile.homePhone, profile.cellPhone, profile.workPhone].filter(Boolean).join(' / '),
       profile.email,
-      profile.qualifyingIncome,
       profile.aliases
     ]];
   }
@@ -657,7 +654,7 @@
       '</div>' +
       '<div class="app-summary-section">' +
         '<h4>Borrower information</h4>' +
-        rowsTable(['Name', 'Role', 'SSN/ITIN', 'DOB', 'Citizenship', 'Marital', 'Dependents', 'Phones', 'Email', 'Qualifying income', 'AKA'], borrowerProfileRows(page.borrowerProfile), 'No borrower contact fields were found.') +
+        rowsTable(['Name', 'Role', 'SSN/ITIN', 'DOB', 'Citizenship', 'Marital', 'Dependents', 'Phones', 'Email', 'AKA'], borrowerProfileRows(page.borrowerProfile), 'No borrower contact fields were found.') +
       '</div>' +
       '<div class="app-summary-section">' +
         '<h4>Residence history</h4>' +
@@ -738,7 +735,7 @@
   function buildEmailData() {
     if (!currentModel) {
       return {
-        title: '🔎 Application Summary',
+        title: 'Application Summary',
         sections: [{ heading: 'Summary', rows: [{ label: 'Status', value: 'No MISMO loaded' }] }]
       };
     }
@@ -793,6 +790,12 @@
         })
       });
       sections.push({
+        heading: 'Liabilities - ' + page.borrowerName,
+        rows: liabilityRows({ liabilities: page.liabilities || [] }).map(function (row) {
+          return { label: [row[0], row[1], row[2]].filter(Boolean).join(' - '), value: row.slice(3).filter(Boolean).join(' | ') };
+        })
+      });
+      sections.push({
         heading: 'Declarations - ' + page.borrowerName,
         rows: page.declarationSummaries.map(function (row) {
           return {
@@ -821,15 +824,30 @@
         rows: assetRows(currentModel).map(function (row) {
           return { label: [row[0], row[1]].filter(Boolean).join(' - '), value: row.slice(2).filter(Boolean).join(' | ') };
         })
-      },
-      {
-        heading: 'Liabilities',
-        rows: liabilityRows(currentModel).map(function (row) {
-          return { label: [row[0], row[1], row[2]].filter(Boolean).join(' - '), value: row.slice(3).filter(Boolean).join(' | ') };
-        })
       }
     );
-    return { title: '🔎 Application Summary', sections };
+    return { title: 'Application Summary', sections };
+  }
+
+  function captureForReport() {
+    const data = buildEmailData();
+    return MSFG.fetch(MSFG.apiUrl('/api/pdf/structured'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(function (resp) {
+      if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
+      return resp.arrayBuffer();
+    }).then(function (buf) {
+      return {
+        pdfBytes: new Uint8Array(buf),
+        name: 'Application Summary',
+        icon: 'AS',
+        slug: 'application-summary',
+        data,
+        filename: 'application-summary.pdf'
+      };
+    });
   }
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -873,6 +891,7 @@
 
     if (window.MSFG && MSFG.DocActions) {
       MSFG.DocActions.register(buildEmailData);
+      MSFG.DocActions.registerCapture(captureForReport);
     }
     if (window.MSFG && MSFG.ReportTemplates) {
       MSFG.ReportTemplates.registerExtractor('application-summary', buildEmailData);
