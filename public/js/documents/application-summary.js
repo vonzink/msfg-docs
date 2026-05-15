@@ -647,27 +647,41 @@
     return 'Needs review - missing ' + MSFG.ApplicationSummary.formatMonths(summary.missingMonths);
   }
 
-  function actionItemsHtml(page) {
-    if (!page.actionItems || !page.actionItems.length) {
-      return '<li>No two-year employment or residence gaps found for this borrower from the MISMO data.</li>';
-    }
-    return page.actionItems.map(function (item) {
-      return '<li><strong>' + esc(item.area) + ':</strong> ' + esc(item.message) + '</li>';
-    }).join('');
+  function applicationPages(model) {
+    return (model.borrowerPages && model.borrowerPages.length)
+      ? model.borrowerPages
+      : [{
+        borrowerName: model.borrowerName,
+        borrowerProfile: fallbackBorrowerProfile(model),
+        residences: model.residences,
+        employments: model.employments,
+        assets: model.assets,
+        reoProperties: model.assets.filter(function (asset) { return asset.isReo; }),
+        liabilities: model.liabilities,
+        declarationSummaries: model.declarationSummaries,
+        residenceCoverage: model.residenceCoverage,
+        employmentCoverage: model.employmentCoverage,
+        actionItems: model.actionItems
+      }];
   }
 
-  function borrowerPageHtml(model, page, idx, total) {
-    function endDateFor(row) {
-      return text(row.type).toLowerCase().indexOf('current') !== -1 ? blankCell() : row.endDate;
-    }
+  function sessionCell(value) {
+    if (isBlankCell(value)) return '';
+    return display(value);
+  }
 
-    const residenceRows = page.residences.map(function (row) {
-      return [row.type, row.address, row.durationLabel, row.startDate, endDateFor(row)];
+  function sessionRows(rows) {
+    return rows.map(function (row) {
+      return row.map(sessionCell);
     });
-    const employmentRows = page.employments.map(function (row) {
-      return [row.type, row.employerName, row.title, row.durationLabel, row.startDate, endDateFor(row), row.monthlyIncome ? MSFG.ApplicationSummary.formatCurrency(row.monthlyIncome) : ''];
-    });
-    const declarationRowsForPage = page.declarationSummaries.map(function (row) {
+  }
+
+  function endDateFor(row) {
+    return text(row.type).toLowerCase().indexOf('current') !== -1 ? blankCell() : row.endDate;
+  }
+
+  function declarationRows(page) {
+    return page.declarationSummaries.map(function (row) {
       return [
         row.intentToOccupy,
         row.sellerRelationship,
@@ -682,6 +696,25 @@
         row.shortSale
       ];
     });
+  }
+
+  function actionItemsHtml(page) {
+    if (!page.actionItems || !page.actionItems.length) {
+      return '<li>No two-year employment or residence gaps found for this borrower from the MISMO data.</li>';
+    }
+    return page.actionItems.map(function (item) {
+      return '<li><strong>' + esc(item.area) + ':</strong> ' + esc(item.message) + '</li>';
+    }).join('');
+  }
+
+  function borrowerPageHtml(model, page, idx, total) {
+    const residenceRows = page.residences.map(function (row) {
+      return [row.type, row.address, row.durationLabel, row.startDate, endDateFor(row)];
+    });
+    const employmentRows = page.employments.map(function (row) {
+      return [row.type, row.employerName, row.title, row.durationLabel, row.startDate, endDateFor(row), row.monthlyIncome ? MSFG.ApplicationSummary.formatCurrency(row.monthlyIncome) : ''];
+    });
+    const declarationRowsForPage = declarationRows(page);
     const assetsForPage = Object.prototype.hasOwnProperty.call(page, 'assets') ? page.assets : model.assets;
     const reoRowsForPage = reoRows({
       assets: assetsForPage,
@@ -757,21 +790,7 @@
     if (!preview) return;
     updateStatusCards(model);
 
-    const pages = (model.borrowerPages && model.borrowerPages.length)
-      ? model.borrowerPages
-      : [{
-        borrowerName: model.borrowerName,
-        borrowerProfile: fallbackBorrowerProfile(model),
-        residences: model.residences,
-        employments: model.employments,
-        assets: model.assets,
-        reoProperties: model.assets.filter(function (asset) { return asset.isReo; }),
-        liabilities: model.liabilities,
-        declarationSummaries: model.declarationSummaries,
-        residenceCoverage: model.residenceCoverage,
-        employmentCoverage: model.employmentCoverage,
-        actionItems: model.actionItems
-      }];
+    const pages = applicationPages(model);
 
     preview.innerHTML = pages.map(function (page, idx) {
       return borrowerPageHtml(model, page, idx, pages.length);
@@ -814,21 +833,7 @@
         sections: [{ heading: 'Summary', rows: [{ label: 'Status', value: 'No MISMO loaded' }] }]
       };
     }
-    const pages = (currentModel.borrowerPages && currentModel.borrowerPages.length)
-      ? currentModel.borrowerPages
-      : [{
-        borrowerName: currentModel.borrowerName,
-        borrowerProfile: fallbackBorrowerProfile(currentModel),
-        residences: currentModel.residences,
-        employments: currentModel.employments,
-        assets: currentModel.assets,
-        reoProperties: currentModel.assets.filter(function (asset) { return asset.isReo; }),
-        liabilities: currentModel.liabilities,
-        declarationSummaries: currentModel.declarationSummaries,
-        residenceCoverage: currentModel.residenceCoverage,
-        employmentCoverage: currentModel.employmentCoverage,
-        actionItems: currentModel.actionItems
-      }];
+    const pages = applicationPages(currentModel);
     const sections = [
       {
         heading: 'Coverage',
@@ -892,8 +897,85 @@
     return { title: 'Application Summary', template: 'application-summary', sections };
   }
 
+  function buildSessionData() {
+    if (!currentModel) {
+      return {
+        title: 'Application Summary',
+        template: 'application-summary-session',
+        loanOverview: {
+          columns: ['Field', 'Value', 'Field', 'Value'],
+          rows: [['Status', 'No MISMO loaded', '', '']]
+        },
+        applications: []
+      };
+    }
+
+    return {
+      title: 'Application Summary',
+      template: 'application-summary-session',
+      loanOverview: {
+        columns: ['Field', 'Value', 'Field', 'Value'],
+        rows: sessionRows(pairRows(loanRows(currentModel)))
+      },
+      applications: applicationPages(currentModel).map(function (page, idx, pages) {
+        const residenceRows = page.residences.map(function (row) {
+          return [row.type, row.address, row.durationLabel, row.startDate, endDateFor(row)];
+        });
+        const employmentRows = page.employments.map(function (row) {
+          return [row.type, row.employerName, row.title, row.durationLabel, row.startDate, endDateFor(row), row.monthlyIncome ? MSFG.ApplicationSummary.formatCurrency(row.monthlyIncome) : ''];
+        });
+        const assetsForPage = Object.prototype.hasOwnProperty.call(page, 'assets') ? page.assets : currentModel.assets;
+        const liabilitiesForPage = Object.prototype.hasOwnProperty.call(page, 'liabilities') ? page.liabilities : currentModel.liabilities;
+        return {
+          label: 'Application ' + (idx + 1) + ' of ' + pages.length,
+          borrowerName: page.borrowerName,
+          coverage: {
+            residence: historyStatusText(page.residenceCoverage),
+            employment: historyStatusText(page.employmentCoverage),
+            reviewItems: page.actionItems.length ? page.actionItems.map(function (item) {
+              return item.area + ': ' + item.message;
+            }).join('\n') : 'None'
+          },
+          tables: {
+            borrowerInformation: {
+              columns: ['Name', 'Role', 'SSN/ITIN', 'DOB', 'Citizenship', 'Marital', 'Dependents', 'Phones', 'Email', 'AKA'],
+              rows: sessionRows(borrowerProfileRows(page.borrowerProfile))
+            },
+            residenceHistory: {
+              columns: ['Type', 'Address', 'Duration', 'Start', 'End'],
+              rows: sessionRows(residenceRows)
+            },
+            employmentHistory: {
+              columns: ['Type', 'Employer', 'Title', 'Duration', 'Start', 'End', 'Monthly income'],
+              rows: sessionRows(employmentRows)
+            },
+            assets: {
+              columns: ['Type', 'Institution / account', 'Value', 'Usage', 'Disposition'],
+              rows: sessionRows(assetRows({ assets: assetsForPage }))
+            },
+            reo: {
+              columns: ['Address', 'Usage', 'Value', 'Lien UPB', 'Net rental', 'Maintenance', 'Disposition'],
+              rows: sessionRows(reoRows({
+                assets: assetsForPage,
+                reoProperties: Object.prototype.hasOwnProperty.call(page, 'reoProperties') ? page.reoProperties : undefined
+              }))
+            },
+            liabilities: {
+              columns: ['Type', 'Creditor', 'Account', 'Balance', 'Payment', 'Paid off at closing', 'Excluded'],
+              rows: sessionRows(liabilityRows({ liabilities: liabilitiesForPage }))
+            },
+            declarations: {
+              columns: ['Occupy', 'Seller relationship', 'Borrowed funds', 'New credit', 'Other mortgage', 'Judgments', 'Federal debt delinquent', 'Lawsuit', 'Bankruptcy', 'Foreclosure', 'Short sale'],
+              rows: sessionRows(declarationRows(page))
+            }
+          }
+        };
+      })
+    };
+  }
+
   function captureForReport() {
-    const data = buildEmailData();
+    const data = buildSessionData();
     return MSFG.fetch(MSFG.apiUrl('/api/pdf/structured'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

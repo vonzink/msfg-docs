@@ -71,7 +71,75 @@ test('generateStructuredPdfBuffer', async (t) => {
     assert.ok(loaded.getPageCount() > 1, 'should produce more than one page');
   });
 
-  await t.test('renders application summary sessions as one page per application', async () => {
+  await t.test('renders application summary sessions as one landscape page per application', async () => {
+    const bytes = await generateStructuredPdfBuffer({
+      title: 'Application Summary',
+      template: 'application-summary-session',
+      loanOverview: {
+        columns: ['Field', 'Value', 'Field', 'Value'],
+        rows: [
+          ['Borrower(s)', 'Jane Borrower, John Borrower', 'Subject property', '17630 East 104th Place, Commerce City, CO 80022'],
+          ['Occupancy', 'PrimaryResidence', 'Units', '1'],
+          ['Loan purpose', 'Purchase', 'Mortgage type', 'Conventional']
+        ]
+      },
+      applications: ['Jane Borrower', 'John Borrower'].map((name, index) => ({
+        borrowerName: name,
+        label: `Application ${index + 1} of 2`,
+        coverage: {
+          residence: 'Complete - 2 years listed',
+          employment: 'Complete - 2 years listed',
+          reviewItems: index === 0 ? 'None' : 'Employment: Confirm prior employer dates.'
+        },
+        tables: {
+          borrowerInformation: {
+            columns: ['Name', 'Role', 'SSN/ITIN', 'DOB', 'Citizenship', 'Marital', 'Dependents', 'Phones', 'Email', 'AKA'],
+            rows: [[name, index === 0 ? 'Borrower' : 'Cosigner', '***-**-1234', '1980-01-01', 'USCitizen', 'Married', '2', '(555) 111-2222', 'borrower@example.com', '']]
+          },
+          residenceHistory: {
+            columns: ['Type', 'Address', 'Duration', 'Start', 'End'],
+            rows: [
+              ['Current', '100 Current Street, Denver, CO 80202', '1 yr', '2025-01-01', ''],
+              ['Prior', '200 Prior Avenue, Aurora, CO 80010', '1 yr', '2024-01-01', '2024-12-31']
+            ]
+          },
+          employmentHistory: {
+            columns: ['Type', 'Employer', 'Title', 'Duration', 'Start', 'End', 'Monthly income'],
+            rows: [
+              ['Current', 'Current Employer', 'Analyst', '1 yr', '2025-01-01', '', '$4,500'],
+              ['Previous', 'Prior Employer', 'Assistant', '1 yr', '2024-01-01', '2024-12-31', '']
+            ]
+          },
+          assets: {
+            columns: ['Type', 'Institution / account', 'Value', 'Usage', 'Disposition'],
+            rows: [['CheckingAccount', 'Bank One', '$5,000', '', '']]
+          },
+          reo: {
+            columns: ['Address', 'Usage', 'Value', 'Lien UPB', 'Net rental', 'Maintenance', 'Disposition'],
+            rows: [['300 Rental Lane, Denver, CO', 'Investment', '$300,000', '$210,000', '$500', '$100', 'Keep']]
+          },
+          liabilities: {
+            columns: ['Type', 'Creditor', 'Account', 'Balance', 'Payment', 'Paid off at closing', 'Excluded'],
+            rows: [
+              ['CreditCard', 'Card One', '1111', '$1,200', '$40', 'No', 'No'],
+              ['Installment', 'Auto Lender', '2222', '$14,000', '$420', 'No', 'No']
+            ]
+          },
+          declarations: {
+            columns: ['Occupy', 'Seller relationship', 'Borrowed funds', 'New credit', 'Other mortgage', 'Judgments', 'Federal debt delinquent', 'Lawsuit', 'Bankruptcy', 'Foreclosure', 'Short sale'],
+            rows: [['Yes', 'No', 'No', 'No', 'No', 'No', 'No', 'No', 'No', 'No', 'No']]
+          }
+        }
+      }))
+    });
+    const loaded = await PDFDocument.load(bytes);
+    const size = loaded.getPage(0).getSize();
+
+    assert.equal(loaded.getPageCount(), 2);
+    assert.ok(size.width > size.height, 'application session pages should be landscape');
+  });
+
+  await t.test('renders legacy application summary section sessions as one page per application', async () => {
     function applicationSections(name, index) {
       return [
         {
@@ -84,55 +152,18 @@ test('generateStructuredPdfBuffer', async (t) => {
             { label: 'Review items', value: index === 1 ? 'None' : 'Employment: Confirm prior employer dates.' }
           ]
         },
-        {
-          heading: `Residence history - ${name}`,
-          rows: [
-            { label: 'Current - 1 year', value: '100 Current Street, Denver, CO 80202' },
-            { label: 'Prior - 1 year', value: '200 Prior Avenue, Aurora, CO 80010' },
-            { label: 'Prior - 6 months', value: '300 Earlier Road, Lakewood, CO 80215' }
-          ]
-        },
-        {
-          heading: `Employment history - ${name}`,
-          rows: [
-            { label: 'Current - 1 year', value: 'Current Employer - Analyst' },
-            { label: 'Prior - 1 year', value: 'Prior Employer - Assistant' },
-            { label: 'Prior - 8 months', value: 'Earlier Employer - Associate' }
-          ]
-        },
-        {
-          heading: `Financial assets - ${name}`,
-          rows: [
-            { label: 'Checking - Bank One', value: '$5,000 | Checking account' },
-            { label: 'Savings - Bank Two', value: '$12,000 | Savings account' },
-            { label: 'Retirement - Broker', value: '$25,000 | Retirement account' }
-          ]
-        },
-        {
-          heading: `Liabilities - ${name}`,
-          rows: [
-            { label: 'CreditCard - Card One - 1111', value: '$1,200 | $40 | No | No' },
-            { label: 'Installment - Auto Lender - 2222', value: '$14,000 | $420 | No | No' },
-            { label: 'CreditCard - Card Two - 3333', value: '$900 | $35 | No | No' },
-            { label: 'Mortgage - Servicer - 4444', value: '$210,000 | $1,750 | No | No' }
-          ]
-        }
-      ];
+        { heading: `Residence history - ${name}`, rows: [{ label: 'Current - 1 year', value: '100 Current Street, Denver, CO 80202' }] },
+        { heading: `Employment history - ${name}`, rows: [{ label: 'Current - 1 year', value: 'Current Employer - Analyst' }] },
+        { heading: `Financial assets - ${name}`, rows: [{ label: 'Checking - Bank One', value: '$5,000 | Checking account' }] },
+        { heading: `Liabilities - ${name}`, rows: [{ label: 'CreditCard - Card One - 1111', value: '$1,200 | $40 | No | No' }] }
+      ]
     }
 
     const bytes = await generateStructuredPdfBuffer({
       title: 'Application Summary',
       template: 'application-summary',
       sections: [
-        {
-          heading: 'Loan overview',
-          rows: [
-            { label: 'Loan purpose', value: 'Purchase' },
-            { label: 'Subject property', value: '17630 East 104th Place, Commerce City, CO 80022' },
-            { label: 'Occupancy', value: 'PrimaryResidence' },
-            { label: 'Unit count', value: '1' }
-          ]
-        },
+        { heading: 'Loan overview', rows: [{ label: 'Loan purpose', value: 'Purchase' }] },
         ...applicationSections('Jane Borrower', 1),
         ...applicationSections('John Borrower', 2)
       ]

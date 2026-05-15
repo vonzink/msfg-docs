@@ -10,6 +10,11 @@ test('application summary email payload does not include declarations sections',
     path.join(__dirname, '../../../public/js/documents/application-summary.js'),
     'utf8'
   );
+  const emailStart = source.indexOf('function buildEmailData()');
+  const sessionStart = source.indexOf('function buildSessionData()');
 
-  assert.doesNotMatch(source, /heading:\s*'Declarations - '/);
+  assert.notEqual(emailStart, -1);
+  assert.notEqual(sessionStart, -1);
+  assert.doesNotMatch(source.slice(emailStart, sessionStart), /declarations/i);
+  assert.match(source.slice(sessionStart), /declarations/i);
 });
