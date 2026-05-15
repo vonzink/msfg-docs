@@ -673,6 +673,7 @@
         '<h4>Declarations to confirm</h4>' +
         rowsTable(['Occupy', 'Seller relationship', 'Borrowed funds', 'New credit', 'Other mortgage', 'Judgments', 'Federal debt delinquent', 'Lawsuit', 'Bankruptcy', 'Foreclosure', 'Short sale'], declarationRowsForPage, 'No declaration data was found in the MISMO data for this borrower.') +
       '</div>' +
+      '<p class="app-summary-disclaimer">Application information will be verified and may be updated during the loan process.</p>' +
     '</div>';
   }
 

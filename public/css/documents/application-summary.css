@@ -199,6 +199,15 @@
   margin-bottom: 10px;
 }
 
+.app-summary-disclaimer {
+  margin: var(--space-lg) 0 0;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-gray-200);
+  color: var(--color-gray-500);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .app-summary-table {
   width: 100%;
   border-collapse: collapse;
