@@ -516,7 +516,6 @@
     const parsed = model.parsed || {};
     return [
       ['Borrower(s)', model.borrowers.join(', ')],
-      ['Loan number', model.loanNumber],
       ['Subject property', model.propertyAddress],
       ['Occupancy', parsed.occupancyType],
       ['Units', parsed.unitCount],
@@ -524,9 +523,7 @@
       ['Mortgage type', model.mortgageType],
       ['Loan amount', model.baseLoanAmount],
       ['Purchase price', money(parsed.purchasePriceAmount)],
-      ['Property value', money(parsed.propertyValueAmount)],
-      ['Note rate', model.noteRate],
-      ['Proposed housing payment', money(parsed.totalMonthlyProposedHousingExpenseAmount)]
+      ['Property value', money(parsed.propertyValueAmount)]
     ];
   }
 
