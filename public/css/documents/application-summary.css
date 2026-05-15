@@ -226,6 +226,21 @@
   font-weight: 700;
 }
 
+.app-summary-table--pair td:nth-child(3) {
+  color: var(--color-gray-600);
+  font-weight: 700;
+}
+
+.app-summary-missing {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid #f59e0b;
+  border-radius: var(--radius-sm);
+  background: #fffbeb;
+  color: #92400e;
+  font-weight: 800;
+}
+
 .app-summary-actions-list {
   display: grid;
   gap: var(--space-sm);

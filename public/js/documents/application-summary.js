@@ -22,6 +22,21 @@
     return node ? (node.localName || String(node.nodeName || '').split(':').pop()) : '';
   }
 
+  function attr(node, names) {
+    if (!node) return '';
+    const list = Array.isArray(names) ? names : [names];
+    for (let i = 0; i < list.length; i++) {
+      const value = node.getAttribute && node.getAttribute(list[i]);
+      if (value) return value;
+    }
+    if (node.getAttributeNS) {
+      const local = String(list[0] || '').split(':').pop();
+      const value = node.getAttributeNS('http://www.w3.org/1999/xlink', local);
+      if (value) return value;
+    }
+    return '';
+  }
+
   function nodesByLocalName(root, name) {
     if (!root) return [];
     const nodes = root.getElementsByTagNameNS
@@ -101,6 +116,8 @@
       out.push({
         party,
         borrowerNode,
+        roleNode: role,
+        roleLabel: attr(role, ['xlink:label', 'label']),
         roleType,
         classification: role ? firstTextWithin(role, 'BorrowerClassificationType') : '',
         name: partyName(party)
@@ -179,10 +196,24 @@
       cellPhone: phoneByRole(party, 'Mobile'),
       workPhone: phoneByRole(party, 'Work'),
       email: firstTextWithin(party, 'ContactPointEmailValue'),
-      qualifyingIncome: money(firstTextWithin(borrowerNode, 'BorrowerQualifyingIncomeAmount')),
+      qualifyingIncome: money(firstNonEmpty(
+        firstTextWithin(borrowerNode, 'BorrowerQualifyingIncomeAmount'),
+        firstTextWithin(borrowerNode, 'CurrentIncomeMonthlyTotalAmount'),
+        currentEmploymentIncome(borrowerNode)
+      )),
       intentToOccupy: firstTextWithin(declaration, 'IntentToOccupyType'),
       homeownerPastThreeYears: firstTextWithin(declaration, 'HomeownerPastThreeYearsType')
     };
+  }
+
+  function currentEmploymentIncome(borrowerNode) {
+    const employments = nodesByLocalName(borrowerNode, 'EMPLOYMENT');
+    for (let i = 0; i < employments.length; i++) {
+      if (employmentStatus(employments[i]).toLowerCase() !== 'current') continue;
+      const income = firstTextWithin(employments[i], ['EmploymentMonthlyIncomeAmount', 'BaseIncomeAmount', 'IncomeAmount']);
+      if (income) return income;
+    }
+    return '';
   }
 
   function durationTotalMonths(root, prefixes) {
@@ -317,11 +348,44 @@
     });
   }
 
-  function extractLiabilities(doc) {
+  function relationshipEndpoints(doc, arcroleText) {
+    return nodesByLocalName(doc, 'RELATIONSHIP').map(function (relationship) {
+      return {
+        arcrole: attr(relationship, ['xlink:arcrole', 'arcrole']),
+        from: attr(relationship, ['xlink:from', 'from']),
+        to: attr(relationship, ['xlink:to', 'to'])
+      };
+    }).filter(function (relationship) {
+      return relationship.arcrole.indexOf(arcroleText) !== -1 && relationship.from && relationship.to;
+    });
+  }
+
+  function liabilityBorrowerMap(doc, parsed) {
+    const roleToBorrower = {};
+    borrowerParties(doc, parsed).forEach(function (borrower) {
+      if (borrower.roleLabel && borrower.name) roleToBorrower[borrower.roleLabel] = borrower.name;
+    });
+
+    const out = {};
+    relationshipEndpoints(doc, 'LIABILITY_IsAssociatedWith_ROLE').forEach(function (relationship) {
+      const borrowerName = roleToBorrower[relationship.to];
+      if (!borrowerName) return;
+      out[relationship.from] = out[relationship.from] || [];
+      if (out[relationship.from].indexOf(borrowerName) === -1) out[relationship.from].push(borrowerName);
+    });
+    return out;
+  }
+
+  function extractLiabilities(doc, parsed) {
+    const borrowerMap = liabilityBorrowerMap(doc, parsed);
     return nodesByLocalName(doc, 'LIABILITY').map(function (liability) {
       const detail = nodesByLocalName(liability, 'LIABILITY_DETAIL')[0] || liability;
       const account = firstTextWithin(detail, 'LiabilityAccountIdentifier');
+      const label = attr(liability, ['xlink:label', 'label']);
+      const borrowerNames = label && borrowerMap[label] ? borrowerMap[label] : [];
       return {
+        borrowerName: borrowerNames[0] || '',
+        borrowerNames,
         type: firstTextWithin(detail, 'LiabilityType'),
         creditor: firstTextWithin(liability, 'FullName'),
         account: account ? '...' + account.slice(-4) : '',
@@ -385,7 +449,7 @@
       residences: histories.residences,
       employments: histories.employments,
       assets: doc ? extractAssets(doc) : [],
-      liabilities: doc ? extractLiabilities(doc) : [],
+      liabilities: doc ? extractLiabilities(doc, parsed) : [],
       declarationSummaries: doc ? extractDeclarations(doc, parsed) : []
     });
   }
@@ -418,18 +482,34 @@
       model.actionItems.length ? 'needs-review' : 'complete');
   }
 
-  function rowsTable(headers, rows, emptyText) {
+  function rowsTable(headers, rows, emptyText, tableClass) {
     if (!rows.length) return '<p class="text-muted">' + esc(emptyText) + '</p>';
-    let html = '<table class="app-summary-table"><thead><tr>';
+    let html = '<table class="app-summary-table' + (tableClass ? ' ' + esc(tableClass) : '') + '"><thead><tr>';
     headers.forEach(function (head) { html += '<th>' + esc(head) + '</th>'; });
     html += '</tr></thead><tbody>';
     rows.forEach(function (row) {
       html += '<tr>';
-      row.forEach(function (cell) { html += '<td>' + esc(display(cell)) + '</td>'; });
+      row.forEach(function (cell) { html += '<td>' + cellHtml(cell) + '</td>'; });
       html += '</tr>';
     });
     html += '</tbody></table>';
     return html;
+  }
+
+  function cellHtml(value) {
+    const rendered = display(value);
+    if (rendered === 'Not provided') return '<span class="app-summary-missing">Not provided</span>';
+    return esc(rendered);
+  }
+
+  function pairRows(rows) {
+    const pairs = [];
+    for (let i = 0; i < rows.length; i += 2) {
+      const left = rows[i] || ['', ''];
+      const right = rows[i + 1] || ['', ''];
+      pairs.push([left[0], left[1], right[0], right[1]]);
+    }
+    return pairs;
   }
 
   function loanRows(model) {
@@ -447,8 +527,7 @@
       ['Property value', money(parsed.propertyValueAmount)],
       ['Note rate', model.noteRate],
       ['Total monthly income', money(parsed.totalMonthlyIncomeAmount)],
-      ['Proposed housing payment', money(parsed.totalMonthlyProposedHousingExpenseAmount)],
-      ['Application date', model.applicationDate]
+      ['Proposed housing payment', money(parsed.totalMonthlyProposedHousingExpenseAmount)]
     ];
   }
 
@@ -510,7 +589,7 @@
 
   function historyStatusText(summary) {
     if (summary.status === 'complete') {
-      return 'Complete - ' + MSFG.ApplicationSummary.formatMonths(summary.coveredMonths) + ' documented';
+      return 'Complete - ' + MSFG.ApplicationSummary.formatMonths(summary.coveredMonths) + ' listed';
     }
     return 'Needs review - missing ' + MSFG.ApplicationSummary.formatMonths(summary.missingMonths);
   }
@@ -546,6 +625,7 @@
         row.shortSale
       ];
     });
+    const liabilitiesForPage = Object.prototype.hasOwnProperty.call(page, 'liabilities') ? page.liabilities : model.liabilities;
 
     return '<div class="app-summary-packet app-summary-page">' +
       '<div class="app-summary-packet__header">' +
@@ -573,7 +653,7 @@
       '</div>' +
       '<div class="app-summary-section">' +
         '<h4>Loan overview</h4>' +
-        rowsTable(['Field', 'Value'], loanRows(model), 'No loan overview fields were found.') +
+        rowsTable(['Field', 'Value', 'Field', 'Value'], pairRows(loanRows(model)), 'No loan overview fields were found.', 'app-summary-table--pair') +
       '</div>' +
       '<div class="app-summary-section">' +
         '<h4>Borrower information</h4>' +
@@ -593,7 +673,7 @@
       '</div>' +
       '<div class="app-summary-section">' +
         '<h4>Liabilities</h4>' +
-        rowsTable(['Type', 'Creditor', 'Account', 'Balance', 'Payment', 'Paid off at closing', 'Excluded'], liabilityRows(model), 'No liability data was found in the MISMO data.') +
+        rowsTable(['Type', 'Creditor', 'Account', 'Balance', 'Payment', 'Paid off at closing', 'Excluded'], liabilityRows({ liabilities: liabilitiesForPage }), 'No liability data was found in the MISMO data for this borrower.') +
       '</div>' +
       '<div class="app-summary-section">' +
         '<h4>Declarations to confirm</h4>' +
@@ -614,6 +694,7 @@
         borrowerProfile: fallbackBorrowerProfile(model),
         residences: model.residences,
         employments: model.employments,
+        liabilities: model.liabilities,
         declarationSummaries: model.declarationSummaries,
         residenceCoverage: model.residenceCoverage,
         employmentCoverage: model.employmentCoverage,
@@ -668,6 +749,7 @@
         borrowerProfile: fallbackBorrowerProfile(currentModel),
         residences: currentModel.residences,
         employments: currentModel.employments,
+        liabilities: currentModel.liabilities,
         declarationSummaries: currentModel.declarationSummaries,
         residenceCoverage: currentModel.residenceCoverage,
         employmentCoverage: currentModel.employmentCoverage,

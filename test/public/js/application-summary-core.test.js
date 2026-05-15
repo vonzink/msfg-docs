@@ -75,6 +75,11 @@ test('application summary core', async (t) => {
         { borrowerName: 'Jane Borrower', type: 'Current', employerName: 'Long Job', years: 5, months: 0 },
         { borrowerName: 'John CoBorrower', type: 'Current', employerName: 'Short Job', years: 0, months: 10 }
       ],
+      liabilities: [
+        { borrowerNames: ['Jane Borrower'], creditor: 'Jane Card', balance: '$1,000' },
+        { borrowerNames: ['John CoBorrower'], creditor: 'John Auto', balance: '$9,000' },
+        { borrowerName: 'John CoBorrower', creditor: 'John Card', balance: '$500' }
+      ],
       declarationSummaries: [
         { borrowerName: 'Jane Borrower', intentToOccupy: 'Yes' },
         { borrowerName: 'John CoBorrower', intentToOccupy: 'No' }
@@ -84,9 +89,11 @@ test('application summary core', async (t) => {
     assert.equal(model.borrowerPages.length, 2);
     assert.equal(model.borrowerPages[0].borrowerName, 'Jane Borrower');
     assert.equal(model.borrowerPages[0].residences.length, 1);
+    assert.deepEqual(model.borrowerPages[0].liabilities.map(item => item.creditor), ['Jane Card']);
     assert.equal(model.borrowerPages[0].actionItems.length, 0);
     assert.equal(model.borrowerPages[1].borrowerName, 'John CoBorrower');
     assert.equal(model.borrowerPages[1].employments[0].employerName, 'Short Job');
+    assert.deepEqual(model.borrowerPages[1].liabilities.map(item => item.creditor), ['John Auto', 'John Card']);
     assert.deepEqual(model.borrowerPages[1].actionItems.map(item => item.area), ['Residence', 'Employment']);
   });
 
