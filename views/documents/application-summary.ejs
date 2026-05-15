@@ -1,0 +1,51 @@
+<div class="doc-page application-summary">
+  <div class="doc-page__header">
+    <h1><%= doc.icon %> <%= doc.name %></h1>
+    <p><%= doc.description %></p>
+  </div>
+
+  <div class="doc-page__body">
+    <div class="calc-section app-summary-source" data-print="hide">
+      <h2><span class="section-number">1</span> MISMO source</h2>
+      <div class="app-summary-source__grid">
+        <div class="app-summary-source__panel">
+          <input type="file" id="applicationSummaryFile" accept=".xml,text/xml,application/xml,.mismo" class="u-sr-only">
+          <div>
+            <strong id="applicationSummarySourceTitle">No MISMO loaded</strong>
+            <span id="applicationSummarySourceMeta">Open this document in Workspace after importing MISMO, or upload XML here.</span>
+          </div>
+          <div class="app-summary-source__actions">
+            <label class="btn btn-sm btn-primary" for="applicationSummaryFile">Upload MISMO</label>
+            <button class="btn btn-sm btn-ghost" type="button" id="applicationSummaryClear">Clear</button>
+          </div>
+        </div>
+        <div class="app-summary-status-grid" id="applicationSummaryStatusGrid">
+          <div class="app-summary-status-card" data-status-area="residence">
+            <span>Residence history</span>
+            <strong>Needs MISMO</strong>
+          </div>
+          <div class="app-summary-status-card" data-status-area="employment">
+            <span>Employment history</span>
+            <strong>Needs MISMO</strong>
+          </div>
+          <div class="app-summary-status-card" data-status-area="actions">
+            <span>Review items</span>
+            <strong>--</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-section">
+      <h2><span class="section-number">2</span> Borrower review packet</h2>
+      <div id="applicationSummaryPreview" class="app-summary-preview">
+        <div class="app-summary-empty">
+          <h3>Application Summary</h3>
+          <p>Import MISMO XML to build the borrower review packet.</p>
+        </div>
+      </div>
+    </div>
+
+    <%- include('../partials/doc-actions') %>
+  </div>
+</div>

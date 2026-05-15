@@ -13,6 +13,7 @@ function findDoc(slug) {
 
 const docRoutes = [
   { slug: 'credit-inquiry',      view: 'documents/credit-inquiry',      title: 'Credit Inquiry Letter',  css: 'credit-inquiry' },
+  { slug: 'application-summary', view: 'documents/application-summary', title: 'Application Summarizer', css: 'application-summary', sharedScripts: ['mismo-parser', 'application-summary-core'] },
   { slug: 'pre-approval',        view: 'documents/pre-approval',        title: 'Pre-Approval Letter',    css: 'pre-approval' },
   { slug: 'address-lox',         view: 'documents/address-lox',         title: 'Address LOX',            css: 'address-lox' },
   { slug: 'generic-lox',         view: 'documents/generic-lox',         title: 'Generic LOX',            css: 'generic-lox' },
@@ -33,12 +34,17 @@ docRoutes.forEach(dr => {
     const extraHeadParts = [];
     if (dr.css) extraHeadParts.push(`<link rel="stylesheet" href="${bp}/css/documents/${dr.css}.css?v=${ver}">`);
 
+    const scripts = (dr.sharedScripts || []).map((name) => {
+      return `<script src="${bp}/js/shared/${name}${ext}?v=${ver}"></script>`;
+    });
+    scripts.push(`<script src="${bp}/js/documents/${dr.slug}${ext}?v=${ver}"></script>`);
+
     res.render(dr.view, {
       title: dr.title,
       doc: findDoc(dr.slug),
       bodyClass: req.query && req.query.embed ? 'embed-mode' : undefined,
       extraHead: extraHeadParts.length ? extraHeadParts.join('') : undefined,
-      extraScripts: `<script src="${bp}/js/documents/${dr.slug}${ext}?v=${ver}"></script>`
+      extraScripts: scripts.join('')
     });
   });
 });

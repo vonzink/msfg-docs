@@ -1,0 +1,306 @@
+/* Application Summary
+   Borrower-facing review packet with two-year history checks. */
+
+.application-summary .doc-page__body {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.app-summary-source__grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.25fr);
+  gap: var(--space-md);
+  align-items: stretch;
+}
+
+.app-summary-source__panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+}
+
+.app-summary-source__panel strong {
+  display: block;
+  color: var(--color-dark);
+  margin-bottom: 2px;
+}
+
+.app-summary-source__panel span {
+  display: block;
+  color: var(--color-gray-500);
+  font-size: 0.84rem;
+}
+
+.app-summary-source__actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.app-summary-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.app-summary-status-card {
+  min-height: 74px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-gray-200);
+  border-left: 4px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+}
+
+.app-summary-status-card span {
+  display: block;
+  color: var(--color-gray-500);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  margin-bottom: 4px;
+}
+
+.app-summary-status-card strong {
+  color: var(--color-gray-800);
+  font-size: 0.96rem;
+}
+
+.app-summary-status-card.is-complete {
+  border-left-color: var(--brand-primary);
+  background: #f4fbf7;
+}
+
+.app-summary-status-card.is-review {
+  border-left-color: #c2410c;
+  background: #fff7ed;
+}
+
+.app-summary-preview {
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  color: var(--color-gray-900);
+  overflow: hidden;
+}
+
+.app-summary-empty {
+  padding: var(--space-xl);
+  text-align: center;
+  color: var(--color-gray-500);
+}
+
+.app-summary-empty h3 {
+  color: var(--color-dark);
+  margin-bottom: var(--space-sm);
+}
+
+.app-summary-packet {
+  padding: 30px;
+}
+
+.app-summary-page + .app-summary-page {
+  border-top: 10px solid var(--color-gray-50);
+}
+
+.app-summary-packet__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-md);
+  align-items: start;
+  padding-bottom: var(--space-md);
+  border-bottom: 2px solid var(--brand-primary);
+  margin-bottom: var(--space-lg);
+}
+
+.app-summary-packet__eyebrow {
+  color: var(--brand-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  margin-bottom: 4px;
+}
+
+.app-summary-packet__header h3 {
+  font-size: 1.55rem;
+  margin: 0 0 4px;
+}
+
+.app-summary-packet__header p {
+  color: var(--color-gray-600);
+  margin: 0;
+}
+
+.app-summary-packet__date {
+  color: var(--color-gray-500);
+  font-size: 0.84rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.app-summary-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.app-summary-kpi {
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  background: var(--color-gray-50);
+}
+
+.app-summary-kpi span {
+  display: block;
+  color: var(--color-gray-500);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.app-summary-kpi strong {
+  color: var(--color-dark);
+  font-size: 1rem;
+}
+
+.app-summary-kpi.is-complete {
+  background: #f4fbf7;
+  border-color: #b7e4c7;
+}
+
+.app-summary-kpi.is-review {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.app-summary-section {
+  margin-top: var(--space-lg);
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.app-summary-section h4 {
+  color: var(--brand-primary);
+  font-size: 1rem;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-gray-200);
+  margin-bottom: 10px;
+}
+
+.app-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.app-summary-table th,
+.app-summary-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-gray-100);
+  vertical-align: top;
+  text-align: left;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.app-summary-table th {
+  background: var(--color-gray-50);
+  color: var(--color-gray-700);
+  font-weight: 700;
+}
+
+.app-summary-table td:first-child {
+  color: var(--color-gray-600);
+  font-weight: 700;
+}
+
+.app-summary-actions-list {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-summary-actions-list li {
+  padding: 10px 12px;
+  border: 1px solid #fed7aa;
+  border-left: 4px solid #c2410c;
+  border-radius: var(--radius-sm);
+  background: #fff7ed;
+  color: var(--color-gray-800);
+  font-weight: 600;
+}
+
+.app-summary-actions-list.is-clean li {
+  border-color: #b7e4c7;
+  border-left-color: var(--brand-primary);
+  background: #f4fbf7;
+}
+
+@media (max-width: 860px) {
+  .app-summary-source__grid,
+  .app-summary-packet__header,
+  .app-summary-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .app-summary-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .app-summary-packet__date {
+    text-align: left;
+  }
+}
+
+@media print {
+  .app-summary-source,
+  .application-summary .doc-page__header,
+  .application-summary .doc-actions,
+  .application-summary .site-header,
+  .application-summary .site-footer {
+    display: none !important;
+  }
+
+  .app-summary-preview {
+    border: none;
+    border-radius: 0;
+  }
+
+  .app-summary-packet {
+    padding: 0;
+  }
+
+  .app-summary-page {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .app-summary-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .app-summary-page + .app-summary-page {
+    border-top: none;
+  }
+
+  .app-summary-table th,
+  .app-summary-table td {
+    font-size: 8pt;
+    padding: 5px 6px;
+  }
+}
