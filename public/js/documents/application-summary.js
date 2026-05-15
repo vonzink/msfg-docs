@@ -889,7 +889,7 @@
       });
     });
 
-    return { title: 'Application Summary', sections };
+    return { title: 'Application Summary', template: 'application-summary', sections };
   }
 
   function captureForReport() {
