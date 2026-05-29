@@ -190,10 +190,25 @@
     setStatus('Sending...', '');
 
     try {
+      const payload = { to: to, subject: subject, message: message, calcData: data };
+      // Attach the document PDF (pdf-lib bytes from the same capture the
+      // workspace uses) so the email carries the generated letter.
+      if (_captureForReport) {
+        try {
+          const cap = await _captureForReport();
+          if (cap && cap.pdfBytes) {
+            const u8 = cap.pdfBytes instanceof Uint8Array ? cap.pdfBytes : new Uint8Array(cap.pdfBytes);
+            let bin = '';
+            for (let i = 0; i < u8.length; i += 0x8000) { bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); }
+            payload.attachmentBase64 = btoa(bin);
+            payload.attachmentFilename = cap.filename || (data && data.title) || 'document';
+          }
+        } catch (_capErr) { /* fall back to sending without an attachment */ }
+      }
       const resp = await MSFG.fetch(MSFG.apiUrl('/api/email/send'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: to, subject: subject, message: message, calcData: data })
+        body: JSON.stringify(payload)
       });
       const result = await resp.json();
 

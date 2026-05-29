@@ -897,10 +897,14 @@
     return { title: 'Application Summary', template: 'application-summary', sections };
   }
 
+  // A/B/C document style for the Application Summary PDF (set by the picker).
+  let currentStyle = 'A';
+
   function buildSessionData() {
     if (!currentModel) {
       return {
         title: 'Application Summary',
+        style: currentStyle,
         template: 'application-summary-session',
         loanOverview: {
           columns: ['Field', 'Value', 'Field', 'Value'],
@@ -912,6 +916,7 @@
 
     return {
       title: 'Application Summary',
+      style: currentStyle,
       template: 'application-summary-session',
       loanOverview: {
         columns: ['Field', 'Value', 'Field', 'Value'],
@@ -1020,6 +1025,26 @@
     }
 
     if (clearBtn) clearBtn.addEventListener('click', renderEmpty);
+
+    // A/B/C style picker: drive the downloaded PDF's accent (via buildSessionData
+    // → /api/pdf/structured) and recolour the on-screen preview to match.
+    const stylePicker = document.querySelector('.letter-style-picker');
+    const previewEl = document.getElementById('applicationSummaryPreview');
+    const STYLE_ACCENT = { A: '#2d6a4f', B: '#0f8a8e', C: '#23232a' };
+    function applyDocStyle(s) {
+      currentStyle = (s === 'B' || s === 'C') ? s : 'A';
+      if (previewEl) {
+        previewEl.setAttribute('data-style', currentStyle);
+        previewEl.style.setProperty('--brand-primary', STYLE_ACCENT[currentStyle]);
+      }
+    }
+    if (stylePicker) {
+      const active = stylePicker.querySelector('[data-style].is-active, [data-style][aria-checked="true"]');
+      applyDocStyle(active ? active.dataset.style : 'A');
+      stylePicker.querySelectorAll('[data-style]').forEach(function (b) {
+        b.addEventListener('click', function () { applyDocStyle(b.dataset.style); });
+      });
+    }
 
     window.addEventListener('message', function (e) {
       if (e.origin !== window.location.origin) return;

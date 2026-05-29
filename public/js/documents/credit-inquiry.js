@@ -92,6 +92,11 @@
       html += '<p class="text-muted">No inquiries entered yet.</p>';
     }
 
+    const notes = val('ciNotes');
+    if (notes && notes.trim()) {
+      html += '<p>' + MSFG.escHtml(notes.trim()).replace(/\n/g, '<br>') + '</p>';
+    }
+
     html += '<p>Thank you,</p>';
     html += '<p><strong>' + MSFG.escHtml(senderName) + '</strong></p>';
     html += '</div>';
@@ -201,6 +206,7 @@
       subjectPropertyAddress: val('subjectPropertyAddress'),
       loanNumber: val('loanNumber'),
       letterDate: val('letterDate') || todayLong(),
+      additionalNotes: val('ciNotes'),
       // Full per-user letter settings (font/size/accent/table/margins/toggles).
       // Backend mirrors these into the PDF theme in lib/pdf/letterPdf.js.
       letterSettings: (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null,
@@ -223,7 +229,7 @@
     downloadSelector: '[data-action="doc-export-pdf"]',
     resetBtnId: 'ciResetPreview',
     dateFieldId: 'letterDate',
-    previewFields: ['senderName', 'coBorrowerName', 'subjectPropertyAddress', 'loanNumber'],
+    previewFields: ['senderName', 'coBorrowerName', 'subjectPropertyAddress', 'loanNumber', 'ciNotes'],
     generate: generateLetter,
     collectPayload: buildPdfPayload,
     getEmailData: getEmailData,

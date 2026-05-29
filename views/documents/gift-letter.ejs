@@ -72,6 +72,10 @@
           <label for="giftDonorAddress">Donor address</label>
           <input type="text" id="giftDonorAddress" placeholder="Street, City, ST ZIP" autocomplete="address-line1">
         </div>
+        <div class="form-group form-group--full">
+          <label for="giftNotes">Additional notes (optional)</label>
+          <textarea id="giftNotes" rows="3" placeholder="Any extra context to include in the letter…"></textarea>
+        </div>
       </div>
     </div>
 
@@ -79,14 +83,13 @@
     <div class="calc-section">
       <h2>
         <span class="section-number">4</span> Letter Preview
-        <button type="button" class="btn btn-link btn-sm" id="giftResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
       </h2>
       <%- include('../partials/letter-style-picker') %>
-      <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
+      <div id="letterPreview" class="letter-preview">
         <p class="text-muted text-center">Fill in the fields above to generate your gift letter.</p>
       </div>
       <p class="letter-preview-hint">
-        Click anywhere in the preview to tweak wording. Preview edits stay here only — <strong>Download</strong> rebuilds the PDF from the form fields above.
+        This letter is generated from the fields above.
       </p>
     </div>
 

@@ -38,6 +38,27 @@
 
     <div class="calc-section">
       <h2><span class="section-number">2</span> Borrower review packet</h2>
+      <!-- A/B/C document style for the Application Summary PDF. Reuses the
+           letter picker's styling + active-state wiring; application-summary.js
+           reads the choice into the download payload and recolours the preview. -->
+      <div class="letter-style-picker" role="radiogroup" aria-label="Document style"
+           data-doc-slug="<%= (typeof doc !== 'undefined' && doc) ? doc.slug : '' %>">
+        <span class="letter-style-picker__label">Style</span>
+        <div class="letter-style-picker__opts">
+          <button type="button" class="letter-style-picker__opt" role="radio" aria-checked="true" data-style="A">
+            <span class="letter-style-picker__name">Evergreen</span>
+            <span class="letter-style-picker__sub">Green</span>
+          </button>
+          <button type="button" class="letter-style-picker__opt" role="radio" aria-checked="false" data-style="B">
+            <span class="letter-style-picker__name">Ledger</span>
+            <span class="letter-style-picker__sub">Teal</span>
+          </button>
+          <button type="button" class="letter-style-picker__opt" role="radio" aria-checked="false" data-style="C">
+            <span class="letter-style-picker__name">Plain</span>
+            <span class="letter-style-picker__sub">Ink</span>
+          </button>
+        </div>
+      </div>
       <div id="applicationSummaryPreview" class="app-summary-preview">
         <div class="app-summary-empty">
           <h3>Application Summary</h3>

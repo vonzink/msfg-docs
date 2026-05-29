@@ -49,14 +49,13 @@
     <div class="calc-section">
       <h2>
         <span class="section-number">3</span> Letter Preview
-        <button type="button" class="btn btn-link btn-sm lox-reset-preview" id="loxResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
       </h2>
       <%- include('../partials/letter-style-picker') %>
-      <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
+      <div id="letterPreview" class="letter-preview">
         <p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>
       </div>
       <p class="letter-preview-hint">
-        Click anywhere in the preview to tweak wording. Preview edits stay here only — <strong>Download</strong> rebuilds the PDF from the form fields above.
+        This letter is generated from the fields above.
       </p>
     </div>
 

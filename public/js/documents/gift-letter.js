@@ -55,6 +55,11 @@
     html += '<li>The date the funds were transferred: <strong>' + v(fundTransferDate) + '</strong>.</li>';
     html += '</ol>';
 
+    const notes = val('giftNotes');
+    if (notes && notes.trim()) {
+      html += '<p>' + MSFG.escHtml(notes.trim()).replace(/\n/g, '<br>') + '</p>';
+    }
+
     html += '<table style="margin-top:var(--space-lg);">';
     html += '<tr><td>Donor signature</td><td>____________________________</td><td>Date</td><td>__________</td></tr>';
     html += '<tr><td>Donor name (print)</td><td>' + v(donorName) + '</td><td>Phone</td><td>' + v(donorPhone) + '</td></tr>';
@@ -82,6 +87,7 @@
       loanNumber: val('giftLoanNumber'),
       subjectPropertyAddress: val('giftPropertyAddress'),
       letterDate: val('giftLetterDate') || todayLong(),
+      additionalNotes: val('giftNotes'),
       letterSettings: ls
     };
   }
@@ -139,7 +145,7 @@
     dateFieldId: 'giftLetterDate',
     previewFields: ['giftDonorName', 'giftDonorAddress', 'giftDonorPhone', 'giftDonorEmail',
       'giftAmount', 'giftSourceOfGift', 'giftFundTransferDate', 'giftRelationshipToDonor',
-      'giftRecipientName', 'giftLoanNumber', 'giftPropertyAddress', 'giftLetterDate'],
+      'giftRecipientName', 'giftLoanNumber', 'giftPropertyAddress', 'giftLetterDate', 'giftNotes'],
     generate: generateLetter,
     collectPayload: collectPayload,
     getEmailData: getEmailData,

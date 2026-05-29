@@ -1,0 +1,122 @@
+/* =====================================================
+   Letter sheet — branded "paper" frame around the editable
+   letter preview. Adds the company letterhead (logo + accent
+   rule) and a footer band so the on-screen preview matches the
+   downloaded/printed PDF exactly (WYSIWYG).
+
+   The frame is themed by the same A/B/C custom properties the
+   style picker writes onto .letter-preview (#letterPreview); a
+   small client script (letter-sheet.js) mirrors --lp-accent /
+   --lp-margin onto .letter-sheet so the head + foot match.
+
+   Used in two places with the SAME markup + CSS:
+     1. On-screen preview (this stylesheet, loaded on the page).
+     2. The Puppeteer HTML→PDF render (server inlines this file).
+   ===================================================== */
+
+.letter-sheet {
+  --ls-accent: var(--lp-accent, #2d6a4f);
+  --ls-margin: var(--lp-margin, 64px);
+  background: #fff;
+  color: #1d1d1f;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px var(--ls-margin) 0;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(16, 24, 32, 0.08), 0 8px 28px rgba(16, 24, 32, 0.08);
+  border-radius: 4px;
+}
+
+/* ---- Letterhead ---- */
+.letter-sheet__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  border-bottom: 1.5px solid var(--ls-accent);
+}
+.letter-sheet__logo img {
+  height: 48px;
+  width: auto;
+  display: block;
+}
+.letter-sheet__wordmark {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--ls-accent);
+  letter-spacing: 0.01em;
+}
+.letter-sheet__meta {
+  text-align: right;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: #5b6b63;
+}
+
+/* ---- Body (the editable #letterPreview lives here) ---- */
+.letter-sheet > .letter-sheet__body.letter-preview {
+  /* The sheet owns the page margins + chrome; neutralise the
+     standalone preview's own border/shadow/padding so it reads
+     as the body of the page. */
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border-radius: 0;
+  min-height: 0;
+}
+.letter-sheet > .letter-sheet__body.letter-preview::after { display: none; }
+
+/* ---- Footer band ---- */
+.letter-sheet__foot {
+  margin-top: 28px;
+  padding: 8px 0 14px;
+  border-top: 2px solid var(--ls-accent);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 8.6px;
+  letter-spacing: 0.03em;
+  color: #6a7872;
+}
+
+/* Left-rail styles (Ledger/B) echo the accent down the page edge. */
+.letter-sheet.letter-sheet--left-rail { border-left: 6px solid var(--ls-accent); }
+
+/* =====================================================
+   Print / PDF — exact Letter page. The Puppeteer renderer
+   posts ONLY the .letter-sheet markup, so these rules govern
+   the downloaded PDF; they also tidy the browser Print dialog.
+   ===================================================== */
+@media print {
+  @page { size: Letter; margin: 0; }
+  html, body {
+    background: #fff !important;
+    margin: 0; padding: 0;
+  }
+  .letter-sheet {
+    box-shadow: none;
+    border-radius: 0;
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    /* generous bottom padding reserves space for the fixed footer band */
+    padding: 0.5in var(--ls-margin, 0.75in) 1in;
+  }
+  .letter-sheet__logo img { height: 52px; }
+  /* Footer repeats on every printed page (Chromium repeats position:fixed). */
+  .letter-sheet__foot {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    margin: 0;
+    padding: 7px 0.75in 9px;
+    background: #f3f6f5;
+    border-top: 2px solid var(--ls-accent);
+  }
+  /* Avoid splitting the table or signature block across pages. */
+  .letter-sheet table, .letter-preview__signatures { break-inside: avoid; }
+}

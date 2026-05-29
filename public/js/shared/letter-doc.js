@@ -2,22 +2,19 @@
    MSFG.LetterDoc — shared scaffolding for borrower-letter docs
    -----------------------------------------------------
    Every letter doc (address-lox, generic-lox, gift-letter,
-   credit-inquiry, pre-approval) wires the same things: a live
-   contenteditable preview, a "Download PDF" button that POSTs the form
-   payload to /api/pdf/{slug}, Add-to-Session capture, email/report
-   registration, and a MISMO autofill listener. This module owns all of
-   it; each doc supplies only its doc-specific generate(), collectPayload(),
-   getEmailData(), and (optionally) applyMismo().
+   credit-inquiry, pre-approval) wires the same things: a read-only
+   preview rebuilt from the form fields, a "Download PDF" button that
+   POSTs the form payload to /api/pdf/{slug} (rendered by pdf-lib),
+   Add-to-Session capture, email/report registration, and a MISMO
+   autofill listener. This module owns all of it; each doc supplies only
+   its doc-specific generate(), collectPayload(), getEmailData(), and
+   (optionally) applyMismo().
 
-   Preview-dirty ownership: this module tracks whether the user has
-   hand-edited the preview. While dirty, regenerate() is a no-op so field
-   edits don't clobber manual changes; Reset clears the flag and forces a
-   rebuild. (The separate preview-dirty.js owns only the badge/confirm UX.)
-   Because of this, each doc's generate() is now a PURE renderer — it must
-   NOT self-gate on a dirty flag; LetterDoc decides when to call it.
+   The preview is not editable: generate() is a pure renderer driven by
+   the form fields, and regenerate() always rebuilds.
 
    init(cfg) returns { regenerate, download } so docs with dynamic content
-   (e.g. address-lox's repeating rows) can request a gated rebuild.
+   (e.g. address-lox's repeating rows) can request a rebuild.
    ===================================================== */
 (function () {
   'use strict';
@@ -35,9 +32,9 @@
   function init(cfg) {
     const slug = cfg.slug;
     const generate = cfg.generate || function () {};
-    let dirty = false;
 
-    function regenerate() { if (!dirty) generate(); }
+    // Preview is read-only and always rebuilt from the form fields.
+    function regenerate() { generate(); }
 
     // filename may be a string or a function evaluated at download time
     // (e.g. credit-inquiry names the file after the loan number).
@@ -83,23 +80,12 @@
         });
       }
 
-      // Form fields that should rebuild the preview (gated by dirty).
+      // Form fields rebuild the read-only preview from the fields.
       (cfg.previewFields || []).forEach(function (id) {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('input', regenerate);
         el.addEventListener('change', regenerate);
-      });
-
-      // Manual preview edits flip the dirty flag; Reset clears it and forces
-      // a rebuild from the fields.
-      const preview = document.getElementById(cfg.previewId || 'letterPreview');
-      if (preview) preview.addEventListener('input', function () { dirty = true; });
-      const reset = cfg.resetBtnId && document.getElementById(cfg.resetBtnId);
-      if (reset) reset.addEventListener('click', function (e) {
-        e.preventDefault();
-        dirty = false;
-        generate();
       });
 
       // Initial render.

@@ -171,9 +171,9 @@ const emailLimiter = rateLimit({
  * POST /api/email/send
  * Body: { to, subject, message, calcData: { title, sections } }
  */
-router.post('/send', emailLimiter, express.json(), async (req, res) => {
+router.post('/send', emailLimiter, express.json({ limit: '8mb' }), async (req, res) => {
   try {
-    const { to, subject, message, calcData } = req.body;
+    const { to, subject, message, calcData, attachmentBase64, attachmentFilename } = req.body;
 
     if (!to || !subject || !calcData) {
       return res.status(400).json({ success: false, message: 'Missing required fields (to, subject, calcData).' });
@@ -207,11 +207,25 @@ router.post('/send', emailLimiter, express.json(), async (req, res) => {
     const fromEmail = smtp.from || smtp.user;
     const htmlBody = buildEmailHTML(calcData, message, siteConfig);
 
+    // Attach the document PDF when the client supplies pre-rendered pdf-lib
+    // bytes (base64). Generated from the form fields — no headless browser.
+    const attachments = [];
+    if (attachmentBase64 && typeof attachmentBase64 === 'string') {
+      try {
+        const base = String(attachmentFilename || calcData.title || 'document')
+          .replace(/\.pdf$/i, '').replace(/[^a-z0-9._-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'document';
+        attachments.push({ filename: base + '.pdf', content: Buffer.from(attachmentBase64, 'base64'), contentType: 'application/pdf' });
+      } catch (e) {
+        console.error('[Email] PDF attachment decode failed (sending without attachment):', e.message);
+      }
+    }
+
     await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
       to,
       subject,
-      html: htmlBody
+      html: htmlBody,
+      attachments
     });
 
     res.json({ success: true, message: 'Email sent successfully.' });
