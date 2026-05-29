@@ -46,6 +46,29 @@ MSFG.el = function(id) { return document.getElementById(id); };
 MSFG.qs = function(sel, ctx) { return (ctx || document).querySelector(sel); };
 MSFG.qsa = function(sel, ctx) { return (ctx || document).querySelectorAll(sel); };
 
+/** Trimmed string value of a form control by id ('' when missing). */
+MSFG.val = function(id) {
+  const el = document.getElementById(id);
+  return el ? String(el.value || '').trim() : '';
+};
+
+/** Set a control's value by id and fire input+change so listeners react.
+    No-ops on a missing element or an empty/null value. NOTE: this dispatches
+    events — do not use it to write computed output fields that themselves
+    feed a recalculation (those use a plain assignment instead). */
+MSFG.setVal = function(id, v) {
+  const el = document.getElementById(id);
+  if (!el || v == null || v === '') return;
+  el.value = String(v);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+};
+
+/** Long-form US date, e.g. "May 28, 2026". Defaults to today. */
+MSFG.formatDateLong = function(date) {
+  return (date || new Date()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+};
+
 /**
  * Build an absolute-on-origin URL from an app-relative path.
  * Prepends window.__MSFG_BASE_PATH__ (when the app is mounted under a

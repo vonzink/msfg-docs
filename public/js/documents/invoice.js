@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+  const val = MSFG.val;
 
   function createRow() {
     const tr = document.createElement('tr');

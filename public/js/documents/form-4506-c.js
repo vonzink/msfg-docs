@@ -6,10 +6,7 @@
     return !!(main && main.dataset.docSlug === 'form-4506-c');
   }
 
-  function val(id) {
-    const el = document.getElementById(id);
-    return el ? String(el.value || '').trim() : '';
-  }
+  const val = MSFG.val;
 
   function selectedText(id) {
     const el = document.getElementById(id);

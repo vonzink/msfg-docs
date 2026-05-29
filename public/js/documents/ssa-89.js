@@ -6,10 +6,7 @@
     return !!(main && main.dataset.docSlug === 'ssa-89');
   }
 
-  function val(id) {
-    const el = document.getElementById(id);
-    return el ? String(el.value || '').trim() : '';
-  }
+  const val = MSFG.val;
 
   function checked(id) {
     const el = document.getElementById(id);

@@ -2,7 +2,7 @@
   'use strict';
 
   function p(id) { return MSFG.parseNum(document.getElementById(id) ? document.getElementById(id).value : '0'); }
-  function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+  const val = MSFG.val;
   function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
 
   function calculate() {

@@ -1,6 +1,8 @@
 'use strict';
 
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 
 const docConfig = require('../config/documents.json');
@@ -9,22 +11,31 @@ function findDoc(slug) {
   return docConfig.documents.find(d => d.slug === slug);
 }
 
-/* ---- Document Routes ---- */
+// Which slugs actually ship a per-doc stylesheet. Computed once at
+// startup so we only emit a <link> for a file that exists (docs whose
+// styling comes entirely from layout.css / letter-styles.css have none).
+const docCssDir = path.join(__dirname, '..', 'public', 'css', 'documents');
+function hasDocCss(slug) {
+  try {
+    return fs.statSync(path.join(docCssDir, `${slug}.css`)).size > 0;
+  } catch (_e) {
+    return false;
+  }
+}
 
-const docRoutes = [
-  { slug: 'credit-inquiry',      view: 'documents/credit-inquiry',      title: 'Credit Inquiry Letter',  css: 'credit-inquiry' },
-  { slug: 'application-summary', view: 'documents/application-summary', title: 'Application Summarizer', css: 'application-summary', sharedScripts: ['mismo-parser', 'application-summary-core'] },
-  { slug: 'pre-approval',        view: 'documents/pre-approval',        title: 'Pre-Approval Letter',    css: 'pre-approval' },
-  { slug: 'address-lox',         view: 'documents/address-lox',         title: 'Address LOX',            css: 'address-lox' },
-  { slug: 'generic-lox',         view: 'documents/generic-lox',         title: 'Generic LOX',            css: 'generic-lox' },
-  { slug: 'gift-letter',         view: 'documents/gift-letter',         title: 'Gift Letter',            css: 'gift-letter' },
-  { slug: 'income-statement',    view: 'documents/income-statement',    title: 'Income Statement',       css: 'income-statement' },
-  { slug: 'balance-sheet',       view: 'documents/balance-sheet',       title: 'Balance Sheet',          css: 'balance-sheet' },
-  { slug: 'invoice',             view: 'documents/invoice',             title: 'Generic Invoice',        css: 'invoice' },
-  { slug: 'form-4506-c',         view: 'documents/form-4506-c',         title: 'IRS Form 4506-C',        css: 'form-4506-c' },
-  { slug: 'ssa-89',              view: 'documents/ssa-89',              title: 'SSA-89',                 css: 'ssa-89' },
-  { slug: 'condo-questionnaire', view: 'documents/condo-questionnaire', title: 'Condo Questionnaire',    css: 'condo-questionnaire' }
-];
+/* ---- Document Routes ----
+   Derived from config/documents.json so the document registry has a
+   single source of truth. view and css follow the slug; title is the
+   doc's display name; sharedScripts (only application-summary needs
+   any) come straight from the config entry. */
+
+const docRoutes = docConfig.documents.map(d => ({
+  slug: d.slug,
+  view: `documents/${d.slug}`,
+  title: d.name,
+  css: hasDocCss(d.slug) ? d.slug : null,
+  sharedScripts: d.sharedScripts || []
+}));
 
 docRoutes.forEach(dr => {
   router.get(`/${dr.slug}`, (req, res) => {
