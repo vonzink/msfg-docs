@@ -12,20 +12,14 @@
     return String(s || '').trim().replace(/\r\n/g, '\n');
   }
 
-  function val(id) {
-    const el = document.getElementById(id);
-    return el ? el.value.trim() : '';
-  }
-
-  function todayLong() {
-    return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  }
+  const val = MSFG.val;
+  const todayLong = MSFG.formatDateLong;
 
   function parseDateLong(yyyyMmDd) {
     if (!yyyyMmDd) return '';
     try {
       return new Date(yyyyMmDd + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    } catch (e) {
+    } catch (_e) {
       return yyyyMmDd;
     }
   }
@@ -42,14 +36,14 @@
     }).filter(r => r.date || r.creditor || r.explanation);
   }
 
-  // Track manual edits — preview is contenteditable, and we shouldn't
-  // overwrite user typing on every form input.
-  let previewDirty = false;
+  // Gated rebuild — assigned from LetterDoc once initialised. The dynamic
+  // inquiry rows call this so their edits respect the dirty-preview gate.
+  let regenerate = function () {};
 
+  // Pure render — LetterDoc decides when to call it (dirty-gated).
   function generateLetter() {
     const preview = document.getElementById('letterPreview');
     if (!preview) return;
-    if (previewDirty) return;
 
     const senderName = val('senderName');
     const coBorrowerName = val('coBorrowerName');
@@ -177,15 +171,15 @@
     }
 
     tr.querySelectorAll('input, select, textarea').forEach(el => {
-      el.addEventListener('input', generateLetter);
-      el.addEventListener('change', generateLetter);
+      el.addEventListener('input', regenerate);
+      el.addEventListener('change', regenerate);
     });
 
     const removeBtn = tr.querySelector('.credit-inquiry__row-remove');
     removeBtn?.addEventListener('click', () => {
       tr.remove();
       renumberRows();
-      generateLetter();
+      regenerate();
     });
 
     return tr;
@@ -219,106 +213,33 @@
     };
   }
 
-  async function exportPdf() {
-    const payload = buildPdfPayload();
-
-    const resp = await MSFG.fetch(MSFG.apiUrl('/api/pdf/credit-inquiry'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!resp.ok) throw new Error('PDF export failed');
-    const blob = await resp.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Credit-Inquiry-Letter-${(payload.loanNumber || 'draft').replace(/[^a-z0-9_-]+/gi, '-')}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const letterDate = document.getElementById('letterDate');
-    if (letterDate && !letterDate.value) letterDate.value = todayLong();
-
-    const fields = ['senderName', 'coBorrowerName', 'subjectPropertyAddress', 'loanNumber'];
-
-    fields.forEach(function(id) {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('input', generateLetter);
-      if (el) el.addEventListener('change', generateLetter);
-    });
-
-    const tbody = document.getElementById('inquiryTbody');
-    const addBtn = document.getElementById('addInquiryRow');
-    if (tbody && addBtn) {
-      // start with one row
-      tbody.appendChild(renderInquiryRow(1));
-      addBtn.addEventListener('click', () => {
-        tbody.appendChild(renderInquiryRow(tbody.querySelectorAll('tr').length + 1));
-        generateLetter();
-      });
-    }
-
-    // Editable preview wiring
-    const preview = document.getElementById('letterPreview');
-    if (preview) preview.addEventListener('input', function () { previewDirty = true; });
-    const reset = document.getElementById('ciResetPreview');
-    if (reset) reset.addEventListener('click', function (e) {
-      e.preventDefault();
-      previewDirty = false;
-      generateLetter();
-    });
-
-    generateLetter();
-
-    if (MSFG.DocActions) MSFG.DocActions.register(getEmailData);
-    // Workspace panel "Add to Session Report" — fetches the filled PDF
-    // (same payload buildPdfPayload + endpoint exportPdf uses).
-    if (MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
-      MSFG.DocActions.registerCapture(function () {
-        var payload = buildPdfPayload();
-        return MSFG.fetch(MSFG.apiUrl('/api/pdf/credit-inquiry'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).then(function (resp) {
-          if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
-          return resp.arrayBuffer();
-        }).then(function (buf) {
-          return {
-            pdfBytes: new Uint8Array(buf),
-            name: 'Credit Inquiry Letter',
-            icon: '📧',
-            slug: 'credit-inquiry',
-            data: getEmailData(),
-            filename: 'Credit-Inquiry-Letter-' + ((payload.loanNumber || 'draft').replace(/[^a-z0-9_-]+/gi, '-')) + '.pdf'
-          };
+  const doc = MSFG.LetterDoc.init({
+    slug: 'credit-inquiry',
+    name: 'Credit Inquiry Letter',
+    icon: '📧',
+    filename: function () {
+      return 'Credit-Inquiry-Letter-' + ((val('loanNumber') || 'draft').replace(/[^a-z0-9_-]+/gi, '-')) + '.pdf';
+    },
+    downloadSelector: '[data-action="doc-export-pdf"]',
+    resetBtnId: 'ciResetPreview',
+    dateFieldId: 'letterDate',
+    previewFields: ['senderName', 'coBorrowerName', 'subjectPropertyAddress', 'loanNumber'],
+    generate: generateLetter,
+    collectPayload: buildPdfPayload,
+    getEmailData: getEmailData,
+    onReady: function (api) {
+      regenerate = api.regenerate;
+      // Seed one inquiry row and wire the "add row" button.
+      const tbody = document.getElementById('inquiryTbody');
+      const addBtn = document.getElementById('addInquiryRow');
+      if (tbody && addBtn) {
+        tbody.appendChild(renderInquiryRow(1));
+        addBtn.addEventListener('click', () => {
+          tbody.appendChild(renderInquiryRow(tbody.querySelectorAll('tr').length + 1));
+          regenerate();
         });
-      });
+      }
     }
-
-    // Report template extractor
-    if (MSFG.ReportTemplates) {
-      MSFG.ReportTemplates.registerExtractor('credit-inquiry', function() {
-        return getEmailData();
-      });
-    }
-
-    document.querySelectorAll('[data-action="doc-export-pdf"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        try {
-          btn.disabled = true;
-          await exportPdf();
-        } catch (e) {
-          console.error(e);
-          alert('Could not export PDF. Please try again.');
-        } finally {
-          btn.disabled = false;
-        }
-      });
-    });
   });
+  regenerate = doc.regenerate;
 })();

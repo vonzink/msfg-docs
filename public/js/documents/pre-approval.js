@@ -1,32 +1,18 @@
 (function() {
   'use strict';
 
-  function val(id) {
-    const el = document.getElementById(id);
-    return el ? el.value.trim() : '';
-  }
-
-  function setVal(id, v) {
-    const el = document.getElementById(id);
-    if (!el || v == null || v === '') return;
-    el.value = String(v);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  }
+  const val = MSFG.val;
+  const setVal = MSFG.setVal;
 
   function isChecked(id) {
     const el = document.getElementById(id);
     return !!(el && el.checked);
   }
 
-  // Track manual edits to the preview so we don't overwrite them on
-  // every form input. Cleared when the user clicks "Reset preview".
-  let previewDirty = false;
-
+  // Pure render — LetterDoc decides when to call it (dirty-gated).
   function generateLetter() {
     const preview = document.getElementById('letterPreview');
     if (!preview) return;
-    if (previewDirty) return;
 
     const borrowerName = val('borrowerName');
     const borrowerAddress = val('borrowerAddress');
@@ -161,32 +147,6 @@
     };
   }
 
-  async function downloadPdf(btn) {
-    if (btn) { btn.disabled = true; btn.dataset._lbl = btn.dataset._lbl || btn.textContent; btn.textContent = 'Building PDF…'; }
-    try {
-      const resp = await MSFG.fetch(MSFG.apiUrl('/api/pdf/pre-approval'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(collectPdfPayload())
-      });
-      if (!resp.ok) throw new Error('PDF generation failed');
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'Pre-Approval-Letter.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-    } catch (e) {
-      console.error(e);
-      alert(e.message || 'Could not generate PDF.');
-    } finally {
-      if (btn) { btn.disabled = false; if (btn.dataset._lbl) btn.textContent = btn.dataset._lbl; }
-    }
-  }
-
   function formatCurrency(n) {
     const num = typeof n === 'number' ? n : parseFloat(String(n).replace(/[,$]/g, ''));
     if (!isFinite(num) || num <= 0) return '';
@@ -198,74 +158,20 @@
     return num.toFixed(3) + '%';
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    const fields = ['borrowerName', 'borrowerAddress', 'loanType', 'loanPurpose',
-                    'approvalAmount', 'interestRate', 'includeInterestRate',
-                    'loanTerm', 'downPayment',
-                    'expirationDate', 'loName', 'loNMLS', 'loPhone', 'loEmail', 'conditions'];
-
-    fields.forEach(function(id) {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('input', generateLetter);
-      if (el) el.addEventListener('change', generateLetter);
-    });
-
-    // Editable preview wiring
-    const preview = document.getElementById('letterPreview');
-    if (preview) preview.addEventListener('input', function () { previewDirty = true; });
-    const reset = document.getElementById('paResetPreview');
-    if (reset) reset.addEventListener('click', function (e) {
-      e.preventDefault(); previewDirty = false; generateLetter();
-    });
-
-    generateLetter();
-
-    const dlBtn = document.getElementById('btnPreApprovalDownloadPdf');
-    if (dlBtn) dlBtn.addEventListener('click', function () { downloadPdf(this); });
-
-    if (MSFG.DocActions) MSFG.DocActions.register(getEmailData);
-
-    if (MSFG.ReportTemplates) {
-      MSFG.ReportTemplates.registerExtractor('pre-approval', function() {
-        return getEmailData();
-      });
-    }
-
-    // Add-to-Session captures the styled PDF the LO would actually send.
-    if (MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
-      MSFG.DocActions.registerCapture(function () {
-        return MSFG.fetch(MSFG.apiUrl('/api/pdf/pre-approval'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(collectPdfPayload())
-        }).then(function (resp) {
-          if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
-          return resp.arrayBuffer();
-        }).then(function (buf) {
-          return {
-            pdfBytes: new Uint8Array(buf),
-            name: 'Pre-Approval Letter',
-            icon: '✅',
-            slug: 'pre-approval',
-            data: getEmailData(),
-            filename: 'Pre-Approval-Letter.pdf'
-          };
-        });
-      });
-    }
-
-    // MISMO prepop — listen for workspace broadcasts AND ask the
-    // parent to re-broadcast in case MISMO was imported before this
-    // iframe loaded.
-    window.addEventListener('message', function (e) {
-      if (e.origin !== window.location.origin) return;
-      if (!e.data || e.data.type !== 'MSFG_MISMO') return;
-      applyMismo(e.data.payload && e.data.payload.parsed);
-    });
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'MSFG_MISMO_REQUEST' }, window.location.origin);
-      }
-    } catch (_e) { /* ignore */ }
+  MSFG.LetterDoc.init({
+    slug: 'pre-approval',
+    name: 'Pre-Approval Letter',
+    icon: '✅',
+    filename: 'Pre-Approval-Letter.pdf',
+    downloadBtnId: 'btnPreApprovalDownloadPdf',
+    resetBtnId: 'paResetPreview',
+    previewFields: ['borrowerName', 'borrowerAddress', 'loanType', 'loanPurpose',
+      'approvalAmount', 'interestRate', 'includeInterestRate',
+      'loanTerm', 'downPayment',
+      'expirationDate', 'loName', 'loNMLS', 'loPhone', 'loEmail', 'conditions'],
+    generate: generateLetter,
+    collectPayload: collectPdfPayload,
+    getEmailData: getEmailData,
+    applyMismo: applyMismo
   });
 })();

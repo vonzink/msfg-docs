@@ -4,22 +4,9 @@
   const rowsEl = document.getElementById('addressRows');
   const addBtn = document.getElementById('addAddressRow');
 
-  function val(id) {
-    const el = document.getElementById(id);
-    return el ? String(el.value || '').trim() : '';
-  }
-
-  function setVal(id, v) {
-    const el = document.getElementById(id);
-    if (!el || v == null || v === '') return;
-    el.value = String(v);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-
-  function todayLong() {
-    return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  }
+  const val = MSFG.val;
+  const setVal = MSFG.setVal;
+  const todayLong = MSFG.formatDateLong;
 
   /* ---- Repeating address rows ---- */
 
@@ -52,17 +39,17 @@
 
     div.querySelector('.lox-row-remove').addEventListener('click', function () {
       div.remove();
-      generateLetter();
+      regenerate();
     });
-    div.addEventListener('input', generateLetter);
-    div.addEventListener('change', generateLetter);
+    div.addEventListener('input', regenerate);
+    div.addEventListener('change', regenerate);
     return div;
   }
 
   function addRow(values) {
     if (!rowsEl) return;
     rowsEl.appendChild(buildRow(values));
-    generateLetter();
+    regenerate();
   }
 
   function collectRows() {
@@ -80,18 +67,18 @@
   }
 
   /* ---- Letter preview ----
-     The preview is contenteditable so the LO can hand-edit the
-     final letter. We treat the preview as user-owned once they
-     interact with it — subsequent field edits stop overwriting
-     until they click "Reset preview" (which clears the dirty flag
-     and re-renders from the fields). */
+     The preview is contenteditable so the LO can hand-edit the final
+     letter. LetterDoc owns the dirty flag; while dirty it won't call
+     generate(), so field/row edits stop overwriting manual changes
+     until "Reset preview" clears it. */
 
-  let previewDirty = false;
+  // Gated rebuild — assigned from LetterDoc once initialised. The dynamic
+  // address rows call this so their edits respect the dirty-preview gate.
+  let regenerate = function () {};
 
   function generateLetter() {
     const preview = document.getElementById('letterPreview');
     if (!preview) return;
-    if (previewDirty) return; // user is editing; leave them alone
 
     const name = val('borrowerName');
     const loanNum = val('loanNumber');
@@ -148,32 +135,6 @@
     };
   }
 
-  async function downloadPdf(btn) {
-    if (btn) { btn.disabled = true; btn.dataset._lbl = btn.dataset._lbl || btn.textContent; btn.textContent = 'Building PDF…'; }
-    try {
-      const resp = await MSFG.fetch(MSFG.apiUrl('/api/pdf/address-lox'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(collectPdfPayload())
-      });
-      if (!resp.ok) throw new Error('PDF generation failed');
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'Address-LOX.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
-    } catch (e) {
-      console.error(e);
-      alert(e.message || 'Could not generate PDF.');
-    } finally {
-      if (btn) { btn.disabled = false; if (btn.dataset._lbl) btn.textContent = btn.dataset._lbl; }
-    }
-  }
-
   /* ---- Email / report extractor ---- */
 
   function getEmailData() {
@@ -227,83 +188,25 @@
   }
 
   /* ---- Init ---- */
-  document.addEventListener('DOMContentLoaded', function () {
-    if (!val('letterDate')) setVal('letterDate', todayLong());
-
-    // Seed with one empty row to invite the user.
-    addRow({});
-
-    if (addBtn) addBtn.addEventListener('click', function () { addRow({}); });
-
-    const dlBtn = document.getElementById('btnAddressLoxDownloadPdf');
-    if (dlBtn) dlBtn.addEventListener('click', function () { downloadPdf(this); });
-
-    // Track when the user types into the preview so we stop
-    // overwriting their edits.
-    const preview = document.getElementById('letterPreview');
-    if (preview) {
-      preview.addEventListener('input', function () { previewDirty = true; });
+  const doc = MSFG.LetterDoc.init({
+    slug: 'address-lox',
+    name: 'Address LOX',
+    icon: '📍',
+    filename: 'Address-LOX.pdf',
+    downloadBtnId: 'btnAddressLoxDownloadPdf',
+    resetBtnId: 'loxResetPreview',
+    dateFieldId: 'letterDate',
+    previewFields: ['borrowerName', 'loanNumber', 'currentAddress', 'letterDate'],
+    generate: generateLetter,
+    collectPayload: collectPdfPayload,
+    getEmailData: getEmailData,
+    applyMismo: seedFromMismo,
+    onReady: function (api) {
+      regenerate = api.regenerate;
+      // Seed one empty row to invite the user; wire "add address".
+      addRow({});
+      if (addBtn) addBtn.addEventListener('click', function () { addRow({}); });
     }
-    const resetBtn = document.getElementById('loxResetPreview');
-    if (resetBtn) {
-      resetBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        previewDirty = false;
-        generateLetter();
-      });
-    }
-
-    ['borrowerName', 'loanNumber', 'currentAddress', 'letterDate'].forEach(function (id) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('input', generateLetter);
-        el.addEventListener('change', generateLetter);
-      }
-    });
-
-    generateLetter();
-
-    if (window.MSFG && MSFG.DocActions) MSFG.DocActions.register(getEmailData);
-    if (window.MSFG && MSFG.ReportTemplates) {
-      MSFG.ReportTemplates.registerExtractor('address-lox', getEmailData);
-    }
-    // Add-to-Session uses the same styled PDF as Download so the
-    // report archives what the LO would actually send.
-    if (window.MSFG && MSFG.DocActions && typeof MSFG.DocActions.registerCapture === 'function') {
-      MSFG.DocActions.registerCapture(function () {
-        return MSFG.fetch(MSFG.apiUrl('/api/pdf/address-lox'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(collectPdfPayload())
-        }).then(function (resp) {
-          if (!resp.ok) return resp.text().then(function (t) { throw new Error('PDF generation failed: ' + t.slice(0, 120)); });
-          return resp.arrayBuffer();
-        }).then(function (buf) {
-          return {
-            pdfBytes: new Uint8Array(buf),
-            name: 'Address LOX',
-            icon: '📍',
-            slug: 'address-lox',
-            data: getEmailData(),
-            filename: 'Address-LOX.pdf'
-          };
-        });
-      });
-    }
-
-    // The shared mismo-embed.js dispatcher already populates a few base
-    // fields. Listen too so we can also seed the first repeating row.
-    window.addEventListener('message', function (e) {
-      if (e.origin !== window.location.origin) return;
-      if (!e.data || e.data.type !== 'MSFG_MISMO') return;
-      const payload = e.data.payload;
-      seedFromMismo(payload && payload.parsed);
-      generateLetter();
-    });
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'MSFG_MISMO_REQUEST' }, window.location.origin);
-      }
-    } catch (_e) { /* ignore */ }
   });
+  regenerate = doc.regenerate;
 })();
