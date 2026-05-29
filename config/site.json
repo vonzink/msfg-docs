@@ -10,6 +10,7 @@
   "equalHousingLogo": "https://msfg-media.s3.us-west-2.amazonaws.com/Assets/LOGOS/EQUAL+HOUSING+LENDER.png",
   "favicon": "/images/favicon-32x32.png",
   "domain": "msfginfo.com",
+  "signature": "",
   "smtp": {
     "host": "smtp.porkbun.com",
     "port": "465",

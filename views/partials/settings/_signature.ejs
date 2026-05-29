@@ -1,0 +1,27 @@
+    <!-- Signature -->
+    <div class="calc-section">
+      <h2>Signature</h2>
+      <p class="settings-help">
+        Upload your signature image. It is stamped above the signature line on the documents you
+        sign (Pre-Approval and Credit Inquiry letters). A PNG with a transparent background works best.
+      </p>
+
+      <% var signature = (typeof config.signature !== 'undefined') ? config.signature : ''; %>
+      <div class="settings-logo-preview u-mb-md" id="signaturePreviewWrap"<%= signature ? '' : ' hidden' %>>
+        <img id="signaturePreview" src="<%= signature %>" alt="Current signature"
+             style="max-width:280px;max-height:110px;object-fit:contain;border:1px solid var(--color-gray-200);background:#fff;padding:6px;border-radius:6px;">
+      </div>
+
+      <form action="<%= basePath %>/settings/signature" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <div class="form-grid u-grid-1-auto">
+          <div class="form-group">
+            <label>Signature image (PNG or JPEG — max 2MB)</label>
+            <input type="file" name="signature" accept="image/png,image/jpeg" required>
+          </div>
+          <div class="form-group u-justify-end">
+            <button type="submit" class="btn btn-primary">Upload Signature</button>
+          </div>
+        </div>
+      </form>
+    </div>

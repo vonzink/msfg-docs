@@ -1,0 +1,22 @@
+<div class="doc-page">
+  <div class="doc-page__header">
+    <h1>Site Settings</h1>
+    <p>Configure branding, your signature, the email signature, and SMTP for the documents site.</p>
+  </div>
+
+  <div class="doc-page__body">
+    <% if (saved) { %>
+      <div class="alert alert-info u-mb-lg">
+        Settings saved successfully.
+      </div>
+    <% } %>
+
+    <%- include('./partials/settings/_branding') %>
+
+    <%- include('./partials/settings/_signature') %>
+
+    <%- include('./partials/settings/_email-signature') %>
+
+    <%- include('./partials/settings/_smtp') %>
+  </div>
+</div>

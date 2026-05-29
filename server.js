@@ -120,6 +120,7 @@ pageRouter.use('/workspace', require('./routes/workspace'));
 pageRouter.use('/templates', require('./routes/templates'));
 pageRouter.use('/dashboard-docs', require('./routes/dashboardDocs'));
 pageRouter.use('/report', require('./routes/report'));
+pageRouter.use('/settings', require('./routes/settings'));
 
 // API routes (JSON) — guarded by Cognito auth
 const apiRouter = express.Router();
