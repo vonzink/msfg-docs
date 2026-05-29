@@ -47,7 +47,7 @@
     <!-- Section 3: Signers (up to 5) -->
     <div class="calc-section">
       <h2><span class="section-number">3</span> Signers <span class="text-muted">(up to 5)</span></h2>
-      <p class="text-muted" style="margin-top:0;">
+      <p class="section-intro">
         These names print as the captions under each signature line. Leave a row blank to print a generic
         "Borrower N" caption.
       </p>
@@ -60,21 +60,19 @@
       </div>
     </div>
 
-    <%- include('../partials/letter-settings-panel') %>
-
     <!-- Section 4: Letter Preview — editable. Same pattern as the
-         other borrower-letter docs. The Download button still
-         regenerates the PDF from form fields. -->
+         other borrower-letter docs. -->
     <div class="calc-section">
       <h2>
         <span class="section-number">4</span> Letter Preview
         <button type="button" class="btn btn-link btn-sm" id="loxResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
       </h2>
+      <%- include('../partials/letter-style-picker') %>
       <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
         <p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>
       </div>
-      <p class="text-muted" style="margin:var(--space-xs) 0 0;font-size:0.82rem;">
-        Click anywhere to edit. <strong>Download</strong> rebuilds the PDF from the form fields, not from manual edits in this preview.
+      <p class="letter-preview-hint">
+        Click anywhere in the preview to tweak wording. Preview edits stay here only — <strong>Download</strong> rebuilds the PDF from the form fields above.
       </p>
     </div>
 

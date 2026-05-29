@@ -13,7 +13,9 @@
   /* Neutral */
   --color-dark:       #1a1a2e;
   --color-gray-900:   #2c3e50;
+  --color-gray-800:   #323f4b;
   --color-gray-700:   #495057;
+  --color-gray-600:   #52606d;
   --color-gray-500:   #6c757d;
   --color-gray-400:   #adb5bd;
   --color-gray-300:   #ced4da;
@@ -21,6 +23,9 @@
   --color-gray-100:   #f1f3f5;
   --color-gray-50:    #f8f9fa;
   --color-white:      #ffffff;
+
+  /* Aliases — fix undefined refs used in older components. */
+  --color-primary:    #2d6a4f;
 
   /* Status */
   --color-success:  #28a745;
@@ -38,13 +43,22 @@
   --space-sm:  0.5rem;
   --space-md:  1rem;
   --space-lg:  1.5rem;
-  --space-xl:  1.5rem;
-  --space-2xl: 2rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
 
   /* Layout */
   --container-max:  1200px;
-  --border-radius:  8px;
-  --border-radius-lg: 12px;
+
+  /* Radius scale — single source of truth. Keep the older
+     --border-radius* aliases around for back-compat; prefer --radius-*
+     in new code. */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:  12px;
+  --radius-pill: 999px;
+  --border-radius:    var(--radius-md);
+  --border-radius-lg: var(--radius-lg);
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
   --shadow-md:   0 4px 12px rgba(0,0,0,0.1);
   --shadow-lg:   0 8px 24px rgba(0,0,0,0.12);
@@ -101,3 +115,10 @@ img { max-width: 100%; height: auto; }
 .text-center { text-align: center; }
 .text-muted  { color: var(--color-gray-500); }
 .text-sm     { font-size: 0.85rem; }
+
+/* Section-intro paragraph — replaces the repeated
+   class="text-muted" style="margin-top:0;" pattern in doc views. */
+.section-intro {
+  color: var(--color-gray-500);
+  margin-top: 0;
+}

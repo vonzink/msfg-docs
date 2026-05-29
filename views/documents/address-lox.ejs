@@ -33,7 +33,7 @@
          past/alternate address with date range + explanation. -->
     <div class="calc-section">
       <h2><span class="section-number">2</span> Past / alternate addresses</h2>
-      <p class="text-muted" style="margin-top:0;">
+      <p class="section-intro">
         Add one row per address that needs explaining. Use the date range to anchor each move; the
         explanation prints under the address in the letter.
       </p>
@@ -43,22 +43,20 @@
       </div>
     </div>
 
-    <%- include('../partials/letter-settings-panel') %>
-
-    <!-- Section 3: Letter Preview — editable. Auto-fills from the
-         fields above, but you can also click into the preview and
-         tweak the wording directly. Use "Reset preview" to throw
-         away your edits and re-render from the form. -->
+    <!-- Section 3: Letter Preview — editable. Click into the preview
+         to tweak wording directly. Use "Reset preview" to throw away
+         your edits and re-render from the form. -->
     <div class="calc-section">
       <h2>
         <span class="section-number">3</span> Letter Preview
         <button type="button" class="btn btn-link btn-sm lox-reset-preview" id="loxResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
       </h2>
+      <%- include('../partials/letter-style-picker') %>
       <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
         <p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>
       </div>
-      <p class="text-muted" style="margin:var(--space-xs) 0 0;font-size:0.82rem;">
-        Click anywhere in the preview to edit the wording directly. Manual edits stick until you press <strong>Reset preview</strong> or change a field above.
+      <p class="letter-preview-hint">
+        Click anywhere in the preview to tweak wording. Preview edits stay here only — <strong>Download</strong> rebuilds the PDF from the form fields above.
       </p>
     </div>
 

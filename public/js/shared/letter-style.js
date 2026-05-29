@@ -11,8 +11,24 @@
   'use strict';
 
   const STORAGE_KEY = 'msfg-docs.letter-settings.v1';
+  const GLOBAL_KEY = STORAGE_KEY + ':__global__';
+
+  /** Compose the localStorage key for a given doc slug. Per-doc
+   *  settings win; fall back to the shared global default. */
+  function keyFor(slug) {
+    return slug ? STORAGE_KEY + ':' + slug : GLOBAL_KEY;
+  }
+
+  /** Find the per-doc slug from the settings panel on the current
+   *  page. Letters without a slug share the global bucket. */
+  function currentSlug() {
+    const root = document.querySelector('.letter-settings')
+      || document.querySelector('.letter-style-picker');
+    return (root && root.dataset.docSlug) || '';
+  }
 
   const DEFAULTS = {
+    templateStyle: 'A',         // 'A' Evergreen | 'B' Ledger | 'C' Plain
     fontFamily: 'times',        // 'times' | 'helvetica'
     fontSize: 11,               // 9 | 10 | 11 | 12 | 13
     accent: '#2d6a4f',
@@ -25,6 +41,22 @@
     justify: true,
   };
 
+  // Each A/B/C template style maps to a full appearance combo chosen to
+  // mirror its PDF renderer (lib/pdf/borrowerLetter{,B,C}.js): A Evergreen
+  // serif, B Compact Ledger (teal, dense, mono headers), C Plain business
+  // letter (monochrome serif). On pages without the granular gear panel
+  // this is what drives the live preview look.
+  const STYLE_THEMES = {
+    A: { fontFamily: 'times',     fontSize: 11, accent: '#1d4d3e', tableStyle: 'dotted', titleAlign: 'center', margin: 'normal', headerBand: false, footerBand: false, leftRail: false, justify: true },
+    B: { fontFamily: 'helvetica', fontSize: 10, accent: '#0f8a8e', tableStyle: 'thin',   titleAlign: 'left',   margin: 'narrow', headerBand: false, footerBand: false, leftRail: true,  justify: false },
+    C: { fontFamily: 'times',     fontSize: 11, accent: '#1d1d1f', tableStyle: 'thin',   titleAlign: 'left',   margin: 'wide',   headerBand: false, footerBand: false, leftRail: false, justify: false },
+  };
+
+  function normalizeStyle(style) {
+    const s = String(style == null ? '' : style).trim().toUpperCase();
+    return (s === 'B' || s === 'C') ? s : 'A';
+  }
+
   // Named presets — map each to a full settings object. The "Apply
   // preset" buttons in the panel just copy these in.
   const PRESETS = {
@@ -36,40 +68,64 @@
 
   const MARGIN_PX = { narrow: 18, normal: 32, wide: 48 };
 
-  function readSettings() {
+  function readJson(key) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return Object.assign({}, DEFAULTS);
-      const parsed = JSON.parse(raw);
-      return Object.assign({}, DEFAULTS, parsed || {});
-    } catch (_e) { return Object.assign({}, DEFAULTS); }
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw) || null;
+    } catch (_e) { return null; }
   }
 
-  function writeSettings(s) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
-    catch (_e) { /* storage may be blocked */ }
+  /** Resolve settings for the current page: per-doc override →
+   *  global default → hardcoded DEFAULTS. Accepts an optional slug
+   *  so PDF-download code can request a specific doc's settings. */
+  function readSettings(slug) {
+    const key = typeof slug === 'undefined' ? keyFor(currentSlug()) : keyFor(slug);
+    const perDoc = readJson(key);
+    const global = (key === GLOBAL_KEY) ? null : readJson(GLOBAL_KEY);
+    return Object.assign({}, DEFAULTS, global || {}, perDoc || {});
+  }
+
+  function writeSettings(s, opts) {
+    const applyAll = !!(opts && opts.applyToAll);
+    const slug = currentSlug();
+    try {
+      localStorage.setItem(keyFor(slug), JSON.stringify(s));
+      if (applyAll) localStorage.setItem(GLOBAL_KEY, JSON.stringify(s));
+    } catch (_e) { /* storage may be blocked */ }
   }
 
   /** Apply the settings object to every .letter-preview on the page.
    *  Scalars become CSS custom properties; booleans become
    *  letter-preview--* state classes. */
   function applySettings(s) {
+    const style = normalizeStyle(s.templateStyle);
+    // The granular gear panel (pre-approval only) keeps full control of the
+    // look; everywhere else the chosen A/B/C template theme drives it so the
+    // preview mirrors the PDF the picker will produce.
+    const hasPanel = !!document.querySelector('.letter-settings');
+    const eff = hasPanel ? s : Object.assign({}, s, STYLE_THEMES[style]);
+
     document.querySelectorAll('.letter-preview').forEach(function (el) {
-      el.style.setProperty('--lp-font', s.fontFamily === 'helvetica'
+      el.style.setProperty('--lp-font', eff.fontFamily === 'helvetica'
         ? '-apple-system, "Segoe UI", Helvetica, Arial, sans-serif'
         : 'Georgia, "Times New Roman", serif');
-      el.style.setProperty('--lp-size', s.fontSize + 'pt');
-      el.style.setProperty('--lp-accent', s.accent);
-      el.style.setProperty('--lp-margin', (MARGIN_PX[s.margin] || MARGIN_PX.normal) + 'px');
-      el.style.setProperty('--lp-title-align', s.titleAlign);
-      el.style.setProperty('--lp-text-align', s.justify ? 'justify' : 'left');
+      el.style.setProperty('--lp-size', eff.fontSize + 'pt');
+      el.style.setProperty('--lp-accent', eff.accent);
+      el.style.setProperty('--lp-margin', (MARGIN_PX[eff.margin] || MARGIN_PX.normal) + 'px');
+      el.style.setProperty('--lp-title-align', eff.titleAlign);
+      el.style.setProperty('--lp-text-align', eff.justify ? 'justify' : 'left');
 
       ['plain', 'dotted', 'striped', 'accentKey', 'thin'].forEach(function (t) {
-        el.classList.toggle('letter-preview--table-' + t, s.tableStyle === t);
+        el.classList.toggle('letter-preview--table-' + t, eff.tableStyle === t);
       });
-      el.classList.toggle('letter-preview--header-band', !!s.headerBand);
-      el.classList.toggle('letter-preview--footer-band', !!s.footerBand);
-      el.classList.toggle('letter-preview--left-rail', !!s.leftRail);
+      el.classList.toggle('letter-preview--header-band', !!eff.headerBand);
+      el.classList.toggle('letter-preview--footer-band', !!eff.footerBand);
+      el.classList.toggle('letter-preview--left-rail', !!eff.leftRail);
+
+      ['A', 'B', 'C'].forEach(function (k) {
+        el.classList.toggle('letter-preview--style-' + k.toLowerCase(), style === k);
+      });
     });
   }
 
@@ -110,10 +166,38 @@
     return s;
   }
 
+  const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
   document.addEventListener('DOMContentLoaded', function () {
     // Always apply saved settings to any .letter-preview on the page —
     // even pages without the settings panel (e.g. a future consumer).
     applySettings(readSettings());
+
+    // A/B/C template-style picker (borrower-letter pages). Persists the
+    // choice per-doc and live-restyles the preview; each doc's Download
+    // reads the same setting so the PDF matches what the user picked.
+    const picker = document.querySelector('.letter-style-picker');
+    if (picker) {
+      const opts = Array.prototype.slice.call(picker.querySelectorAll('[data-style]'));
+      const syncPicker = function (style) {
+        opts.forEach(function (b) {
+          const on = normalizeStyle(b.dataset.style) === style;
+          b.classList.toggle('is-active', on);
+          b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+      };
+      syncPicker(normalizeStyle(readSettings().templateStyle));
+      opts.forEach(function (b) {
+        b.addEventListener('click', function () {
+          const style = normalizeStyle(b.dataset.style);
+          const st = readSettings();
+          st.templateStyle = style;
+          writeSettings(st);
+          applySettings(st);
+          syncPicker(style);
+        });
+      });
+    }
 
     const root = document.querySelector('.letter-settings');
     if (!root) return;
@@ -122,50 +206,85 @@
     const toggle = root.querySelector('.letter-settings__gear');
     const resetBtn = root.querySelector('.letter-settings__reset');
     const presetBtns = root.querySelectorAll('.letter-settings__preset');
+    const accentText = root.querySelector('input[type="text"][data-setting="accent"]');
+    const accentPicker = root.querySelector('input[type="color"][data-setting="accent"]');
+    const accentError = root.querySelector('#lsAccentError');
+    const applyAllCb = root.querySelector('#lsApplyAll');
 
-    // Open/close the panel
+    /* ---- Open / close the popover ---- */
     function setOpen(open) {
       panel.hidden = !open;
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
-    toggle.addEventListener('click', function () {
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
       setOpen(panel.hidden);
     });
+    // Click-outside closes — but ignore clicks INSIDE the panel.
+    document.addEventListener('click', function (e) {
+      if (panel.hidden) return;
+      if (root.contains(e.target)) return;
+      setOpen(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !panel.hidden) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
 
-    // Populate form from current settings
+    /* ---- Form → state → preview → storage pipeline ---- */
     let state = readSettings();
     syncFormToSettings(root, state);
 
-    // Keep color picker + hex text input in sync (both have
-    // data-setting="accent"). Any change re-applies the settings.
+    function setAccentError(show) {
+      if (!accentError) return;
+      accentError.hidden = !show;
+      if (accentText) accentText.classList.toggle('is-invalid', !!show);
+    }
+
+    function persist() {
+      writeSettings(state, { applyToAll: !!(applyAllCb && applyAllCb.checked) });
+    }
+
     root.querySelectorAll('[data-setting]').forEach(function (input) {
       input.addEventListener('input', function () {
-        // Color text input → validate + broadcast to the matching color
-        if (input.type === 'text' && input.dataset.setting === 'accent') {
+        // Accent text field — validate hex. Keep stale values on-screen
+        // so the user can finish typing, but only commit when valid.
+        if (input === accentText) {
           const hex = String(input.value || '').trim();
-          if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
-            const picker = root.querySelector('input[type="color"][data-setting="accent"]');
-            if (picker) picker.value = hex;
-          } else {
-            return; // invalid hex — don't persist until valid
+          if (!HEX_RE.test(hex)) {
+            setAccentError(true);
+            return;
           }
+          setAccentError(false);
+          if (accentPicker) accentPicker.value = hex;
         }
-        if (input.type === 'color' && input.dataset.setting === 'accent') {
-          const txt = root.querySelector('input[type="text"][data-setting="accent"]');
-          if (txt) txt.value = input.value;
+        // Color picker → mirror the hex text input
+        if (input === accentPicker && accentText) {
+          accentText.value = input.value;
+          setAccentError(false);
         }
         state = readFormIntoSettings(root, state);
         applySettings(state);
-        writeSettings(state);
+        persist();
       });
       input.addEventListener('change', function () {
         state = readFormIntoSettings(root, state);
         applySettings(state);
-        writeSettings(state);
+        persist();
       });
     });
 
-    // Presets — copy full preset combo into state + form + storage.
+    if (applyAllCb) {
+      applyAllCb.addEventListener('change', function () {
+        // Flipping it ON should immediately promote current state to
+        // the shared global default.
+        persist();
+      });
+    }
+
+    /* ---- Presets — copy full combo into state + form + storage ---- */
     presetBtns.forEach(function (btn) {
       btn.addEventListener('click', function () {
         const name = btn.dataset.preset;
@@ -173,17 +292,19 @@
         state = Object.assign({}, PRESETS[name]);
         syncFormToSettings(root, state);
         applySettings(state);
-        writeSettings(state);
+        setAccentError(false);
+        persist();
       });
     });
 
-    // Reset to defaults
+    /* ---- Reset to defaults ---- */
     if (resetBtn) {
       resetBtn.addEventListener('click', function () {
         state = Object.assign({}, DEFAULTS);
         syncFormToSettings(root, state);
         applySettings(state);
-        writeSettings(state);
+        setAccentError(false);
+        persist();
       });
     }
   });

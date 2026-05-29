@@ -1,33 +1,33 @@
-<!-- Letter appearance settings — per-user customizer that replaces the
-     4-template picker. Controls persist to localStorage (shared across
-     all borrower-letter docs) and apply live to the .letter-preview
-     below AND to the exported PDF (each borrower doc sends the full
-     settings object in its Download payload; lib/pdf/letterPdf.js
-     honors it). Gear icon mirrors the msfg-calc settings affordance. -->
-<div class="letter-settings" data-doc-slug="<%= (typeof doc !== 'undefined' && doc) ? doc.slug : '' %>">
-  <div class="letter-settings__toolbar">
-    <button type="button" class="letter-settings__gear" id="letterSettingsToggle" aria-expanded="false" aria-controls="letterSettingsPanel" title="Letter appearance settings">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-      <span>Letter appearance</span>
-    </button>
-    <button type="button" class="letter-settings__reset" id="letterSettingsReset" title="Reset all settings to defaults">Reset to defaults</button>
-  </div>
+<!-- Letter appearance settings — compact gear button + popover.
+     Render this INLINE inside the Letter Preview section header so
+     the gear visually belongs to the preview it controls. The panel
+     opens below the gear as a floating popover (click-outside to
+     dismiss; Esc closes). Settings persist per-doc-slug (with an
+     optional "Apply to all letters" toggle that also writes the
+     global default) and apply live to the .letter-preview via CSS
+     custom properties + state classes. The same settings object is
+     read by each doc's Download client and sent in the PDF payload
+     so lib/pdf/letterPdf.js produces matching output. -->
+<span class="letter-settings" data-doc-slug="<%= (typeof doc !== 'undefined' && doc) ? doc.slug : '' %>">
+  <button type="button" class="letter-settings__gear" id="letterSettingsToggle"
+          aria-expanded="false" aria-controls="letterSettingsPanel"
+          aria-haspopup="dialog" title="Letter appearance">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    <span class="sr-only">Letter appearance</span>
+  </button>
 
-  <div class="letter-settings__panel" id="letterSettingsPanel" hidden>
-    <!-- Quick presets — apply a whole settings combo at once. -->
-    <div class="letter-settings__row letter-settings__presets">
-      <label class="letter-settings__label">Presets</label>
-      <div class="letter-settings__preset-chips">
-        <button type="button" class="letter-settings__preset" data-preset="classic">Classic</button>
-        <button type="button" class="letter-settings__preset" data-preset="modern">Modern</button>
-        <button type="button" class="letter-settings__preset" data-preset="branded">Branded</button>
-        <button type="button" class="letter-settings__preset" data-preset="compact">Compact</button>
-      </div>
+  <div class="letter-settings__panel" id="letterSettingsPanel" role="dialog" aria-label="Letter appearance settings" hidden>
+    <div class="letter-settings__panel-head">
+      <span class="letter-settings__panel-title">Letter appearance</span>
+      <button type="button" class="letter-settings__reset" id="letterSettingsReset" title="Reset all settings to defaults">Reset</button>
     </div>
 
+    <!-- Core controls come first — users land on the detail they came
+         here to adjust. Presets are pinned at the bottom as a quick
+         starting point. -->
     <div class="letter-settings__grid">
       <div class="letter-settings__field">
         <label for="lsFontFamily">Font</label>
@@ -46,12 +46,13 @@
           <option value="13">13 pt — large</option>
         </select>
       </div>
-      <div class="letter-settings__field">
+      <div class="letter-settings__field letter-settings__field--full">
         <label for="lsAccentText">Accent color</label>
         <div class="letter-settings__color">
-          <input type="color" id="lsAccent" data-setting="accent">
-          <input type="text" id="lsAccentText" data-setting="accent" maxlength="7" placeholder="#2d6a4f">
+          <input type="color" id="lsAccent" data-setting="accent" aria-label="Accent color picker">
+          <input type="text" id="lsAccentText" data-setting="accent" maxlength="7" placeholder="#2d6a4f" spellcheck="false" aria-label="Accent color hex">
         </div>
+        <p class="letter-settings__hint letter-settings__hint--error" id="lsAccentError" hidden>Enter a 6-digit hex like <code>#2d6a4f</code>.</p>
       </div>
       <div class="letter-settings__field">
         <label for="lsTableStyle">Table style</label>
@@ -86,5 +87,26 @@
       <label class="letter-settings__toggle"><input type="checkbox" data-setting="leftRail"> Left accent rail</label>
       <label class="letter-settings__toggle"><input type="checkbox" data-setting="justify"> Justify body text</label>
     </div>
+
+    <!-- Per-doc vs shared scope. When unchecked (default), settings
+         apply only to THIS doc type. When checked, the current values
+         also become the fallback default for all other letter docs. -->
+    <label class="letter-settings__scope">
+      <input type="checkbox" id="lsApplyAll">
+      <span>Apply to all letter types</span>
+    </label>
+
+    <!-- Quick starts — preset combos. Pinned below core controls so
+         the panel leads with granular options (the whole point of
+         replacing the 4-preset picker). -->
+    <div class="letter-settings__quickstarts">
+      <span class="letter-settings__quickstarts-label">Quick starts</span>
+      <div class="letter-settings__preset-chips">
+        <button type="button" class="letter-settings__preset" data-preset="classic">Classic</button>
+        <button type="button" class="letter-settings__preset" data-preset="modern">Modern</button>
+        <button type="button" class="letter-settings__preset" data-preset="branded">Branded</button>
+        <button type="button" class="letter-settings__preset" data-preset="compact">Compact</button>
+      </div>
+    </div>
   </div>
-</div>
+</span>

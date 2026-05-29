@@ -10,169 +10,297 @@
    resolves the individual settings from them).
    ===================================================== */
 
-/* ---- Settings toolbar + collapsible panel ---- */
+/* ---- Inline gear + floating popover ----
+   The gear is a 32px icon-button that lives inside the Letter Preview
+   section header. The panel opens below it as a floating popover
+   anchored right-aligned so it clears the section title. This puts
+   the control spatially on top of the preview it affects. */
 .letter-settings {
-  margin-bottom: var(--space-md, 16px);
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
 }
-.letter-settings__toolbar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm, 12px);
-  padding: var(--space-sm, 12px) var(--space-md, 16px);
-  background: var(--color-gray-50, #f7f7f7);
-  border: 1px solid var(--color-gray-200, #e5e7eb);
-  border-radius: var(--border-radius, 8px);
+
+/* When the gear is docked into a .calc-section h2, push it + any
+   sibling .btn-link (Reset preview) cluster to the right edge so the
+   title stays left-aligned with the section number. */
+.calc-section h2 > .btn-link {
+  margin-left: auto;
 }
+.calc-section h2 > .btn-link + .letter-settings {
+  margin-left: var(--space-sm);
+}
+
 .letter-settings__gear {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: #fff;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: var(--radius-sm, 6px);
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  color: var(--color-gray-700);
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--color-gray-700, #374151);
-  transition: all 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
 }
 .letter-settings__gear:hover {
-  border-color: var(--brand-accent, #2d6a4f);
-  color: var(--brand-primary, #1b4332);
+  border-color: var(--brand-accent);
+  color: var(--brand-primary);
+  background: var(--brand-light);
 }
 .letter-settings__gear[aria-expanded="true"] {
-  background: rgba(45, 106, 79, 0.08);
-  border-color: var(--brand-accent, #2d6a4f);
-  color: var(--brand-primary, #1b4332);
+  background: var(--brand-light);
+  border-color: var(--brand-accent);
+  color: var(--brand-primary);
 }
 .letter-settings__gear svg {
-  transition: transform 0.3s;
+  transition: transform 0.3s ease;
 }
 .letter-settings__gear[aria-expanded="true"] svg {
-  transform: rotate(45deg);
-}
-.letter-settings__reset {
-  margin-left: auto;
-  font-size: 0.78rem;
-  color: var(--color-gray-600, #4b5563);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-}
-.letter-settings__reset:hover {
-  color: var(--color-danger, #dc3545);
+  transform: rotate(90deg);
 }
 
 .letter-settings__panel {
-  margin-top: var(--space-sm, 12px);
-  padding: var(--space-md, 16px);
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(360px, 92vw);
+  padding: var(--space-md);
   background: #fff;
-  border: 1px solid var(--color-gray-200, #e5e7eb);
-  border-radius: var(--border-radius, 8px);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 40;
   animation: lsSlide 0.15s ease-out;
+  text-align: left;
+  font-weight: normal;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-gray-900);
 }
 @keyframes lsSlide {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.letter-settings__row {
+
+.letter-settings__panel-head {
   display: flex;
   align-items: center;
-  gap: var(--space-sm, 12px);
-  margin-bottom: var(--space-md, 16px);
+  justify-content: space-between;
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-gray-100);
 }
-.letter-settings__label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-gray-500, #6b7280);
-  min-width: 90px;
-}
-.letter-settings__preset-chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.letter-settings__preset {
-  padding: 5px 12px;
-  font-size: 0.8rem;
+.letter-settings__panel-title {
+  font-family: var(--font-heading);
   font-weight: 600;
-  background: #fff;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: var(--radius-sm, 6px);
-  cursor: pointer;
-  color: var(--color-gray-700, #374151);
-  transition: all 0.15s;
+  font-size: 0.95rem;
+  color: var(--color-dark);
 }
-.letter-settings__preset:hover {
-  border-color: var(--brand-accent, #2d6a4f);
-  color: var(--brand-primary, #1b4332);
-  background: rgba(45, 106, 79, 0.06);
+.letter-settings__reset {
+  font-size: 0.78rem;
+  color: var(--color-gray-600);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+}
+.letter-settings__reset:hover {
+  color: var(--color-danger);
+  background: var(--color-gray-50);
 }
 
 .letter-settings__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-md, 16px);
-  margin-bottom: var(--space-md, 16px);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md) var(--space-md);
+  margin-bottom: var(--space-md);
 }
+.letter-settings__field--full { grid-column: 1 / -1; }
 .letter-settings__field label {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-gray-700, #374151);
+  color: var(--color-gray-700);
   margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .letter-settings__field select,
 .letter-settings__field input[type="text"] {
   width: 100%;
-  padding: 5px 8px;
+  padding: 6px 8px;
   font-size: 0.85rem;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
   background: #fff;
+  color: var(--color-gray-900);
 }
+.letter-settings__field select:focus-visible,
+.letter-settings__field input[type="text"]:focus-visible,
+.letter-settings__field input[type="color"]:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 1px;
+}
+
 .letter-settings__color {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
 }
 .letter-settings__color input[type="color"] {
   width: 36px;
   height: 32px;
   padding: 2px;
-  border: 1px solid var(--color-gray-300, #d1d5db);
-  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   background: #fff;
+  flex: 0 0 auto;
 }
 .letter-settings__color input[type="text"] {
   flex: 1;
-  font-family: 'SF Mono', Menlo, monospace;
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   text-transform: lowercase;
+}
+.letter-settings__color input[type="text"].is-invalid {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.18);
+}
+
+.letter-settings__hint {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+}
+.letter-settings__hint--error { color: var(--color-danger); }
+.letter-settings__hint code {
+  font-family: var(--font-mono);
+  background: var(--color-gray-50);
+  padding: 1px 4px;
+  border-radius: var(--radius-xs);
 }
 
 .letter-settings__toggles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md, 16px) var(--space-lg, 24px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--color-gray-100);
+  border-bottom: 1px solid var(--color-gray-100);
+  margin-bottom: var(--space-md);
 }
 .letter-settings__toggle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 0.85rem;
-  color: var(--color-gray-700, #374151);
+  color: var(--color-gray-700);
   cursor: pointer;
   user-select: none;
 }
 .letter-settings__toggle input {
   cursor: pointer;
-  accent-color: var(--brand-accent, #2d6a4f);
+  accent-color: var(--brand-accent);
+}
+
+.letter-settings__scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--color-gray-600);
+  margin-bottom: var(--space-md);
+  cursor: pointer;
+  user-select: none;
+}
+.letter-settings__scope input { accent-color: var(--brand-accent); }
+
+.letter-settings__quickstarts {
+  padding-top: var(--space-sm);
+  border-top: 1px dashed var(--color-gray-200);
+}
+.letter-settings__quickstarts-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-gray-500);
+  margin-bottom: 6px;
+}
+.letter-settings__preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.letter-settings__preset {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: #fff;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  color: var(--color-gray-700);
+  transition: all 0.15s;
+}
+.letter-settings__preset:hover {
+  border-color: var(--brand-accent);
+  color: var(--brand-primary);
+  background: var(--brand-light);
+}
+
+/* Small muted helper text that sits under the preview on every
+   borrower-letter doc. Was an inline style copy-pasted 5 times. */
+.letter-preview-hint {
+  margin: var(--space-xs) 0 0;
+  font-size: 0.82rem;
+  color: var(--color-gray-500);
+}
+
+/* "Edited — preview only" badge. Injected by preview-dirty.js next
+   to the Reset button whenever the user types into a
+   contenteditable .letter-preview. Communicates the contract: your
+   edits live in the preview only; Download rebuilds from fields. */
+.preview-edited-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--space-xs);
+  padding: 2px 8px 2px 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brand-primary);
+  background: var(--brand-light);
+  border: 1px solid rgba(45, 106, 79, 0.28);
+  border-radius: var(--radius-pill);
+  vertical-align: middle;
+  animation: pebPop 0.18s ease-out;
+}
+.preview-edited-badge svg {
+  stroke: var(--brand-primary);
+  flex-shrink: 0;
+}
+.preview-edited-badge__note {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-gray-600);
+  margin-left: 2px;
+}
+@keyframes pebPop {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .preview-edited-badge { animation: none; }
 }
 
 /* ---- Live letter preview — all styling keyed off CSS variables
@@ -199,7 +327,53 @@
   text-align: var(--lp-text-align);
   position: relative;
   overflow: hidden;
+  /* 150ms crossfade on every setting change so toggling a band,
+     font, or accent feels smooth instead of popping. */
+  transition:
+    padding 0.15s ease,
+    font-size 0.15s ease,
+    font-family 0.15s ease,
+    text-align 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
+@media (prefers-reduced-motion: reduce) {
+  .letter-preview { transition: none; }
+}
+
+/* Pre-edit affordance — until the user actually types into the
+   preview, a subtle pencil icon sits in the top-right corner and the
+   card lifts on hover. Communicates "click here to edit" without
+   visual noise in the resting state. Hidden entirely once dirty. */
+.letter-preview[contenteditable="true"]::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%232d6a4f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 20h9'/><path d='M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.letter-preview[contenteditable="true"]:hover {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.08);
+}
+.letter-preview[contenteditable="true"]:hover::after {
+  opacity: 0.75;
+}
+.letter-preview[contenteditable="true"]:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+}
+/* Once the user has typed, drop the pencil hint — they clearly know
+   they can edit, and the badge in the header now carries the signal. */
+.letter-preview--dirty::after { display: none !important; }
 .letter-preview strong {
   color: var(--lp-ink);
 }
@@ -278,7 +452,123 @@
   border-left: 6px solid var(--lp-accent);
 }
 
+/* ---- A/B/C template-style picker — segmented control above the
+   preview on borrower-letter docs. letter-style.js toggles .is-active
+   and persists the choice; the preview restyles via the style classes
+   below. ---- */
+.letter-style-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin: 0 0 var(--space-sm);
+}
+.letter-style-picker__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-gray-500);
+}
+.letter-style-picker__opts {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.letter-style-picker__opt {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 96px;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.letter-style-picker__opt:hover {
+  border-color: var(--brand-accent);
+  background: var(--brand-light);
+}
+.letter-style-picker__opt:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 1px;
+}
+.letter-style-picker__opt.is-active {
+  border-color: var(--brand-primary);
+  background: var(--brand-light);
+  box-shadow: 0 0 0 2px rgba(45, 106, 79, 0.15);
+}
+.letter-style-picker__name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-dark);
+}
+.letter-style-picker__opt.is-active .letter-style-picker__name {
+  color: var(--brand-primary);
+}
+.letter-style-picker__sub {
+  font-size: 0.7rem;
+  color: var(--color-gray-500);
+}
+
+/* ---- Template-style identities for the on-screen preview.
+   Core type + colour come from --lp-* (set by JS from the chosen style
+   theme); these rules add the structural flourishes that mirror each
+   PDF renderer. They sit after the table/layout classes so they win
+   ties. ---- */
+
+/* A — Evergreen: refined serif, brand top rule, accented table headers. */
+.letter-preview--style-a {
+  border-top: 3px solid var(--lp-accent);
+}
+.letter-preview--style-a table th {
+  border-bottom: 1.5px solid var(--lp-accent);
+  color: var(--lp-accent);
+  font-weight: 700;
+}
+
+/* B — Compact Ledger: dense, monospaced ledger headers; the teal left
+   rail (from the style theme) echoes the PDF's accent flag. */
+.letter-preview--style-b {
+  line-height: 1.45;
+}
+.letter-preview--style-b .letter-date {
+  font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.78em;
+}
+.letter-preview--style-b table th {
+  font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72em;
+  color: var(--lp-accent);
+  border-bottom: 1px solid var(--lp-accent);
+}
+.letter-preview--style-b table td {
+  font-size: 0.92em;
+}
+
+/* C — Plain: monochrome business letter, hairline table, black header
+   rule, no colour accents. */
+.letter-preview--style-c {
+  line-height: 1.7;
+}
+.letter-preview--style-c table th {
+  border-bottom: 1.5px solid var(--lp-ink);
+  font-weight: 700;
+}
+.letter-preview--style-c table td {
+  border-bottom: 0.5px solid var(--color-gray-200, #e5e7eb);
+}
+
 /* Mobile: print hides the settings block — only the preview prints. */
 @media print {
-  .letter-settings { display: none !important; }
+  .letter-settings,
+  .letter-style-picker { display: none !important; }
 }

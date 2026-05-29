@@ -1,0 +1,22 @@
+<!-- A/B/C template-style picker. Render just above a borrower-letter
+     .letter-preview. Choosing a style live-restyles the preview (via
+     letter-style.js → applySettings) and persists per-doc-slug; the
+     doc's Download reads the same setting so the PDF matches. -->
+<div class="letter-style-picker" role="radiogroup" aria-label="Document template style"
+     data-doc-slug="<%= (typeof doc !== 'undefined' && doc) ? doc.slug : '' %>">
+  <span class="letter-style-picker__label">Style</span>
+  <div class="letter-style-picker__opts">
+    <button type="button" class="letter-style-picker__opt" role="radio" aria-checked="false" data-style="A">
+      <span class="letter-style-picker__name">Evergreen</span>
+      <span class="letter-style-picker__sub">Refined serif</span>
+    </button>
+    <button type="button" class="letter-style-picker__opt" role="radio" aria-checked="false" data-style="B">
+      <span class="letter-style-picker__name">Ledger</span>
+      <span class="letter-style-picker__sub">Compact, teal</span>
+    </button>
+    <button type="button" class="letter-style-picker__opt" role="radio" aria-checked="false" data-style="C">
+      <span class="letter-style-picker__name">Plain</span>
+      <span class="letter-style-picker__sub">Classic letter</span>
+    </button>
+  </div>
+</div>

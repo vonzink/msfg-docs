@@ -108,21 +108,21 @@
       </div>
     </div>
 
-    <%- include('../partials/letter-settings-panel') %>
-
     <!-- Section 5: Letter Preview — editable. Click to type directly
          in the rendered letter; manual edits stick until "Reset
-         preview" is pressed. -->
+         preview" is pressed. The gear button to the right of the
+         section title opens the letter-appearance popover. -->
     <div class="calc-section">
       <h2>
         <span class="section-number">5</span> Letter Preview
         <button type="button" class="btn btn-link btn-sm" id="paResetPreview" title="Discard manual edits and rebuild from the fields above">Reset preview</button>
       </h2>
+      <%- include('../partials/letter-style-picker') %>
       <div id="letterPreview" class="letter-preview" contenteditable="true" spellcheck="true">
         <p class="text-muted text-center">Fill in the fields above to generate your pre-approval letter.</p>
       </div>
-      <p class="text-muted" style="margin:var(--space-xs) 0 0;font-size:0.82rem;">
-        Click anywhere in the preview to edit. Manual edits stick until you press <strong>Reset preview</strong>.
+      <p class="letter-preview-hint">
+        Click anywhere in the preview to tweak wording. Preview edits stay here only — <strong>Download</strong> rebuilds the PDF from the form fields above.
       </p>
     </div>
 

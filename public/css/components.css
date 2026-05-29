@@ -327,6 +327,22 @@
   background: var(--brand-light);
 }
 
+/* Link-styled button — previously only defined in templates.css so it
+   rendered unstyled on borrower-doc pages (Reset-preview buttons). */
+.btn-link,
+.btn--link {
+  background: none;
+  border: none;
+  color: var(--brand-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  font-weight: 500;
+  padding: 0;
+}
+.btn-link:hover,
+.btn--link:hover { color: var(--brand-secondary); }
+
 .btn-sm {
   padding: 0.4rem 0.85rem;
   font-size: 0.8rem;
