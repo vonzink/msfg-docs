@@ -8,6 +8,9 @@
   const setVal = MSFG.setVal;
   const todayLong = MSFG.formatDateLong;
 
+  // Shared multi-borrower list (wired in onReady).
+  let borrowers = null;
+
   /* ---- Repeating address rows ---- */
 
   function buildRow(values) {
@@ -80,7 +83,9 @@
     const preview = document.getElementById('letterPreview');
     if (!preview) return;
 
-    const name = val('borrowerName');
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const names = selected.map(function (b) { return b.name; });
+    const borrowerNames = MSFG.Borrowers.joinNames(names);
     const loanNum = val('loanNumber');
     const currentAddr = val('currentAddress');
     const letterDate = val('letterDate') || todayLong();
@@ -88,7 +93,7 @@
       return r.address || r.dates || r.reason || r.explanation;
     });
 
-    if (!name && !rows.length) {
+    if (!borrowerNames && !rows.length) {
       preview.innerHTML = '<p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>';
       return;
     }
@@ -96,7 +101,7 @@
     let html = '<div class="letter-content">';
     html += '<p class="letter-date">' + MSFG.escHtml(letterDate) + '</p>';
     html += '<p>To Whom It May Concern,</p>';
-    html += '<p>I, <strong>' + MSFG.escHtml(name || 'the borrower') + '</strong>';
+    html += '<p>I, <strong>' + MSFG.escHtml(borrowerNames || 'the borrower') + '</strong>';
     if (loanNum) html += ' (Loan #' + MSFG.escHtml(loanNum) + ')';
     html += ', am writing to provide an explanation regarding the address(es) shown on my records.</p>';
     if (currentAddr) html += '<p><strong>Current Address:</strong> ' + MSFG.escHtml(currentAddr) + '</p>';
@@ -116,7 +121,15 @@
     }
 
     html += '<p>I certify that the above information is true and correct to the best of my knowledge.</p>';
-    html += '<p>Sincerely,<br><strong>' + MSFG.escHtml(name) + '</strong></p>';
+    html += '<p>Sincerely,</p>';
+    // Blank signature lines (one per selected borrower); the name appears in the
+    // body, not pre-printed on the line — printed for wet signing.
+    const signers = names.length ? names : ['Borrower 1'];
+    html += '<table style="margin-top:var(--space-lg);">';
+    signers.slice(0, 8).forEach(function () {
+      html += '<tr><td>____________________________</td><td>Signature</td><td>Date</td><td>__________</td></tr>';
+    });
+    html += '</table>';
     html += '</div>';
 
     preview.innerHTML = html;
@@ -124,9 +137,11 @@
 
   /* ---- Download PDF ---- */
   function collectPdfPayload() {
+    const selected = borrowers ? borrowers.getSelected() : [];
     const ls = (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null;
     return {
-      borrowerName: val('borrowerName'),
+      borrowers: selected,
+      borrowerNames: MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; })),
       loanNumber: val('loanNumber'),
       currentAddress: val('currentAddress'),
       letterDate: val('letterDate') || todayLong(),
@@ -138,8 +153,10 @@
   /* ---- Email / report extractor ---- */
 
   function getEmailData() {
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const borrowerNames = MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; }));
     const headerRows = [];
-    if (val('borrowerName')) headerRows.push({ label: 'Borrower', value: val('borrowerName') });
+    if (borrowerNames) headerRows.push({ label: 'Borrower(s)', value: borrowerNames });
     if (val('loanNumber')) headerRows.push({ label: 'Loan Number', value: val('loanNumber') });
     if (val('currentAddress')) headerRows.push({ label: 'Current Address', value: val('currentAddress') });
     if (val('letterDate')) headerRows.push({ label: 'Letter Date', value: val('letterDate') });
@@ -160,12 +177,12 @@
   }
 
   /* ---- MISMO prepop ---- */
-  // mismo-embed.js's applyToAddressLox already populates name + current
-  // address on its own. We additionally seed the first repeating row
-  // with the prior residence so the LO has a starting point.
+  // Seeds the shared borrowers list from parsed.borrowers and fills the
+  // current address. We additionally seed the first repeating row with the
+  // prior residence so the LO has a starting point.
   function seedFromMismo(parsed) {
     if (!parsed) return;
-    if (parsed.borrowerName) setVal('borrowerName', parsed.borrowerName);
+    if (borrowers && Array.isArray(parsed.borrowers)) borrowers.seed(parsed.borrowers);
     if (parsed.loanNumber) setVal('loanNumber', parsed.loanNumber);
     if (parsed.currentResidenceAddress) setVal('currentAddress', parsed.currentResidenceAddress);
 
@@ -196,13 +213,14 @@
     downloadBtnId: 'btnAddressLoxDownloadPdf',
     resetBtnId: 'loxResetPreview',
     dateFieldId: 'letterDate',
-    previewFields: ['borrowerName', 'loanNumber', 'currentAddress', 'letterDate'],
+    previewFields: ['loanNumber', 'currentAddress', 'letterDate'],
     generate: generateLetter,
     collectPayload: collectPdfPayload,
     getEmailData: getEmailData,
     applyMismo: seedFromMismo,
     onReady: function (api) {
       regenerate = api.regenerate;
+      borrowers = MSFG.Borrowers.init({ containerId: 'borrowersList', addBtnId: 'addBorrower', onChange: api.regenerate });
       // Seed one empty row to invite the user; wire "add address".
       addRow({});
       if (addBtn) addBtn.addEventListener('click', function () { addRow({}); });
