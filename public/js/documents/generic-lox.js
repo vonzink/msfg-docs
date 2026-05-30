@@ -5,19 +5,21 @@
   const setVal = MSFG.setVal;
   const todayLong = MSFG.formatDateLong;
 
+  let borrowers = null;
+
   /* ---- In-page preview rendering (pure render; LetterDoc gates it) ---- */
   function generateLetter() {
     const preview = document.getElementById('letterPreview');
     if (!preview) return;
 
-    const borrowerNames = val('loxBorrowerNames');
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const borrowerNames = MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; }));
     const loanNumber = val('loxLoanNumber');
     const propertyAddress = val('loxPropertyAddress');
     const letterDate = val('loxLetterDate') || todayLong();
     const topic = val('loxTopic');
     const explanation = val('loxExplanation');
-    const signers = ['loxSigner1', 'loxSigner2', 'loxSigner3', 'loxSigner4', 'loxSigner5']
-      .map(function (id, i) { return val(id) || ('Borrower ' + (i + 1)); });
+    const signers = selected.length ? selected.map(function (b) { return b.name; }) : ['Borrower 1'];
 
     if (!borrowerNames && !explanation) {
       preview.innerHTML = '<p class="text-muted text-center">Fill in the fields above to generate your letter of explanation.</p>';
@@ -42,8 +44,10 @@
 
     html += '<p>I certify that the above information is true and correct to the best of my knowledge.</p>';
     html += '<table style="margin-top:var(--space-lg);">';
-    signers.slice(0, 5).forEach(function (name) {
-      html += '<tr><td>' + MSFG.escHtml(name) + '</td><td>____________________________</td><td>Date</td><td>__________</td></tr>';
+    // Blank signature lines (one per selected borrower); the name appears in the
+    // body, not pre-printed on the line — printed for wet signing.
+    signers.slice(0, 8).forEach(function () {
+      html += '<tr><td>____________________________</td><td>Signature</td><td>Date</td><td>__________</td></tr>';
     });
     html += '</table>';
     html += '</div>';
@@ -52,33 +56,24 @@
   }
 
   function collectPayload() {
-    const signers = ['loxSigner1', 'loxSigner2', 'loxSigner3', 'loxSigner4', 'loxSigner5']
-      .map((id) => ({ name: val(id) }))
-      .filter((s, idx, all) => {
-        // Drop trailing blanks so the PDF doesn't render empty signature lines
-        // past the last named signer; keep blanks if a later slot has a value
-        // (preserves the sequence the LO entered).
-        if (s.name) return true;
-        for (let j = idx + 1; j < all.length; j++) if (all[j].name) return true;
-        return false;
-      });
+    const selected = borrowers ? borrowers.getSelected() : [];
     const ls = (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null;
     return {
-      borrowerNames: val('loxBorrowerNames'),
+      borrowers: selected,
+      borrowerNames: MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; })),
       loanNumber: val('loxLoanNumber'),
       subjectPropertyAddress: val('loxPropertyAddress'),
       letterDate: val('loxLetterDate') || todayLong(),
       topic: val('loxTopic'),
       explanation: val('loxExplanation'),
-      signers,
+      signers: selected.map(function (b) { return { name: b.name }; }),
       letterSettings: ls
     };
   }
 
   function getEmailData() {
-    const sigList = ['loxSigner1', 'loxSigner2', 'loxSigner3', 'loxSigner4', 'loxSigner5']
-      .map((id, i) => val(id) || ('Borrower ' + (i + 1)))
-      .join(', ');
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const names = MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; }));
     return {
       title: '📝 Letter of Explanation',
       sections: [
@@ -86,7 +81,7 @@
           heading: 'Loan & borrower',
           rows: [
             { label: 'Loan number', value: val('loxLoanNumber') },
-            { label: 'Borrower(s)', value: val('loxBorrowerNames') },
+            { label: 'Borrower(s)', value: names },
             { label: 'Property', value: val('loxPropertyAddress') },
             { label: 'Letter date', value: val('loxLetterDate') }
           ]
@@ -100,7 +95,7 @@
         },
         {
           heading: 'Signers',
-          rows: [{ label: 'On signature lines', value: sigList }]
+          rows: [{ label: 'On signature lines', value: names }]
         }
       ]
     };
@@ -111,13 +106,7 @@
     if (!parsed) return;
     setVal('loxLoanNumber', parsed.loanNumber);
     setVal('loxPropertyAddress', parsed.propertyAddress);
-    // Borrower(s) — combine primary + co-borrower if both present
-    const borrowers = [parsed.borrowerName, parsed.coBorrowerName].filter(Boolean).join(', ');
-    if (borrowers) setVal('loxBorrowerNames', borrowers);
-    // Pre-fill signer slots with the borrower names so the PDF caption
-    // labels read with real names instead of "Borrower 1 / Borrower 2".
-    if (parsed.borrowerName) setVal('loxSigner1', parsed.borrowerName);
-    if (parsed.coBorrowerName) setVal('loxSigner2', parsed.coBorrowerName);
+    if (borrowers && Array.isArray(parsed.borrowers)) borrowers.seed(parsed.borrowers);
   }
 
   MSFG.LetterDoc.init({
@@ -128,12 +117,14 @@
     downloadBtnId: 'btnLoxDownloadPdf',
     resetBtnId: 'loxResetPreview',
     dateFieldId: 'loxLetterDate',
-    previewFields: ['loxBorrowerNames', 'loxLoanNumber', 'loxPropertyAddress',
-      'loxLetterDate', 'loxTopic', 'loxExplanation',
-      'loxSigner1', 'loxSigner2', 'loxSigner3', 'loxSigner4', 'loxSigner5'],
+    previewFields: ['loxLoanNumber', 'loxPropertyAddress',
+      'loxLetterDate', 'loxTopic', 'loxExplanation'],
     generate: generateLetter,
     collectPayload: collectPayload,
     getEmailData: getEmailData,
-    applyMismo: applyMismo
+    applyMismo: applyMismo,
+    onReady: function (api) {
+      borrowers = MSFG.Borrowers.init({ containerId: 'borrowersList', addBtnId: 'addBorrower', onChange: api.regenerate });
+    }
   });
 })();

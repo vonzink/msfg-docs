@@ -19,14 +19,11 @@
           <input type="text" id="loxLetterDate" placeholder="MM/DD/YYYY" inputmode="numeric">
         </div>
         <div class="form-group form-group--full">
-          <label for="loxBorrowerNames">Borrower(s) — comma separated</label>
-          <input type="text" id="loxBorrowerNames" placeholder="e.g. Kyle William Tawney, Alice Ann Tawney" autocomplete="off">
-        </div>
-        <div class="form-group form-group--full">
           <label for="loxPropertyAddress">Subject property address</label>
           <input type="text" id="loxPropertyAddress" placeholder="Street, City, ST ZIP" autocomplete="off">
         </div>
       </div>
+      <%- include('../partials/borrowers-list') %>
     </div>
 
     <!-- Section 2: Topic + explanation -->
@@ -44,27 +41,11 @@
       </div>
     </div>
 
-    <!-- Section 3: Signers (up to 5) -->
-    <div class="calc-section">
-      <h2><span class="section-number">3</span> Signers <span class="text-muted">(up to 5)</span></h2>
-      <p class="section-intro">
-        These names print as the captions under each signature line. Leave a row blank to print a generic
-        "Borrower N" caption.
-      </p>
-      <div class="form-grid u-grid-2col">
-        <div class="form-group"><label for="loxSigner1">Signer 1 name</label><input type="text" id="loxSigner1" placeholder="Borrower 1"></div>
-        <div class="form-group"><label for="loxSigner2">Signer 2 name</label><input type="text" id="loxSigner2" placeholder="Borrower 2"></div>
-        <div class="form-group"><label for="loxSigner3">Signer 3 name</label><input type="text" id="loxSigner3"></div>
-        <div class="form-group"><label for="loxSigner4">Signer 4 name</label><input type="text" id="loxSigner4"></div>
-        <div class="form-group"><label for="loxSigner5">Signer 5 name</label><input type="text" id="loxSigner5"></div>
-      </div>
-    </div>
-
-    <!-- Section 4: Letter Preview — editable. Same pattern as the
+    <!-- Section 3: Letter Preview — editable. Same pattern as the
          other borrower-letter docs. -->
     <div class="calc-section">
       <h2>
-        <span class="section-number">4</span> Letter Preview
+        <span class="section-number">3</span> Letter Preview
       </h2>
       <%- include('../partials/letter-style-picker') %>
       <div id="letterPreview" class="letter-preview">
