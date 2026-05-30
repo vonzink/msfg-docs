@@ -18,6 +18,9 @@
     const borrowerAddress = val('borrowerAddress');
     const loanType = val('loanType');
     const loanPurpose = val('loanPurpose');
+    const propertyType = val('propertyType');
+    const includePropertyType = isChecked('includePropertyType');
+    const occupancy = val('occupancy');
     const amount = val('approvalAmount');
     const rate = val('interestRate');
     const showRate = isChecked('includeInterestRate');
@@ -47,6 +50,8 @@
     html += '<table class="data-table" style="margin:1rem 0;">';
     if (loanType) html += '<tr><td><strong>Loan Type</strong></td><td>' + MSFG.escHtml(loanType) + '</td></tr>';
     if (loanPurpose) html += '<tr><td><strong>Purpose</strong></td><td>' + MSFG.escHtml(loanPurpose) + '</td></tr>';
+    if (propertyType && includePropertyType) html += '<tr><td><strong>Property Type</strong></td><td>' + MSFG.escHtml(propertyType) + '</td></tr>';
+    if (occupancy) html += '<tr><td><strong>Occupancy</strong></td><td>' + MSFG.escHtml(occupancy) + '</td></tr>';
     if (amount) html += '<tr><td><strong>Approved Amount</strong></td><td>' + MSFG.escHtml(amount) + '</td></tr>';
     if (rate && showRate) html += '<tr><td><strong>Interest Rate</strong></td><td>' + MSFG.escHtml(rate) + '</td></tr>';
     if (term) html += '<tr><td><strong>Loan Term</strong></td><td>' + MSFG.escHtml(term) + '</td></tr>';
@@ -132,6 +137,9 @@
       borrowerAddress: val('borrowerAddress'),
       loanType: val('loanType'),
       loanPurpose: val('loanPurpose'),
+      propertyType: val('propertyType'),
+      includePropertyType: isChecked('includePropertyType'),
+      occupancy: val('occupancy'),
       approvalAmount: val('approvalAmount'),
       interestRate: val('interestRate'),
       includeInterestRate: isChecked('includeInterestRate'),
@@ -166,6 +174,7 @@
     downloadBtnId: 'btnPreApprovalDownloadPdf',
     resetBtnId: 'paResetPreview',
     previewFields: ['borrowerName', 'borrowerAddress', 'loanType', 'loanPurpose',
+      'propertyType', 'includePropertyType', 'occupancy',
       'approvalAmount', 'interestRate', 'includeInterestRate',
       'loanTerm', 'downPayment',
       'expirationDate', 'loName', 'loNMLS', 'loPhone', 'loEmail', 'conditions'],
