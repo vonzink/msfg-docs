@@ -14,9 +14,8 @@
           <label for="giftLoanNumber">Loan number</label>
           <input type="text" id="giftLoanNumber" placeholder="From MISMO / LOS" autocomplete="off">
         </div>
-        <div class="form-group">
-          <label for="giftRecipientName">Recipient (borrower) name</label>
-          <input type="text" id="giftRecipientName" placeholder="Borrower full name" autocomplete="name">
+        <div class="form-group form-group--full">
+          <%- include('../partials/borrowers-list') %>
         </div>
         <div class="form-group form-group--full">
           <label for="giftPropertyAddress">Subject property address</label>

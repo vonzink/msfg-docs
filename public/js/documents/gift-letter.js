@@ -5,6 +5,10 @@
   const setVal = MSFG.setVal;
   const todayLong = MSFG.formatDateLong;
 
+  // Shared multi-borrower list — here the rows are the gift RECIPIENT(S)
+  // (the loan's borrowers). The donor fields stay separate. Wired in onReady.
+  let borrowers = null;
+
   /* ---- In-page preview rendering ----
      Renders the gift letter as HTML in the .letter-preview div. The
      visual style comes from the picker partial (CSS classes
@@ -23,7 +27,8 @@
     const sourceOfGift = val('giftSourceOfGift');
     const fundTransferDate = val('giftFundTransferDate');
     const relationship = val('giftRelationshipToDonor');
-    const recipient = val('giftRecipientName');
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const recipient = MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; }));
     const loanNumber = val('giftLoanNumber');
     const propertyAddress = val('giftPropertyAddress');
     const letterDate = val('giftLetterDate') || todayLong();
@@ -73,6 +78,7 @@
   }
 
   function collectPayload() {
+    const selected = borrowers ? borrowers.getSelected() : [];
     const ls = (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null;
     return {
       donorName: val('giftDonorName'),
@@ -83,7 +89,8 @@
       sourceOfGift: val('giftSourceOfGift'),
       fundTransferDate: val('giftFundTransferDate'),
       relationshipToDonor: val('giftRelationshipToDonor'),
-      recipientName: val('giftRecipientName'),
+      recipients: selected,
+      recipientNames: MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; })),
       loanNumber: val('giftLoanNumber'),
       subjectPropertyAddress: val('giftPropertyAddress'),
       letterDate: val('giftLetterDate') || todayLong(),
@@ -93,6 +100,8 @@
   }
 
   function getEmailData() {
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const recipientNames = MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; }));
     return {
       title: '🎁 Gift Letter',
       sections: [
@@ -100,7 +109,7 @@
           heading: 'Loan & recipient',
           rows: [
             { label: 'Loan number', value: val('giftLoanNumber') },
-            { label: 'Recipient', value: val('giftRecipientName') },
+            { label: 'Recipient', value: recipientNames },
             { label: 'Property', value: val('giftPropertyAddress') },
             { label: 'Letter date', value: val('giftLetterDate') }
           ]
@@ -131,7 +140,8 @@
   function applyMismo(parsed) {
     if (!parsed) return;
     setVal('giftLoanNumber', parsed.loanNumber);
-    setVal('giftRecipientName', parsed.borrowerName);
+    // The loan's borrowers ARE the gift recipients. Donor is unrelated and untouched.
+    if (borrowers && Array.isArray(parsed.borrowers)) borrowers.seed(parsed.borrowers);
     setVal('giftPropertyAddress', parsed.propertyAddress);
   }
 
@@ -145,10 +155,13 @@
     dateFieldId: 'giftLetterDate',
     previewFields: ['giftDonorName', 'giftDonorAddress', 'giftDonorPhone', 'giftDonorEmail',
       'giftAmount', 'giftSourceOfGift', 'giftFundTransferDate', 'giftRelationshipToDonor',
-      'giftRecipientName', 'giftLoanNumber', 'giftPropertyAddress', 'giftLetterDate', 'giftNotes'],
+      'giftLoanNumber', 'giftPropertyAddress', 'giftLetterDate', 'giftNotes'],
     generate: generateLetter,
     collectPayload: collectPayload,
     getEmailData: getEmailData,
-    applyMismo: applyMismo
+    applyMismo: applyMismo,
+    onReady: function (api) {
+      borrowers = MSFG.Borrowers.init({ containerId: 'borrowersList', addBtnId: 'addBorrower', rowLabel: 'Recipient', onChange: api.regenerate });
+    }
   });
 })();
