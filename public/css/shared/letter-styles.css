@@ -572,3 +572,14 @@
   .letter-settings,
   .letter-style-picker { display: none !important; }
 }
+
+/* Multi-borrower list */
+.borrowers-list { display: flex; flex-direction: column; gap: var(--space-sm); }
+.borrowers-list__row { display: flex; align-items: center; gap: var(--space-sm); }
+.borrowers-list__name { flex: 1 1 auto; }
+.borrowers-list__include { flex: 0 0 auto; width: 18px; height: 18px; accent-color: var(--brand-accent); }
+.borrowers-list__remove {
+  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
+  font-size: 1.25rem; line-height: 1; color: var(--color-gray-500); padding: 0 var(--space-xs);
+}
+.borrowers-list__remove:hover { color: #c2410c; }
