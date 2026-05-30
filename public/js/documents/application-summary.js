@@ -164,8 +164,8 @@
 
   function maskTin(value) {
     const digits = text(value).replace(/\D/g, '');
-    if (digits.length < 4) return '';
-    return '***-**-' + digits.slice(-4);
+    if (digits.length < 2) return '';
+    return '***-***-' + digits.slice(-2);
   }
 
   function yesNo(value) {
