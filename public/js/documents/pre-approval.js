@@ -47,7 +47,8 @@
     html += '<p>To Whom It May Concern,</p>';
     html += '<p>This letter confirms that <strong>' + MSFG.escHtml(names || 'the borrower') + '</strong>';
     if (borrowerAddress) html += ', residing at ' + MSFG.escHtml(borrowerAddress) + ',';
-    html += ' has been pre-approved for a mortgage loan with the following terms:</p>';
+    const approvedVerb = / and |, /.test(names) ? 'have' : 'has';
+    html += ' ' + approvedVerb + ' been pre-approved for a mortgage loan with the following terms:</p>';
 
     html += '<table class="data-table" style="margin:1rem 0;">';
     if (loanType) html += '<tr><td><strong>Loan Type</strong></td><td>' + MSFG.escHtml(loanType) + '</td></tr>';
