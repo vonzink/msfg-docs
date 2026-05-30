@@ -15,6 +15,9 @@
   const val = MSFG.val;
   const todayLong = MSFG.formatDateLong;
 
+  // Shared multi-borrower list (wired in onReady).
+  let borrowers = null;
+
   function parseDateLong(yyyyMmDd) {
     if (!yyyyMmDd) return '';
     try {
@@ -45,14 +48,15 @@
     const preview = document.getElementById('letterPreview');
     if (!preview) return;
 
-    const senderName = val('senderName');
-    const coBorrowerName = val('coBorrowerName');
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const names = selected.map(function (b) { return b.name; });
+    const borrowerNames = MSFG.Borrowers.joinNames(names);
     const subjectPropertyAddress = val('subjectPropertyAddress');
     const loanNumber = val('loanNumber');
     const letterDate = val('letterDate') || todayLong();
     const rows = getRows();
 
-    if (!senderName && !rows.length) {
+    if (!borrowerNames && !rows.length) {
       preview.innerHTML = '<p class="text-muted text-center">Fill in the fields above to generate your letter.</p>';
       return;
     }
@@ -60,9 +64,9 @@
     let html = '<div class="letter-content">';
     html += '<p class="letter-date">' + MSFG.escHtml(letterDate) + '</p>';
 
-    if (senderName) {
-      html += '<p><strong>' + MSFG.escHtml(senderName) + '</strong>';
-      if (coBorrowerName) html += '<br><strong>' + MSFG.escHtml(coBorrowerName) + '</strong>';
+    if (borrowerNames) {
+      html += '<p>';
+      html += names.map(function (n) { return '<strong>' + MSFG.escHtml(n) + '</strong>'; }).join('<br>');
       if (subjectPropertyAddress) html += '<br>' + MSFG.escHtml(subjectPropertyAddress);
       if (loanNumber) html += '<br>Loan #: ' + MSFG.escHtml(loanNumber);
       html += '</p>';
@@ -98,16 +102,19 @@
     }
 
     html += '<p>Thank you,</p>';
-    html += '<p><strong>' + MSFG.escHtml(senderName) + '</strong></p>';
+    if (borrowerNames) {
+      html += '<p>' + names.map(function (n) { return '<strong>' + MSFG.escHtml(n) + '</strong>'; }).join('<br>') + '</p>';
+    }
     html += '</div>';
 
     preview.innerHTML = html;
   }
 
   function getEmailData() {
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const borrowerNames = MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; }));
     const rows = [];
-    rows.push({ label: 'Borrower', value: val('senderName') });
-    if (val('coBorrowerName')) rows.push({ label: 'Co-Borrower', value: val('coBorrowerName') });
+    if (borrowerNames) rows.push({ label: 'Borrower(s)', value: borrowerNames });
     if (val('subjectPropertyAddress')) rows.push({ label: 'Subject Property', value: val('subjectPropertyAddress') });
     if (val('loanNumber')) rows.push({ label: 'Loan Number', value: val('loanNumber') });
 
@@ -200,9 +207,10 @@
   }
 
   function buildPdfPayload() {
+    const selected = borrowers ? borrowers.getSelected() : [];
     return {
-      senderName: val('senderName'),
-      coBorrowerName: val('coBorrowerName'),
+      borrowers: selected,
+      borrowerNames: MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; })),
       subjectPropertyAddress: val('subjectPropertyAddress'),
       loanNumber: val('loanNumber'),
       letterDate: val('letterDate') || todayLong(),
@@ -229,12 +237,16 @@
     downloadSelector: '[data-action="doc-export-pdf"]',
     resetBtnId: 'ciResetPreview',
     dateFieldId: 'letterDate',
-    previewFields: ['senderName', 'coBorrowerName', 'subjectPropertyAddress', 'loanNumber', 'ciNotes'],
+    previewFields: ['subjectPropertyAddress', 'loanNumber', 'ciNotes'],
     generate: generateLetter,
     collectPayload: buildPdfPayload,
     getEmailData: getEmailData,
+    applyMismo: function (parsed) {
+      if (borrowers && parsed && Array.isArray(parsed.borrowers)) borrowers.seed(parsed.borrowers);
+    },
     onReady: function (api) {
       regenerate = api.regenerate;
+      borrowers = MSFG.Borrowers.init({ containerId: 'borrowersList', addBtnId: 'addBorrower', onChange: api.regenerate });
       // Seed one inquiry row and wire the "add row" button.
       const tbody = document.getElementById('inquiryTbody');
       const addBtn = document.getElementById('addInquiryRow');
