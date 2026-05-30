@@ -47,7 +47,7 @@
   // letter (monochrome serif). On pages without the granular gear panel
   // this is what drives the live preview look.
   const STYLE_THEMES = {
-    A: { fontFamily: 'times',     fontSize: 11, accent: '#1d4d3e', tableStyle: 'dotted', titleAlign: 'center', margin: 'normal', headerBand: false, footerBand: false, leftRail: false, justify: true },
+    A: { fontFamily: 'times',     fontSize: 11, accent: '#1d4d3e', tableStyle: 'dotted', titleAlign: 'center', margin: 'normal', headerBand: false, footerBand: false, leftRail: false, justify: false },
     B: { fontFamily: 'helvetica', fontSize: 10, accent: '#0f8a8e', tableStyle: 'thin',   titleAlign: 'left',   margin: 'narrow', headerBand: false, footerBand: false, leftRail: true,  justify: false },
     C: { fontFamily: 'times',     fontSize: 11, accent: '#1d1d1f', tableStyle: 'thin',   titleAlign: 'left',   margin: 'wide',   headerBand: false, footerBand: false, leftRail: false, justify: false },
   };
