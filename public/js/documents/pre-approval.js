@@ -4,6 +4,8 @@
   const val = MSFG.val;
   const setVal = MSFG.setVal;
 
+  let borrowers = null;
+
   function isChecked(id) {
     const el = document.getElementById(id);
     return !!(el && el.checked);
@@ -14,7 +16,7 @@
     const preview = document.getElementById('letterPreview');
     if (!preview) return;
 
-    const borrowerName = val('borrowerName');
+    const names = MSFG.Borrowers.joinNames((borrowers ? borrowers.getSelected() : []).map(function (b) { return b.name; }));
     const borrowerAddress = val('borrowerAddress');
     const loanType = val('loanType');
     const loanPurpose = val('loanPurpose');
@@ -33,7 +35,7 @@
     const loEmail = val('loEmail');
     const conditions = val('conditions');
 
-    if (!borrowerName && !amount) {
+    if (!names && !amount) {
       preview.innerHTML = '<p class="text-muted text-center">Fill in the fields above to generate your pre-approval letter.</p>';
       return;
     }
@@ -43,7 +45,7 @@
     let html = '<div class="letter-content">';
     html += '<p class="letter-date">' + today + '</p>';
     html += '<p>To Whom It May Concern,</p>';
-    html += '<p>This letter confirms that <strong>' + MSFG.escHtml(borrowerName || 'the borrower') + '</strong>';
+    html += '<p>This letter confirms that <strong>' + MSFG.escHtml(names || 'the borrower') + '</strong>';
     if (borrowerAddress) html += ', residing at ' + MSFG.escHtml(borrowerAddress) + ',';
     html += ' has been pre-approved for a mortgage loan with the following terms:</p>';
 
@@ -84,7 +86,8 @@
 
   function getEmailData() {
     const rows = [];
-    if (val('borrowerName')) rows.push({ label: 'Borrower', value: val('borrowerName') });
+    const names = MSFG.Borrowers.joinNames((borrowers ? borrowers.getSelected() : []).map(function (b) { return b.name; }));
+    if (names) rows.push({ label: 'Borrower', value: names });
     if (val('loanType')) rows.push({ label: 'Loan Type', value: val('loanType') });
     if (val('loanPurpose')) rows.push({ label: 'Purpose', value: val('loanPurpose') });
     if (val('approvalAmount')) rows.push({ label: 'Approved Amount', value: val('approvalAmount'), bold: true });
@@ -114,6 +117,7 @@
    *  applyToPreApproval; here we only handle the new LO fields. */
   function applyMismo(parsed) {
     if (!parsed) return;
+    if (borrowers && Array.isArray(parsed.borrowers)) borrowers.seed(parsed.borrowers);
     if (parsed.loanOriginatorName) setVal('loName', parsed.loanOriginatorName);
     if (parsed.loanOriginatorNmls) setVal('loNMLS', parsed.loanOriginatorNmls);
     if (parsed.loanOriginatorPhone) setVal('loPhone', parsed.loanOriginatorPhone);
@@ -133,7 +137,7 @@
   function collectPdfPayload() {
     const ls = (window.MSFG && window.MSFG.LetterSettings) ? window.MSFG.LetterSettings.read() : null;
     return {
-      borrowerName: val('borrowerName'),
+      borrowerNames: MSFG.Borrowers.joinNames((borrowers ? borrowers.getSelected() : []).map(function (b) { return b.name; })),
       borrowerAddress: val('borrowerAddress'),
       loanType: val('loanType'),
       loanPurpose: val('loanPurpose'),
@@ -173,7 +177,7 @@
     filename: 'Pre-Approval-Letter.pdf',
     downloadBtnId: 'btnPreApprovalDownloadPdf',
     resetBtnId: 'paResetPreview',
-    previewFields: ['borrowerName', 'borrowerAddress', 'loanType', 'loanPurpose',
+    previewFields: ['borrowerAddress', 'loanType', 'loanPurpose',
       'propertyType', 'includePropertyType', 'occupancy',
       'approvalAmount', 'interestRate', 'includeInterestRate',
       'loanTerm', 'downPayment',
@@ -181,6 +185,9 @@
     generate: generateLetter,
     collectPayload: collectPdfPayload,
     getEmailData: getEmailData,
-    applyMismo: applyMismo
+    applyMismo: applyMismo,
+    onReady: function (api) {
+      borrowers = MSFG.Borrowers.init({ containerId: 'borrowersList', addBtnId: 'addBorrower', onChange: api.regenerate });
+    }
   });
 })();
