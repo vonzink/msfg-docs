@@ -7,6 +7,29 @@
 
   let assetRowsCtl = null, liabilityRowsCtl = null, equityRowsCtl = null;
 
+  const FIELD_IDS = ['businessName','ownerName','asOfDate','cash','accountsReceivable','inventory','prepaidExpenses','propertyEquipment','otherAssets','accountsPayable','shortTermDebt','longTermDebt','otherLiabilities','ownerCapital','retainedEarnings'];
+  let businessCtl = null;
+
+  function cleanName() { return (val('businessName') || '').trim() || 'Business 1'; }
+
+  function serialize() {
+    const fields = {};
+    FIELD_IDS.forEach(function (id) { fields[id] = val(id); });
+    return { fields: fields, custom: {
+      asset: assetRowsCtl ? assetRowsCtl.getRows() : [],
+      liability: liabilityRowsCtl ? liabilityRowsCtl.getRows() : [],
+      equity: equityRowsCtl ? equityRowsCtl.getRows() : []
+    } };
+  }
+  function deserialize(snap) {
+    snap = snap || { fields: {}, custom: {} };
+    FIELD_IDS.forEach(function (id) { setVal(id, (snap.fields && snap.fields[id]) || ''); });
+    if (assetRowsCtl) assetRowsCtl.setRows((snap.custom && snap.custom.asset) || []);
+    if (liabilityRowsCtl) liabilityRowsCtl.setRows((snap.custom && snap.custom.liability) || []);
+    if (equityRowsCtl) equityRowsCtl.setRows((snap.custom && snap.custom.equity) || []);
+    calculate();
+  }
+
   function calculate() {
     const cash = p('cash');
     const ar = p('accountsReceivable');
@@ -57,60 +80,87 @@
     }
   }
 
-  function getEmailData() {
-    const assetCustomRows = assetRowsCtl ? assetRowsCtl.getRows() : [];
-    const liabilityCustomRows = liabilityRowsCtl ? liabilityRowsCtl.getRows() : [];
-    const equityCustomRows = equityRowsCtl ? equityRowsCtl.getRows() : [];
+  // Build the Assets/Liabilities/Owner's-Equity section group from a SNAPSHOT
+  // (not the live form), so getEmailData can emit one group per business. Same
+  // math as calculate(): standard fields + custom-row totals.
+  function sectionsFor(snap, bizName) {
+    snap = snap || { fields: {}, custom: {} };
+    const f = snap.fields || {};
+    const c = snap.custom || {};
+    const assetCustomRows = c.asset || [];
+    const liabilityCustomRows = c.liability || [];
+    const equityCustomRows = c.equity || [];
+
+    const cash = MSFG.parseNum(f.cash);
+    const ar = MSFG.parseNum(f.accountsReceivable);
+    const inventory = MSFG.parseNum(f.inventory);
+    const prepaid = MSFG.parseNum(f.prepaidExpenses);
+    const property = MSFG.parseNum(f.propertyEquipment);
+    const otherA = MSFG.parseNum(f.otherAssets);
+    const totalAssets = cash + ar + inventory + prepaid + property + otherA +
+      assetCustomRows.reduce(function (a, r) { return a + r.amount; }, 0);
+
+    const ap = MSFG.parseNum(f.accountsPayable);
+    const shortDebt = MSFG.parseNum(f.shortTermDebt);
+    const longDebt = MSFG.parseNum(f.longTermDebt);
+    const otherL = MSFG.parseNum(f.otherLiabilities);
+    const totalLiabilities = ap + shortDebt + longDebt + otherL +
+      liabilityCustomRows.reduce(function (a, r) { return a + r.amount; }, 0);
+
+    const ownerCap = MSFG.parseNum(f.ownerCapital);
+    const retained = MSFG.parseNum(f.retainedEarnings);
+    const totalEquity = ownerCap + retained +
+      equityCustomRows.reduce(function (a, r) { return a + r.amount; }, 0);
+
+    const name = (f.businessName || '').trim() || bizName;
 
     const assetRows = [
-      { label: 'Cash & Equivalents', value: MSFG.formatCurrency(p('cash')) },
-      { label: 'Accounts Receivable', value: MSFG.formatCurrency(p('accountsReceivable')) },
-      { label: 'Inventory', value: MSFG.formatCurrency(p('inventory')) },
-      { label: 'Prepaid Expenses', value: MSFG.formatCurrency(p('prepaidExpenses')) },
-      { label: 'Property & Equipment', value: MSFG.formatCurrency(p('propertyEquipment')) },
-      { label: 'Other Assets', value: MSFG.formatCurrency(p('otherAssets')) }
+      { label: 'Cash & Equivalents', value: MSFG.formatCurrency(cash) },
+      { label: 'Accounts Receivable', value: MSFG.formatCurrency(ar) },
+      { label: 'Inventory', value: MSFG.formatCurrency(inventory) },
+      { label: 'Prepaid Expenses', value: MSFG.formatCurrency(prepaid) },
+      { label: 'Property & Equipment', value: MSFG.formatCurrency(property) },
+      { label: 'Other Assets', value: MSFG.formatCurrency(otherA) }
     ];
     assetCustomRows.forEach(function (r) {
       assetRows.push({ label: r.label || 'Other asset', value: MSFG.formatCurrency(r.amount) });
     });
-    assetRows.push({ label: 'Total Assets', value: val('totalAssets'), isTotal: true });
+    assetRows.push({ label: 'Total Assets', value: MSFG.formatCurrency(totalAssets), isTotal: true });
 
     const liabRows = [
-      { label: 'Accounts Payable', value: MSFG.formatCurrency(p('accountsPayable')) },
-      { label: 'Short-Term Debt', value: MSFG.formatCurrency(p('shortTermDebt')) },
-      { label: 'Long-Term Debt', value: MSFG.formatCurrency(p('longTermDebt')) },
-      { label: 'Other Liabilities', value: MSFG.formatCurrency(p('otherLiabilities')) }
+      { label: 'Accounts Payable', value: MSFG.formatCurrency(ap) },
+      { label: 'Short-Term Debt', value: MSFG.formatCurrency(shortDebt) },
+      { label: 'Long-Term Debt', value: MSFG.formatCurrency(longDebt) },
+      { label: 'Other Liabilities', value: MSFG.formatCurrency(otherL) }
     ];
     liabilityCustomRows.forEach(function (r) {
       liabRows.push({ label: r.label || 'Other liability', value: MSFG.formatCurrency(r.amount) });
     });
-    liabRows.push({ label: 'Total Liabilities', value: val('totalLiabilities'), isTotal: true });
+    liabRows.push({ label: 'Total Liabilities', value: MSFG.formatCurrency(totalLiabilities), isTotal: true });
 
     const eqRows = [
-      { label: "Owner's Capital", value: MSFG.formatCurrency(p('ownerCapital')) },
-      { label: 'Retained Earnings', value: MSFG.formatCurrency(p('retainedEarnings')) }
+      { label: "Owner's Capital", value: MSFG.formatCurrency(ownerCap) },
+      { label: 'Retained Earnings', value: MSFG.formatCurrency(retained) }
     ];
     equityCustomRows.forEach(function (r) {
       eqRows.push({ label: r.label || 'Other equity', value: MSFG.formatCurrency(r.amount) });
     });
-    eqRows.push({ label: 'Total Equity', value: val('totalEquity'), isTotal: true });
+    eqRows.push({ label: 'Total Equity', value: MSFG.formatCurrency(totalEquity), isTotal: true });
 
-    const sections = [
-      { heading: 'Assets', rows: assetRows },
-      { heading: 'Liabilities', rows: liabRows },
-      { heading: "Owner's Equity", rows: eqRows }
+    return [
+      { heading: name + ' — Assets', rows: assetRows },
+      { heading: name + ' — Liabilities', rows: liabRows },
+      { heading: name + " — Owner's Equity", rows: eqRows }
     ];
+  }
 
-    const businessName = val('businessName');
-    if (businessName) {
-      sections.unshift({ heading: 'Business Info', rows: [
-        { label: 'Business', value: businessName },
-        { label: 'Owner', value: val('ownerName') },
-        { label: 'As Of', value: val('asOfDate') }
-      ]});
-    }
-
-    return { title: 'Balance Sheet' + (businessName ? ' — ' + businessName : ''), sections: sections };
+  function getEmailData() {
+    const all = businessCtl ? businessCtl.getAll() : [{ name: cleanName(), snapshot: serialize() }];
+    const sections = [];
+    all.forEach(function (biz) {
+      sectionsFor(biz.snapshot, biz.name).forEach(function (s) { sections.push(s); });
+    });
+    return { title: 'Balance Sheet', sections: sections };
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -123,6 +173,10 @@
       assetRowsCtl = MSFG.CustomRows.init({ tbodyId: 'assetCustomRows', addBtnId: 'addAssetRow', labelPlaceholder: 'Asset line', onChange: calculate });
       liabilityRowsCtl = MSFG.CustomRows.init({ tbodyId: 'liabilityCustomRows', addBtnId: 'addLiabilityRow', labelPlaceholder: 'Liability line', onChange: calculate });
       equityRowsCtl = MSFG.CustomRows.init({ tbodyId: 'equityCustomRows', addBtnId: 'addEquityRow', labelPlaceholder: 'Equity line', onChange: calculate });
+    }
+
+    if (MSFG.MultiBusiness) {
+      businessCtl = MSFG.MultiBusiness.init({ selectId: 'businessSelect', addBtnId: 'addBusiness', renameBtnId: 'renameBusiness', removeBtnId: 'removeBusiness', serialize: serialize, deserialize: deserialize });
     }
 
     calculate();
