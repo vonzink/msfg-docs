@@ -8,6 +8,27 @@
   let revenueRowsCtl = null;
   let expenseRowsCtl = null;
 
+  const FIELD_IDS = ['businessName','ownerName','periodStart','periodEnd','grossSales','otherIncome','returnsAllowances','costOfGoods','wages','rent','utilities','insurance','depreciation','interestExpense','otherExpenses'];
+  let businessCtl = null;
+
+  function cleanName() { return (val('businessName') || '').trim() || 'Business 1'; }
+
+  function serialize() {
+    const fields = {};
+    FIELD_IDS.forEach(function (id) { fields[id] = val(id); });
+    return { fields: fields, custom: {
+      revenue: revenueRowsCtl ? revenueRowsCtl.getRows() : [],
+      expense: expenseRowsCtl ? expenseRowsCtl.getRows() : []
+    } };
+  }
+  function deserialize(snap) {
+    snap = snap || { fields: {}, custom: {} };
+    FIELD_IDS.forEach(function (id) { setVal(id, (snap.fields && snap.fields[id]) || ''); });
+    if (revenueRowsCtl) revenueRowsCtl.setRows((snap.custom && snap.custom.revenue) || []);
+    if (expenseRowsCtl) expenseRowsCtl.setRows((snap.custom && snap.custom.expense) || []);
+    calculate();
+  }
+
   function calculate() {
     const revenueCustom = revenueRowsCtl ? revenueRowsCtl.total() : 0;
     const expenseCustom = expenseRowsCtl ? expenseRowsCtl.total() : 0;
@@ -44,61 +65,78 @@
     }
   }
 
-  function getEmailData() {
-    const revenueCustomRows = revenueRowsCtl ? revenueRowsCtl.getRows() : [];
-    const expenseCustomRows = expenseRowsCtl ? expenseRowsCtl.getRows() : [];
+  // Build the Revenue/Expenses/Summary section group from a SNAPSHOT (not the
+  // live form), so getEmailData can emit one group per business. Same math as
+  // calculate(): standard fields + custom-row totals.
+  function sectionsFor(snap, bizName) {
+    snap = snap || { fields: {}, custom: {} };
+    const f = snap.fields || {};
+    const c = snap.custom || {};
+    const revenueCustomRows = c.revenue || [];
+    const expenseCustomRows = c.expense || [];
     const revenueCustom = revenueCustomRows.reduce(function (a, r) { return a + r.amount; }, 0);
     const expenseCustom = expenseCustomRows.reduce(function (a, r) { return a + r.amount; }, 0);
 
+    const grossSales = MSFG.parseNum(f.grossSales);
+    const otherIncome = MSFG.parseNum(f.otherIncome);
+    const returns = MSFG.parseNum(f.returnsAllowances);
+    const totalRevenue = grossSales + otherIncome - returns + revenueCustom;
+
+    const costOfGoods = MSFG.parseNum(f.costOfGoods);
+    const wages = MSFG.parseNum(f.wages);
+    const rent = MSFG.parseNum(f.rent);
+    const utilities = MSFG.parseNum(f.utilities);
+    const insurance = MSFG.parseNum(f.insurance);
+    const depreciation = MSFG.parseNum(f.depreciation);
+    const interest = MSFG.parseNum(f.interestExpense);
+    const other = MSFG.parseNum(f.otherExpenses);
+    const totalExpenses = costOfGoods + wages + rent + utilities + insurance + depreciation + interest + other + expenseCustom;
+
+    const netIncome = totalRevenue - totalExpenses;
+
+    const name = (f.businessName || '').trim() || bizName;
+
     const revenueRows = [
-      { label: 'Gross Sales / Revenue', value: MSFG.formatCurrency(p('grossSales')) },
-      { label: 'Other Income', value: MSFG.formatCurrency(p('otherIncome')) },
-      { label: 'Returns & Allowances', value: MSFG.formatCurrency(p('returnsAllowances')) }
+      { label: 'Gross Sales / Revenue', value: MSFG.formatCurrency(grossSales) },
+      { label: 'Other Income', value: MSFG.formatCurrency(otherIncome) },
+      { label: 'Returns & Allowances', value: MSFG.formatCurrency(returns) }
     ];
     revenueCustomRows.forEach(function (r) {
       revenueRows.push({ label: r.label || 'Other revenue', value: MSFG.formatCurrency(r.amount) });
     });
-    revenueRows.push({ label: 'Total Revenue', value: val('totalRevenue'), isTotal: true });
+    revenueRows.push({ label: 'Total Revenue', value: MSFG.formatCurrency(totalRevenue), isTotal: true });
 
     const expenseRows = [
-      { label: 'Cost of Goods Sold', value: MSFG.formatCurrency(p('costOfGoods')) },
-      { label: 'Wages & Salaries', value: MSFG.formatCurrency(p('wages')) },
-      { label: 'Rent / Lease', value: MSFG.formatCurrency(p('rent')) },
-      { label: 'Utilities', value: MSFG.formatCurrency(p('utilities')) },
-      { label: 'Insurance', value: MSFG.formatCurrency(p('insurance')) },
-      { label: 'Depreciation', value: MSFG.formatCurrency(p('depreciation')) },
-      { label: 'Interest Expense', value: MSFG.formatCurrency(p('interestExpense')) },
-      { label: 'Other Expenses', value: MSFG.formatCurrency(p('otherExpenses')) }
+      { label: 'Cost of Goods Sold', value: MSFG.formatCurrency(costOfGoods) },
+      { label: 'Wages & Salaries', value: MSFG.formatCurrency(wages) },
+      { label: 'Rent / Lease', value: MSFG.formatCurrency(rent) },
+      { label: 'Utilities', value: MSFG.formatCurrency(utilities) },
+      { label: 'Insurance', value: MSFG.formatCurrency(insurance) },
+      { label: 'Depreciation', value: MSFG.formatCurrency(depreciation) },
+      { label: 'Interest Expense', value: MSFG.formatCurrency(interest) },
+      { label: 'Other Expenses', value: MSFG.formatCurrency(other) }
     ];
     expenseCustomRows.forEach(function (r) {
       expenseRows.push({ label: r.label || 'Other expense', value: MSFG.formatCurrency(r.amount) });
     });
-    expenseRows.push({ label: 'Total Expenses', value: val('totalExpenses'), isTotal: true });
+    expenseRows.push({ label: 'Total Expenses', value: MSFG.formatCurrency(totalExpenses), isTotal: true });
 
-    const netIncome = p('grossSales') + p('otherIncome') - p('returnsAllowances') + revenueCustom -
-      (p('costOfGoods') + p('wages') + p('rent') + p('utilities') + p('insurance') +
-       p('depreciation') + p('interestExpense') + p('otherExpenses') + expenseCustom);
-
-    const summaryRows = [
-      { label: 'Net Income', value: MSFG.formatCurrency(netIncome), bold: true, isTotal: true }
+    return [
+      { heading: name + ' — Revenue', rows: revenueRows },
+      { heading: name + ' — Expenses', rows: expenseRows },
+      { heading: name + ' — Summary', rows: [
+        { label: 'Net Income', value: MSFG.formatCurrency(netIncome), bold: true, isTotal: true }
+      ] }
     ];
+  }
 
-    const sections = [
-      { heading: 'Revenue', rows: revenueRows },
-      { heading: 'Expenses', rows: expenseRows },
-      { heading: 'Summary', rows: summaryRows }
-    ];
-
-    const businessName = val('businessName');
-    if (businessName) {
-      sections.unshift({ heading: 'Business Info', rows: [
-        { label: 'Business', value: businessName },
-        { label: 'Owner', value: val('ownerName') },
-        { label: 'Period', value: val('periodStart') + ' to ' + val('periodEnd') }
-      ]});
-    }
-
-    return { title: 'Income Statement' + (businessName ? ' — ' + businessName : ''), sections: sections };
+  function getEmailData() {
+    const all = businessCtl ? businessCtl.getAll() : [{ name: cleanName(), snapshot: serialize() }];
+    const sections = [];
+    all.forEach(function (biz) {
+      sectionsFor(biz.snapshot, biz.name).forEach(function (s) { sections.push(s); });
+    });
+    return { title: 'Income Statement', sections: sections };
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -110,6 +148,10 @@
     if (MSFG.CustomRows) {
       revenueRowsCtl = MSFG.CustomRows.init({ tbodyId: 'revenueCustomRows', addBtnId: 'addRevenueRow', labelPlaceholder: 'Revenue line', onChange: calculate });
       expenseRowsCtl = MSFG.CustomRows.init({ tbodyId: 'expenseCustomRows', addBtnId: 'addExpenseRow', labelPlaceholder: 'Expense line', onChange: calculate });
+    }
+
+    if (MSFG.MultiBusiness) {
+      businessCtl = MSFG.MultiBusiness.init({ selectId: 'businessSelect', addBtnId: 'addBusiness', renameBtnId: 'renameBusiness', removeBtnId: 'removeBusiness', serialize: serialize, deserialize: deserialize });
     }
 
     calculate();
