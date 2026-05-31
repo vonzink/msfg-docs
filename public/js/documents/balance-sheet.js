@@ -5,6 +5,8 @@
   const val = MSFG.val;
   function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
 
+  let assetRowsCtl = null, liabilityRowsCtl = null, equityRowsCtl = null;
+
   function calculate() {
     const cash = p('cash');
     const ar = p('accountsReceivable');
@@ -12,17 +14,17 @@
     const prepaid = p('prepaidExpenses');
     const property = p('propertyEquipment');
     const otherA = p('otherAssets');
-    const totalAssets = cash + ar + inventory + prepaid + property + otherA;
+    const totalAssets = cash + ar + inventory + prepaid + property + otherA + (assetRowsCtl ? assetRowsCtl.total() : 0);
 
     const ap = p('accountsPayable');
     const shortDebt = p('shortTermDebt');
     const longDebt = p('longTermDebt');
     const otherL = p('otherLiabilities');
-    const totalLiabilities = ap + shortDebt + longDebt + otherL;
+    const totalLiabilities = ap + shortDebt + longDebt + otherL + (liabilityRowsCtl ? liabilityRowsCtl.total() : 0);
 
     const ownerCap = p('ownerCapital');
     const retained = p('retainedEarnings');
-    const totalEquity = ownerCap + retained;
+    const totalEquity = ownerCap + retained + (equityRowsCtl ? equityRowsCtl.total() : 0);
 
     setVal('totalAssets', MSFG.formatCurrency(totalAssets));
     setVal('totalLiabilities', MSFG.formatCurrency(totalLiabilities));
@@ -56,29 +58,42 @@
   }
 
   function getEmailData() {
+    const assetCustomRows = assetRowsCtl ? assetRowsCtl.getRows() : [];
+    const liabilityCustomRows = liabilityRowsCtl ? liabilityRowsCtl.getRows() : [];
+    const equityCustomRows = equityRowsCtl ? equityRowsCtl.getRows() : [];
+
     const assetRows = [
       { label: 'Cash & Equivalents', value: MSFG.formatCurrency(p('cash')) },
       { label: 'Accounts Receivable', value: MSFG.formatCurrency(p('accountsReceivable')) },
       { label: 'Inventory', value: MSFG.formatCurrency(p('inventory')) },
       { label: 'Prepaid Expenses', value: MSFG.formatCurrency(p('prepaidExpenses')) },
       { label: 'Property & Equipment', value: MSFG.formatCurrency(p('propertyEquipment')) },
-      { label: 'Other Assets', value: MSFG.formatCurrency(p('otherAssets')) },
-      { label: 'Total Assets', value: val('totalAssets'), isTotal: true }
+      { label: 'Other Assets', value: MSFG.formatCurrency(p('otherAssets')) }
     ];
+    assetCustomRows.forEach(function (r) {
+      assetRows.push({ label: r.label || 'Other asset', value: MSFG.formatCurrency(r.amount) });
+    });
+    assetRows.push({ label: 'Total Assets', value: val('totalAssets'), isTotal: true });
 
     const liabRows = [
       { label: 'Accounts Payable', value: MSFG.formatCurrency(p('accountsPayable')) },
       { label: 'Short-Term Debt', value: MSFG.formatCurrency(p('shortTermDebt')) },
       { label: 'Long-Term Debt', value: MSFG.formatCurrency(p('longTermDebt')) },
-      { label: 'Other Liabilities', value: MSFG.formatCurrency(p('otherLiabilities')) },
-      { label: 'Total Liabilities', value: val('totalLiabilities'), isTotal: true }
+      { label: 'Other Liabilities', value: MSFG.formatCurrency(p('otherLiabilities')) }
     ];
+    liabilityCustomRows.forEach(function (r) {
+      liabRows.push({ label: r.label || 'Other liability', value: MSFG.formatCurrency(r.amount) });
+    });
+    liabRows.push({ label: 'Total Liabilities', value: val('totalLiabilities'), isTotal: true });
 
     const eqRows = [
       { label: "Owner's Capital", value: MSFG.formatCurrency(p('ownerCapital')) },
-      { label: 'Retained Earnings', value: MSFG.formatCurrency(p('retainedEarnings')) },
-      { label: 'Total Equity', value: val('totalEquity'), isTotal: true }
+      { label: 'Retained Earnings', value: MSFG.formatCurrency(p('retainedEarnings')) }
     ];
+    equityCustomRows.forEach(function (r) {
+      eqRows.push({ label: r.label || 'Other equity', value: MSFG.formatCurrency(r.amount) });
+    });
+    eqRows.push({ label: 'Total Equity', value: val('totalEquity'), isTotal: true });
 
     const sections = [
       { heading: 'Assets', rows: assetRows },
@@ -103,6 +118,12 @@
     inputs.forEach(function(el) {
       el.addEventListener('input', calculate);
     });
+
+    if (MSFG.CustomRows) {
+      assetRowsCtl = MSFG.CustomRows.init({ tbodyId: 'assetCustomRows', addBtnId: 'addAssetRow', labelPlaceholder: 'Asset line', onChange: calculate });
+      liabilityRowsCtl = MSFG.CustomRows.init({ tbodyId: 'liabilityCustomRows', addBtnId: 'addLiabilityRow', labelPlaceholder: 'Liability line', onChange: calculate });
+      equityRowsCtl = MSFG.CustomRows.init({ tbodyId: 'equityCustomRows', addBtnId: 'addEquityRow', labelPlaceholder: 'Equity line', onChange: calculate });
+    }
 
     calculate();
 
