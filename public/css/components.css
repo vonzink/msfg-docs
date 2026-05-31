@@ -846,3 +846,16 @@ body.embed-mode {
 
 /* Print styles → print.css */
 /* Email modal styles → email-modal.css */
+
+/* Custom line-item rows (financial statements) + business switcher */
+.custom-rows { width: 100%; border-collapse: collapse; margin-top: var(--space-sm); }
+.custom-rows td { padding: 4px 6px 4px 0; vertical-align: middle; }
+.custom-rows__label { width: 100%; }
+.custom-rows__amount { width: 120px; text-align: right; }
+.custom-rows__remove {
+  border: 0; background: transparent; color: var(--color-gray-500);
+  font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 0 6px;
+}
+.custom-rows__remove:hover { color: #b91c1c; }
+.business-switcher { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-md); }
+.business-switcher select { min-width: 220px; }
