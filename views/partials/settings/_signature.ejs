@@ -24,4 +24,18 @@
           </div>
         </div>
       </form>
+
+      <form action="<%= basePath %>/settings/update" method="POST" class="u-mt-md">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+        <div class="form-grid u-grid-1-auto">
+          <div class="form-group">
+            <label for="signatureWidth">Signature Max Width (px)</label>
+            <input type="number" id="signatureWidth" name="signatureWidth" value="<%= (config.signatureWidth || 160) %>" min="40" max="400">
+          </div>
+          <div class="form-group u-justify-end">
+            <button type="submit" class="btn btn-primary">Save Size</button>
+          </div>
+        </div>
+        <p class="settings-help">Controls how large your signature is stamped on the document (default&nbsp;160).</p>
+      </form>
     </div>

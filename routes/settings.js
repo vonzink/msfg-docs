@@ -224,6 +224,10 @@ router.post('/update', (req, res) => {
     if (!config.logo) config.logo = {};
     config.logo.width = (width > 0 && width <= 500) ? width : 250;
   }
+  if (req.body.signatureWidth) {
+    const sw = parseInt(req.body.signatureWidth, 10);
+    config.signatureWidth = (sw >= 40 && sw <= 400) ? sw : 160;
+  }
 
   writeConfig(config);
   res.redirect(settingsUrl(res, '?saved=1'));
