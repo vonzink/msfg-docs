@@ -291,4 +291,20 @@
 
   /* Hide email modal in print */
   .email-modal-overlay { display: none !important; }
+
+  /* ---- Letter docs: print ONLY the branded letter sheet, not the input form.
+     The Print button prints the page; these rules drop the header, every input
+     section, the style picker, and the hint, leaving just the rendered letter.
+     (The sheet's own page sizing lives in letter-sheet.css @media print.) ---- */
+  .doc-page__header { display: none !important; }
+  .doc-page__body > .calc-section:not(:has(.letter-sheet)) { display: none !important; }
+  .doc-page__body > .calc-section:has(.letter-sheet) {
+    display: block !important; margin: 0 !important; padding: 0 !important;
+    border: none !important; background: none !important;
+    page-break-inside: auto; break-inside: auto;
+  }
+  .doc-page__body > .calc-section:has(.letter-sheet) > h2,
+  .doc-page .letter-style-picker,
+  .doc-page .letter-preview-hint { display: none !important; }
+  .doc-page .letter-sheet { box-shadow: none !important; border-radius: 0 !important; }
 }
