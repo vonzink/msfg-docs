@@ -143,10 +143,12 @@
     html += '<p>Sincerely,</p>';
     // Blank signature lines (one per selected borrower); the name appears in the
     // body, not pre-printed on the line — printed for wet signing.
-    const signers = names.length ? names : ['Borrower 1'];
+    const signers = names.length ? names : [''];
     html += '<table style="margin-top:var(--space-lg);">';
-    signers.slice(0, 8).forEach(function () {
-      html += '<tr><td>____________________________</td><td>Signature</td><td>Date</td><td>__________</td></tr>';
+    signers.slice(0, 8).forEach(function (nm) {
+      html += '<tr><td style="padding-right:1.5rem;">____________________________</td>'
+        + '<td>' + (nm ? '<strong>' + MSFG.escHtml(nm) + '</strong><br>' : '')
+        + '<span class="text-muted">Signature</span></td></tr>';
     });
     html += '</table>';
     html += '</div>';

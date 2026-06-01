@@ -44,10 +44,12 @@
 
     html += '<p>I certify that the above information is true and correct to the best of my knowledge.</p>';
     html += '<table style="margin-top:var(--space-lg);">';
-    // Blank signature lines (one per selected borrower); the name appears in the
-    // body, not pre-printed on the line — printed for wet signing.
-    signers.slice(0, 8).forEach(function () {
-      html += '<tr><td>____________________________</td><td>Signature</td><td>Date</td><td>__________</td></tr>';
+    // Blank signature line + printed name beneath (matches the PDF); no date —
+    // borrowers don't date the letter.
+    signers.slice(0, 8).forEach(function (nm) {
+      html += '<tr><td style="padding-right:1.5rem;">____________________________</td>'
+        + '<td>' + (nm ? '<strong>' + MSFG.escHtml(nm) + '</strong><br>' : '')
+        + '<span class="text-muted">Signature</span></td></tr>';
     });
     html += '</table>';
     html += '</div>';

@@ -66,7 +66,7 @@
     }
 
     html += '<table style="margin-top:var(--space-lg);">';
-    html += '<tr><td>Donor signature</td><td>____________________________</td><td>Date</td><td>__________</td></tr>';
+    html += '<tr><td>Donor signature</td><td>____________________________</td></tr>';
     html += '<tr><td>Donor name (print)</td><td>' + v(donorName) + '</td><td>Phone</td><td>' + v(donorPhone) + '</td></tr>';
     if (donorAddress || donorEmail) {
       html += '<tr><td>Donor address</td><td colspan="3">' + v(donorAddress) + (donorEmail ? ' &middot; ' + MSFG.escHtml(donorEmail) : '') + '</td></tr>';
