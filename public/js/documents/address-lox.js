@@ -11,6 +11,22 @@
   // Shared multi-borrower list (wired in onReady).
   let borrowers = null;
 
+  // Opening paragraph: auto-personalized until the user edits it. The SAME
+  // resolved text feeds both the preview and the PDF (single source of truth).
+  let introDirty = false;
+  function personalizedIntro() {
+    const selected = borrowers ? borrowers.getSelected() : [];
+    const nm = MSFG.Borrowers.joinNames(selected.map(function (b) { return b.name; }));
+    const loan = val('loanNumber');
+    return 'I, ' + (nm || 'the borrower') + (loan ? ' (Loan #' + loan + ')' : '') +
+      ', am writing to provide an explanation regarding the address(es) shown on my records.';
+  }
+  function resolveIntro() {
+    const el = document.getElementById('loxIntro');
+    if (introDirty && el && el.value.trim()) return el.value;
+    return personalizedIntro();
+  }
+
   /* ---- Repeating address rows ---- */
 
   function buildRow(values) {
@@ -24,7 +40,7 @@
           + '<input type="text" data-field="address" placeholder="123 Main St, City, ST 12345" value="' + MSFG.escHtml(values.address || '') + '">'
         + '</div>'
         + '<div class="form-group">'
-          + '<label>Date range</label>'
+          + '<label>Date range (optional)</label>'
           + '<input type="text" data-field="dates" placeholder="e.g. 06/2022 \u2013 03/2026" value="' + MSFG.escHtml(values.dates || '') + '">'
         + '</div>'
         + '<div class="form-group">'
@@ -98,12 +114,15 @@
       return;
     }
 
+    // Keep the editable opening-paragraph field in sync until the user edits it.
+    const introEl = document.getElementById('loxIntro');
+    if (introEl && !introDirty) introEl.value = personalizedIntro();
+    const intro = resolveIntro();
+
     let html = '<div class="letter-content">';
     html += '<p class="letter-date">' + MSFG.escHtml(letterDate) + '</p>';
     html += '<p>To Whom It May Concern,</p>';
-    html += '<p>I, <strong>' + MSFG.escHtml(borrowerNames || 'the borrower') + '</strong>';
-    if (loanNum) html += ' (Loan #' + MSFG.escHtml(loanNum) + ')';
-    html += ', am writing to provide an explanation regarding the address(es) shown on my records.</p>';
+    html += '<p>' + MSFG.escHtml(intro).replace(/\n/g, '<br>') + '</p>';
     if (currentAddr) html += '<p><strong>Current Address:</strong> ' + MSFG.escHtml(currentAddr) + '</p>';
 
     if (rows.length) {
@@ -145,6 +164,7 @@
       loanNumber: val('loanNumber'),
       currentAddress: val('currentAddress'),
       letterDate: val('letterDate') || todayLong(),
+      intro: resolveIntro(),
       addresses: collectRows(),
       letterSettings: ls
     };
@@ -221,6 +241,9 @@
     onReady: function (api) {
       regenerate = api.regenerate;
       borrowers = MSFG.Borrowers.init({ containerId: 'borrowersList', addBtnId: 'addBorrower', onChange: api.regenerate });
+      // Opening-paragraph edits stop the auto-personalization and re-render.
+      const introEl = document.getElementById('loxIntro');
+      if (introEl) introEl.addEventListener('input', function () { introDirty = true; api.regenerate(); });
       // Seed one empty row to invite the user; wire "add address".
       addRow({});
       if (addBtn) addBtn.addEventListener('click', function () { addRow({}); });
