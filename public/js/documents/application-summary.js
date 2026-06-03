@@ -1059,6 +1059,36 @@
       }
     } catch (_e) { /* ignore */ }
 
+    // Export PDF button — reuse captureForReport (which already POSTs
+    // to /api/pdf/structured and returns pdfBytes) and trigger a
+    // browser download with the configured filename.
+    const exportBtn = document.querySelector('[data-action="doc-export-pdf"]');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', async function () {
+        const orig = exportBtn.textContent;
+        exportBtn.disabled = true;
+        exportBtn.textContent = 'Building PDF…';
+        try {
+          const cap = await captureForReport();
+          const blob = new Blob([cap.pdfBytes], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = cap.filename || 'application-summary.pdf';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+        } catch (e) {
+          console.error('[Application Summary] Export failed:', e);
+          alert(e.message || 'Could not generate PDF.');
+        } finally {
+          exportBtn.disabled = false;
+          exportBtn.textContent = orig;
+        }
+      });
+    }
+
     if (window.MSFG && MSFG.DocActions) {
       MSFG.DocActions.register(buildEmailData);
       MSFG.DocActions.registerCapture(captureForReport);
